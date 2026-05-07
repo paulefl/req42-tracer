@@ -116,7 +116,8 @@ Elemente die noch `req-version=N-1` referenzieren als stale:
 req42-tracer/
 ├── cmd/req42-tracer/
 │   ├── main.go
-│   ├── root.go          # Cobra root, globale Flags (--model, --format, --config)
+│   ├── root.go          # Cobra root, globale Flags (--config, --format, --verbose)
+│   ├── init.go          # cmd: init — Projekt-Skeleton mit Templates
 │   ├── trace.go         # cmd: trace — Traceability Matrix
 │   ├── gaps.go          # cmd: gaps — Gap-Analyse
 │   ├── aspice.go        # cmd: aspice — ASPICE BP-Coverage
@@ -124,6 +125,14 @@ req42-tracer/
 │   ├── watch.go         # cmd: watch — File-Watch Mode
 │   └── lsp.go           # cmd: lsp — LSP-Server starten
 ├── internal/
+│   ├── templates/       # Eingebettete Templates + Fallback
+│   │   ├── req42.adoc   # REQ42-Skeleton mit Block-Beispielen
+│   │   ├── arc42.adoc   # ARC42 12 Kapitel + Block-Beispiele
+│   │   ├── req42-config.yaml  # .req42.yaml Vorlage
+│   │   ├── .gitignore   # .gitignore Vorlage
+│   │   └── embed.go     # //go:embed FS für Templates
+│   ├── init/
+│   │   └── initializer.go  # Template-Verarbeitung, Platzhalter-Ersetzung
 │   ├── parser/
 │   │   ├── adoc.go      # AsciiDoc Block-Scanner (regex-basiert)
 │   │   └── bausteinsicht.go  # Bausteinsicht JSONC-Reader
@@ -139,8 +148,7 @@ req42-tracer/
 │   ├── report/
 │   │   ├── table.go     # ASCII/Markdown Tabellenrenderer (CLI)
 │   │   ├── html.go      # HTML-Report Generator
-│   │   └── templates/   # HTML/CSS/JS Templates
-│   │       └── report.html
+│   │   └── report.html  # HTML-Template (D3.js für Graph)
 │   ├── testresult/
 │   │   ├── junit.go     # JUnit XML Parser
 │   │   └── gotest.go    # go-test JSON Parser
@@ -151,7 +159,8 @@ req42-tracer/
 │       └── diag.go      # Diagnostics (unbekannte IDs)
 ├── go.mod
 ├── Makefile
-└── CLAUDE.md
+├── CLAUDE.md
+└── PLAN.md
 ```
 
 ---
@@ -159,6 +168,17 @@ req42-tracer/
 ## CLI Commands
 
 ```bash
+# Init: Neues Projekt erstellen (interaktiv)
+req42-tracer init
+# > Project name? MyProject
+# > Module? github.com/user/myproject
+# ✓ Created docs/requirements/req42.adoc
+# ✓ Created docs/arc42/arc42.adoc
+# ✓ Created .req42.yaml
+
+# Init: Automation-freundlich
+req42-tracer init --name=MyProject --module=github.com/user/myproject --interactive=false
+
 # Traceability Matrix
 req42-tracer trace --format=markdown
 
@@ -175,8 +195,8 @@ req42-tracer aspice
 # Validierung
 req42-tracer validate
 
-# Watch Mode
-req42-tracer watch --open  # öffnet HTML-Report im Browser, live-reload
+# Watch Mode (Live-Reload)
+req42-tracer watch --open  # öffnet HTML-Report im Browser
 
 # LSP starten (für VS Code / IntelliJ)
 req42-tracer lsp
@@ -240,21 +260,73 @@ HTML-Report: D3.js via CDN (kein Build-Step nötig).
 
 ---
 
+## Init-Feature: Projekt-Skeleton
+
+Neuer `req42-tracer init` Command erstellt ein komplettes Projekt-Skeleton:
+
+```bash
+$ req42-tracer init --interactive
+> Project name? [default: req42-project] MyProject
+> Module path? [default: github.com/user/myproject] 
+> Description?
+
+✓ Created docs/requirements/req42.adoc
+✓ Created docs/arc42/arc42.adoc
+✓ Created .req42.yaml
+✓ Created .gitignore
+```
+
+### Templates (hybrid embed + Fallback)
+
+Templates als Go-Code eingebettet (embed.FS), Fallback auf Repo:
+
+```go
+// internal/templates/embed.go
+//go:embed req42.adoc arc42.adoc req42-config.yaml
+var FS embed.FS
+```
+
+Templates in `/internal/templates/`:
+- `req42.adoc` — Skeleton mit Block-Beispielen + Platzhalter `{{PROJECT_NAME}}`
+- `arc42.adoc` — ARC42 12 Kapitel + Block-Beispiele + Platzhalter
+- `req42-config.yaml` — .req42.yaml Vorlage mit defaults
+- `.gitignore` — req42-tracer spezifische Ignores
+
+### Init-Logik
+
+1. **Interaktive Prompts** (default):
+   - Project name, Module path, Description
+   - Erstelle `docs/requirements/`, `docs/arc42/`
+   
+2. **Template-Verarbeitung**:
+   - Lade Template aus embed.FS (oder Repo-Fallback)
+   - Ersetze Platzhalter: `{{PROJECT_NAME}}` → `MyProject`
+   - Schreibe Files in Zielverzeichnis
+
+3. **--interactive=false** für Automation:
+   ```bash
+   req42-tracer init --name=MyProject --module=github.com/user/myproject --interactive=false
+   ```
+
+---
+
 ## Implementierungsreihenfolge (MVP)
 
 1. ✅ Repo-Skeleton (go.mod, Makefile, CLAUDE.md, root command)
-2. `internal/model/types.go` — alle Typen
-3. `internal/parser/adoc.go` — AsciiDoc Block-Scanner
-4. `internal/parser/bausteinsicht.go` — JSONC-Reader
-5. `internal/model/config.go` — .req42.yaml
-6. `internal/graph/build.go` + `analysis.go`
-7. `internal/aspice/processes.go` + `checker.go`
-8. `internal/testresult/junit.go` + `gotest.go`
-9. `internal/report/table.go` → CLI-Output (`trace`, `gaps`, `aspice`)
-10. `internal/report/html.go` + Templates → HTML-Report
-11. `watch.go` — File-Watch + live-reload
-12. `internal/lsp/` — LSP Minimal-MVP
-13. Beispiel-Projekt (REQ42 + ARC42 + Bausteinsicht Demo)
+2. **`internal/templates/`** — Template-Files (req42.adoc, arc42.adoc, yaml)
+3. **`cmd/req42-tracer/init.go`** — Init-Command mit Prompts + Template-Verarbeitung
+4. `internal/model/types.go` — alle Typen
+5. `internal/parser/adoc.go` — AsciiDoc Block-Scanner
+6. `internal/parser/bausteinsicht.go` — JSONC-Reader
+7. `internal/model/config.go` — .req42.yaml
+8. `internal/graph/build.go` + `analysis.go`
+9. `internal/aspice/processes.go` + `checker.go`
+10. `internal/testresult/junit.go` + `gotest.go`
+11. `internal/report/table.go` → CLI-Output (`trace`, `gaps`, `aspice`)
+12. `internal/report/html.go` + Templates → HTML-Report
+13. `cmd/req42-tracer/watch.go` — File-Watch + live-reload
+14. `internal/lsp/` — LSP Minimal-MVP
+15. Beispiel-Projekt (Demonstriert init + trace + gaps + aspice)
 
 ---
 
