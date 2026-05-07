@@ -16,9 +16,12 @@ func newTraceCmd() *cobra.Command {
 		Use:   "trace",
 		Short: "Generate traceability matrix",
 		Long: `Generate and display the traceability matrix showing relationships
-between requirements, architecture, and tests.`,
+between requirements, architecture, and tests. Supports text, markdown, JSON,
+and interactive HTML visualization with D3.js graph.`,
 		RunE: runTraceCmd,
 	}
+
+	cmd.Flags().String("output", "", "Output file path for HTML report (optional)")
 
 	return cmd
 }
@@ -26,6 +29,7 @@ between requirements, architecture, and tests.`,
 func runTraceCmd(cmd *cobra.Command, args []string) error {
 	configPath, _ := cmd.Flags().GetString("config")
 	format, _ := cmd.Flags().GetString("format")
+	outputPath, _ := cmd.Flags().GetString("output")
 	verbose, _ := cmd.Flags().GetBool("verbose")
 
 	// Load configuration (for future use with advanced options)
@@ -74,6 +78,29 @@ func runTraceCmd(cmd *cobra.Command, args []string) error {
 
 	// Generate report
 	analyzer := graph.NewAnalyzer(g)
+
+	// Handle HTML output separately
+	if format == "html" || outputPath != "" {
+		if outputPath == "" {
+			outputPath = "reports/graph.html"
+		}
+		htmlReporter := report.NewHTMLReporter(analyzer, outputPath)
+		if err := htmlReporter.GenerateReport(); err != nil {
+			return fmt.Errorf("failed to generate HTML report: %w", err)
+		}
+		summaryPath := "reports/summary.html"
+		if err := htmlReporter.GenerateSummaryReport(summaryPath); err != nil {
+			return fmt.Errorf("failed to generate summary report: %w", err)
+		}
+		if verbose {
+			fmt.Fprintf(os.Stderr, "HTML report generated: %s\n", outputPath)
+			fmt.Fprintf(os.Stderr, "Summary report generated: %s\n", summaryPath)
+		}
+		fmt.Printf("HTML reports generated:\n  Graph: %s\n  Summary: %s\n", outputPath, summaryPath)
+		return nil
+	}
+
+	// Use table reporter for text/markdown/json formats
 	reporter := report.NewTableReporter(analyzer, format)
 	output := reporter.TraceabilityMatrix()
 

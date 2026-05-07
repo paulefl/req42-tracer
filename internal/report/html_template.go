@@ -1,0 +1,666 @@
+package report
+
+// HTMLTemplate is the embedded HTML template for graph visualization with D3.js.
+const HTMLTemplate = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>req42-tracer: Traceability Report</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .sidebar h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .sidebar h3 {
+            font-size: 14px;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            color: #ecf0f1;
+        }
+
+        .legend {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.requirement { background: #4a90e2; }
+        .legend-dot.arch { background: #7ed321; }
+        .legend-dot.test-spec { background: #f5a623; }
+        .legend-dot.test-code { background: #f5a623; opacity: 0.7; }
+        .legend-dot.test-result { background: #999; }
+
+        .stats {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            padding: 12px;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stats-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 4px 0;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-group label {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #bdc3c7;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            text-transform: uppercase;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        button.active {
+            background: #e74c3c;
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        #graph {
+            flex: 1;
+            background: #fff;
+            position: relative;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .node {
+            stroke: #fff;
+            stroke-width: 2px;
+            cursor: pointer;
+        }
+
+        .node:hover {
+            stroke: #000;
+            stroke-width: 3px;
+        }
+
+        .node.selected {
+            stroke: #f5a623;
+            stroke-width: 3px;
+            filter: drop-shadow(0 0 6px rgba(245, 166, 35, 0.8));
+        }
+
+        .node-label {
+            font-size: 11px;
+            pointer-events: none;
+            text-anchor: middle;
+            dominant-baseline: central;
+            font-weight: 500;
+        }
+
+        .link {
+            stroke: #bbb;
+            stroke-width: 1.5px;
+            stroke-dasharray: 0;
+            opacity: 0.6;
+        }
+
+        .link.faded {
+            opacity: 0.1;
+        }
+
+        .link-label {
+            font-size: 10px;
+            pointer-events: none;
+            fill: #666;
+            background: white;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: none;
+        }
+
+        .tooltip.visible {
+            display: block;
+        }
+
+        .tooltip-title {
+            font-weight: bold;
+            margin-bottom: 6px;
+            word-break: break-word;
+        }
+
+        .tooltip-content {
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .tooltip-meta {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            font-style: italic;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .zoom-btn {
+            background: white;
+            color: #333;
+            border: 1px solid #ddd;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .zoom-btn:hover {
+            background: #f0f0f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 200px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                max-height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Traceability Graph</h2>
+
+            <div class="legend">
+                <h3>Node Types</h3>
+                <div class="legend-item">
+                    <div class="legend-dot requirement"></div>
+                    <span>Requirement</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot arch"></div>
+                    <span>Architecture</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot test-spec"></div>
+                    <span>Test Spec</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot test-code"></div>
+                    <span>Test Code</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot test-result"></div>
+                    <span>Test Result</span>
+                </div>
+            </div>
+
+            <div class="legend">
+                <h3>Link Types</h3>
+                <div class="legend-item">→ satisfies</div>
+                <div class="legend-item">→ implements</div>
+                <div class="legend-item">→ verifies</div>
+                <div class="legend-item">→ derives</div>
+                <div class="legend-item">→ covers</div>
+            </div>
+
+            <div class="stats" id="stats">
+                <div class="stats-item">
+                    <span>Requirements:</span>
+                    <span id="stat-reqs">0</span>
+                </div>
+                <div class="stats-item">
+                    <span>Architecture:</span>
+                    <span id="stat-arch">0</span>
+                </div>
+                <div class="stats-item">
+                    <span>Test Specs:</span>
+                    <span id="stat-specs">0</span>
+                </div>
+                <div class="stats-item">
+                    <span>Test Results:</span>
+                    <span id="stat-results">0</span>
+                </div>
+                <div class="stats-item">
+                    <span>Total Nodes:</span>
+                    <span id="stat-total">0</span>
+                </div>
+                <div class="stats-item">
+                    <span>Total Links:</span>
+                    <span id="stat-links">0</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label>Filters</label>
+                    <button id="btn-reset">Reset View</button>
+                </div>
+                <div class="control-group">
+                    <label>Node Types</label>
+                    <button id="btn-filter-all" class="active">All</button>
+                    <button id="btn-filter-req">Requirements</button>
+                    <button id="btn-filter-arch">Architecture</button>
+                    <button id="btn-filter-tests">Tests</button>
+                </div>
+                <div class="control-group">
+                    <label>Layout</label>
+                    <button id="btn-layout-force" class="active">Force</button>
+                    <button id="btn-layout-radial">Radial</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main">
+            <div class="header">
+                <h1>Traceability Graph Visualization</h1>
+                <p>Interactive dependency graph showing requirements, architecture, and test coverage</p>
+            </div>
+
+            <div id="graph">
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="btn-zoom-in">+</button>
+                    <button class="zoom-btn" id="btn-zoom-out">−</button>
+                    <button class="zoom-btn" id="btn-zoom-fit">⊙</button>
+                </div>
+                <div class="tooltip" id="tooltip"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Graph data will be injected here: <!--GRAPH_DATA-->
+        const graphData = <!--GRAPH_DATA_JSON-->;
+
+        // Initialize graph visualization
+        initializeGraph(graphData);
+
+        function initializeGraph(data) {
+            // Update statistics
+            updateStats(data);
+
+            // Set up SVG
+            const container = document.getElementById('graph');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            const svg = d3.select('#graph').append('svg');
+
+            // Create groups for zooming
+            const g = svg.append('g');
+            const linkGroup = g.append('g').attr('class', 'links');
+            const nodeGroup = g.append('g').attr('class', 'nodes');
+            const labelGroup = g.append('g').attr('class', 'labels');
+
+            // Color mapping
+            const colorMap = {
+                'requirement': '#4a90e2',
+                'arch': '#7ed321',
+                'test-spec': '#f5a623',
+                'test-code': '#f5a623',
+                'test-result': '#999'
+            };
+
+            // Simulation
+            const simulation = d3.forceSimulation(data.nodes)
+                .force('link', d3.forceLink(data.edges)
+                    .id(d => d.id)
+                    .distance(d => 100 + (d.value * 20)))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide(25));
+
+            // Create links
+            const link = linkGroup.selectAll('line')
+                .data(data.edges)
+                .enter()
+                .append('line')
+                .attr('class', 'link')
+                .attr('stroke-width', d => Math.sqrt(d.value))
+                .on('mouseover', function() {
+                    d3.select(this).classed('active', true);
+                })
+                .on('mouseout', function() {
+                    d3.select(this).classed('active', false);
+                });
+
+            // Create nodes
+            const node = nodeGroup.selectAll('circle')
+                .data(data.nodes)
+                .enter()
+                .append('circle')
+                .attr('class', 'node')
+                .attr('r', 12)
+                .attr('fill', d => colorMap[d.type] || '#999')
+                .call(drag(simulation))
+                .on('mouseover', showTooltip)
+                .on('mouseout', hideTooltip)
+                .on('click', function(event, d) {
+                    event.stopPropagation();
+                    highlightConnected(d, data);
+                });
+
+            // Create labels
+            const label = labelGroup.selectAll('text')
+                .data(data.nodes)
+                .enter()
+                .append('text')
+                .attr('class', 'node-label')
+                .attr('dy', '0.31em')
+                .text(d => d.id)
+                .style('font-size', '11px');
+
+            // Zoom behavior
+            const zoom = d3.zoom()
+                .on('zoom', event => {
+                    g.attr('transform', event.transform);
+                });
+
+            svg.call(zoom);
+
+            // Zoom buttons
+            document.getElementById('btn-zoom-in').addEventListener('click', () => {
+                svg.transition().duration(750).call(zoom.scaleBy, 1.3);
+            });
+
+            document.getElementById('btn-zoom-out').addEventListener('click', () => {
+                svg.transition().duration(750).call(zoom.scaleBy, 0.7);
+            });
+
+            document.getElementById('btn-zoom-fit').addEventListener('click', () => {
+                const bounds = g.node().getBBox();
+                const fullWidth = width;
+                const fullHeight = height;
+                const midX = bounds.x + bounds.width / 2;
+                const midY = bounds.y + bounds.height / 2;
+
+                if (bounds.width > 0 && bounds.height > 0) {
+                    const scale = 0.8 / Math.max(bounds.width / fullWidth, bounds.height / fullHeight);
+                    const translate = [fullWidth / 2 - scale * midX, fullHeight / 2 - scale * midY];
+
+                    svg.transition()
+                        .duration(750)
+                        .call(zoom.transform, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
+                }
+            });
+
+            // Update simulation
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+
+                node
+                    .attr('cx', d => d.x)
+                    .attr('cy', d => d.y);
+
+                label
+                    .attr('x', d => d.x)
+                    .attr('y', d => d.y);
+            });
+
+            // Reset view button
+            document.getElementById('btn-reset').addEventListener('click', () => {
+                node.classed('selected', false);
+                link.classed('faded', false);
+                node.classed('faded', false);
+            });
+
+            // Filter buttons
+            document.getElementById('btn-filter-all').addEventListener('click', () => {
+                updateFilterButtons('all');
+                filterByType('all');
+            });
+
+            document.getElementById('btn-filter-req').addEventListener('click', () => {
+                updateFilterButtons('requirement');
+                filterByType('requirement');
+            });
+
+            document.getElementById('btn-filter-arch').addEventListener('click', () => {
+                updateFilterButtons('arch');
+                filterByType('arch');
+            });
+
+            document.getElementById('btn-filter-tests').addEventListener('click', () => {
+                updateFilterButtons('tests');
+                filterByType('test-spec', 'test-code', 'test-result');
+            });
+
+            function filterByType(...types) {
+                const typeMap = {};
+                types.forEach(t => typeMap[t] = true);
+
+                node.style('display', d => typeMap[d.type] ? 'block' : 'none');
+                label.style('display', d => typeMap[d.type] ? 'block' : 'none');
+                link.style('display', d => typeMap[d.source.type] && typeMap[d.target.type] ? 'line' : 'none');
+            }
+
+            function updateFilterButtons(active) {
+                document.getElementById('btn-filter-all').classList.remove('active');
+                document.getElementById('btn-filter-req').classList.remove('active');
+                document.getElementById('btn-filter-arch').classList.remove('active');
+                document.getElementById('btn-filter-tests').classList.remove('active');
+
+                if (active === 'all') document.getElementById('btn-filter-all').classList.add('active');
+                else if (active === 'requirement') document.getElementById('btn-filter-req').classList.add('active');
+                else if (active === 'arch') document.getElementById('btn-filter-arch').classList.add('active');
+                else if (active === 'tests') document.getElementById('btn-filter-tests').classList.add('active');
+            }
+
+            function showTooltip(event, d) {
+                const tooltip = document.getElementById('tooltip');
+                let metaHTML = '';
+                Object.entries(d.metadata || {}).forEach(([k, v]) => {
+                    metaHTML += '<strong>' + k + ':</strong> ' + v + '<br>';
+                });
+
+                tooltip.innerHTML =
+                    '<div class="tooltip-title">' + d.label + '</div>' +
+                    '<div class="tooltip-content">' +
+                    '<strong>Type:</strong> ' + d.type + '<br>' +
+                    '<strong>ID:</strong> ' + d.id +
+                    '</div>' +
+                    '<div class="tooltip-meta">' + metaHTML + '</div>';
+
+                tooltip.classList.add('visible');
+                tooltip.style.left = (event.pageX + 10) + 'px';
+                tooltip.style.top = (event.pageY + 10) + 'px';
+            }
+
+            function hideTooltip() {
+                document.getElementById('tooltip').classList.remove('visible');
+            }
+
+            function highlightConnected(node, data) {
+                const connectedIds = new Set([node.id]);
+
+                // Find all connected nodes
+                data.edges.forEach(edge => {
+                    if (edge.source.id === node.id) connectedIds.add(edge.target.id);
+                    if (edge.target.id === node.id) connectedIds.add(edge.source.id);
+                });
+
+                nodeGroup.selectAll('.node')
+                    .classed('selected', d => d.id === node.id)
+                    .classed('faded', d => !connectedIds.has(d.id));
+
+                linkGroup.selectAll('.link')
+                    .classed('faded', d => !(connectedIds.has(d.source.id) && connectedIds.has(d.target.id)));
+            }
+
+            function drag(simulation) {
+                function dragstarted(event) {
+                    if (!event.active) simulation.alphaTarget(0.3).restart();
+                    event.subject.fx = event.subject.x;
+                    event.subject.fy = event.subject.y;
+                }
+
+                function dragged(event) {
+                    event.subject.fx = event.x;
+                    event.subject.fy = event.y;
+                }
+
+                function dragended(event) {
+                    if (!event.active) simulation.alphaTarget(0);
+                    event.subject.fx = null;
+                    event.subject.fy = null;
+                }
+
+                return d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended);
+            }
+        }
+
+        function updateStats(data) {
+            const stats = {
+                requirement: 0,
+                arch: 0,
+                'test-spec': 0,
+                'test-code': 0,
+                'test-result': 0
+            };
+
+            data.nodes.forEach(node => {
+                stats[node.type]++;
+            });
+
+            document.getElementById('stat-reqs').textContent = stats.requirement;
+            document.getElementById('stat-arch').textContent = stats.arch;
+            document.getElementById('stat-specs').textContent = stats['test-spec'];
+            document.getElementById('stat-results').textContent = stats['test-result'];
+            document.getElementById('stat-total').textContent = data.nodes.length;
+            document.getElementById('stat-links').textContent = data.edges.length;
+        }
+    </script>
+</body>
+</html>
+`
