@@ -16,6 +16,11 @@ func NewAnalyzer(graph *model.TraceabilityGraph) *Analyzer {
 	return &Analyzer{graph: graph}
 }
 
+// GetGraph returns the underlying traceability graph.
+func (a *Analyzer) GetGraph() *model.TraceabilityGraph {
+	return a.graph
+}
+
 // AnalyzeGaps performs a comprehensive gap analysis.
 func (a *Analyzer) AnalyzeGaps() *model.GapAnalysisResult {
 	gap := &model.GapAnalysisResult{
