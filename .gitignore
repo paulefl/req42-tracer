@@ -1,0 +1,29 @@
+# Compiled binary
+req42-tracer
+
+# Go
+*.o
+*.a
+*.so
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+build/
+
+# Test reports
+*.out
+coverage.html
