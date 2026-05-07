@@ -585,9 +585,12 @@ const HTMLTemplate = `<!DOCTYPE html>
     <script>
         // Graph data will be injected here: <!--GRAPH_DATA-->
         const graphData = <!--GRAPH_DATA_JSON-->;
+        const matrixData = <!--MATRIX_DATA_JSON-->;
 
-        // Initialize graph visualization
-        initializeGraph(graphData);
+        // Global variables for filtering
+        let globalNode = null;
+        let globalLink = null;
+        let globalLabel = null;
 
         function initializeGraph(data) {
             // Update statistics
@@ -624,8 +627,8 @@ const HTMLTemplate = `<!DOCTYPE html>
                 .force('center', d3.forceCenter(width / 2, height / 2))
                 .force('collision', d3.forceCollide(25));
 
-            // Create links
-            const link = linkGroup.selectAll('line')
+            // Create links (store globally for filtering)
+            globalLink = linkGroup.selectAll('line')
                 .data(data.edges)
                 .enter()
                 .append('line')
@@ -638,8 +641,8 @@ const HTMLTemplate = `<!DOCTYPE html>
                     d3.select(this).classed('active', false);
                 });
 
-            // Create nodes
-            const node = nodeGroup.selectAll('circle')
+            // Create nodes (store globally for filtering)
+            globalNode = nodeGroup.selectAll('circle')
                 .data(data.nodes)
                 .enter()
                 .append('circle')
@@ -654,8 +657,8 @@ const HTMLTemplate = `<!DOCTYPE html>
                     highlightConnected(d, data);
                 });
 
-            // Create labels
-            const label = labelGroup.selectAll('text')
+            // Create labels (store globally for filtering)
+            globalLabel = labelGroup.selectAll('text')
                 .data(data.nodes)
                 .enter()
                 .append('text')
@@ -747,9 +750,9 @@ const HTMLTemplate = `<!DOCTYPE html>
                 const typeMap = {};
                 types.forEach(t => typeMap[t] = true);
 
-                node.style('display', d => typeMap[d.type] ? 'block' : 'none');
-                label.style('display', d => typeMap[d.type] ? 'block' : 'none');
-                link.style('display', d => typeMap[d.source.type] && typeMap[d.target.type] ? 'line' : 'none');
+                globalNode.style('display', d => typeMap[d.type] ? 'block' : 'none');
+                globalLabel.style('display', d => typeMap[d.type] ? 'block' : 'none');
+                globalLink.style('display', d => typeMap[d.source.type] && typeMap[d.target.type] ? 'line' : 'none');
             }
 
             function updateFilterButtons(active) {
@@ -831,6 +834,11 @@ const HTMLTemplate = `<!DOCTYPE html>
         }
 
         function updateStats(data) {
+            if (!data || !data.nodes) {
+                console.error('No data or nodes in updateStats:', data);
+                return;
+            }
+
             const stats = {
                 requirement: 0,
                 arch: 0,
@@ -840,15 +848,24 @@ const HTMLTemplate = `<!DOCTYPE html>
             };
 
             data.nodes.forEach(node => {
-                stats[node.type]++;
+                if (node.type in stats) {
+                    stats[node.type]++;
+                }
             });
 
-            document.getElementById('stat-reqs').textContent = stats.requirement;
-            document.getElementById('stat-arch').textContent = stats.arch;
-            document.getElementById('stat-specs').textContent = stats['test-spec'];
-            document.getElementById('stat-results').textContent = stats['test-result'];
-            document.getElementById('stat-total').textContent = data.nodes.length;
-            document.getElementById('stat-links').textContent = data.edges.length;
+            const reqEl = document.getElementById('stat-reqs');
+            const archEl = document.getElementById('stat-arch');
+            const specsEl = document.getElementById('stat-specs');
+            const resultsEl = document.getElementById('stat-results');
+            const totalEl = document.getElementById('stat-total');
+            const linksEl = document.getElementById('stat-links');
+
+            if (reqEl) reqEl.textContent = stats.requirement;
+            if (archEl) archEl.textContent = stats.arch;
+            if (specsEl) specsEl.textContent = stats['test-spec'];
+            if (resultsEl) resultsEl.textContent = stats['test-result'];
+            if (totalEl) totalEl.textContent = data.nodes.length;
+            if (linksEl) linksEl.textContent = data.edges.length;
         }
 
         // Tab switching
@@ -869,9 +886,6 @@ const HTMLTemplate = `<!DOCTYPE html>
                 renderMatrix();
             }
         }
-
-        // Matrix data will be injected here: <!--MATRIX_DATA_JSON-->
-        const matrixData = <!--MATRIX_DATA_JSON-->;
 
         let currentMatrixData = matrixData;
 
@@ -953,6 +967,20 @@ const HTMLTemplate = `<!DOCTYPE html>
         document.getElementById('filter-priority').addEventListener('change', renderMatrix);
         document.getElementById('filter-status').addEventListener('change', renderMatrix);
         document.getElementById('search-req').addEventListener('input', renderMatrix);
+
+        // Initialize graph visualization after all functions are defined
+        document.addEventListener('DOMContentLoaded', function() {
+            if (graphData && graphData.nodes) {
+                initializeGraph(graphData);
+            }
+        });
+
+        // Also initialize immediately if DOM is already loaded
+        if (document.readyState !== 'loading') {
+            if (graphData && graphData.nodes) {
+                initializeGraph(graphData);
+            }
+        }
     </script>
 </body>
 </html>
