@@ -9,7 +9,7 @@
 
 This section briefly lists the main quality requirements and project goals.
 
-[arch,id=intro.goals,aspice=SYS.2]
+[arch,id=intro.goals,aspice=SYS.2,req=REQ-REPORT-001]
 ==== Quality Goals
 
 - Learnability: Users productive within 30 minutes
@@ -27,12 +27,17 @@ This section briefly lists the main quality requirements and project goals.
 
 List technical, organizational, and regulatory constraints.
 
-[arch,id=constraints.technical]
+[arch,id=constraints.technical,req=REQ-COMPAT-001,REQ-COMPAT-002]
 ==== Technical Constraints
 
 - Language: Go 1.24+
 - CLI framework: Cobra
 - Configuration: YAML (.req42.yaml)
+
+[arch,id=constraints.compat,req=REQ-COMPAT-002]
+==== Platform Compatibility
+
+Supports multiple platforms and operating systems.
 
 [arch,id=constraints.org]
 ==== Organizational Constraints
@@ -44,7 +49,7 @@ List technical, organizational, and regulatory constraints.
 
 Describes the system context and scope.
 
-[arch,id=system.context,aspice=SYS.3]
+[arch,id=system.context,aspice=SYS.3,req=REQ-PARSE-001,REQ-PARSE-002,REQ-PARSE-003]
 ==== System Context Diagram
 
 The project tool connects three primary data sources:
@@ -65,7 +70,7 @@ The tool follows a graph-based architecture:
 4. Analyze for gaps, coverage, ASPICE compliance
 5. Generate reports (CLI, HTML)
 
-[arch,id=strategy.graph]
+[arch,id=strategy.graph,req=REQ-GRAPH-001,REQ-VALIDATE-001]
 ==== Traceability Graph
 
 - Nodes: Requirement, Architecture Element, Test Spec, Test Code, Test Result
@@ -74,58 +79,67 @@ The tool follows a graph-based architecture:
 
 == 5. Building Block View
 
+=== 5.0 Level 1 — Initialization
+
+[arch,id=comp.init,parent=comp.system,aspice=SWE.2,impl=internal/cmd,req=REQ-INIT-001]
+==== Initialization Component
+
+Handles project initialization and setup commands.
+
+[arch,id=comp.lsp,parent=comp.system,aspice=SWE.2,impl=internal/lsp,req=REQ-LSP-001]
+==== LSP Server Component
+
+Provides Language Server Protocol integration for IDE support.
+
 === 5.1 Level 1 — Whitebox
 
 The system consists of the following top-level components:
 
-[arch,id=comp.parser,parent=comp.system,aspice=SWE.2,
- impl=internal/parser]
+[arch,id=comp.parser,parent=comp.system,aspice=SWE.2,impl=internal/parser,req=REQ-PARSE-001,REQ-PARSE-002,REQ-PARSE-003,REQ-INIT-001]
 ==== Parser Component
 
 Reads AsciiDoc files and Bausteinsicht models, extracts blocks.
 
-[arch,id=comp.graph,parent=comp.system,aspice=SWE.2,
- impl=internal/graph]
+[arch,id=comp.graph,parent=comp.system,aspice=SWE.2,impl=internal/graph,req=REQ-GRAPH-001,REQ-REPORT-001,REQ-REPORT-002]
 ==== Graph Component
 
 Builds and analyzes the traceability graph.
 
-[arch,id=comp.aspice,parent=comp.system,aspice=SWE.2,
- impl=internal/aspice]
+[arch,id=comp.aspice,parent=comp.system,aspice=SWE.2,impl=internal/aspice,req=REQ-ASPICE-001,REQ-TESTING-001]
 ==== ASPICE Checker
 
 Validates process coverage against PAM 4.0.
 
-[arch,id=comp.report,parent=comp.system,aspice=SWE.2,
- impl=internal/report]
+[arch,id=comp.report,parent=comp.system,aspice=SWE.2,impl=internal/report,req=REQ-REPORT-001,REQ-REPORT-002]
 ==== Report Generator
 
 Produces CLI and HTML reports.
 
 === 5.2 Level 2 — Parser Subcomponents
 
-[arch,id=comp.parser.adoc,parent=comp.parser,aspice=SWE.3,
- impl=internal/parser/adoc.go]
+[arch,id=comp.parser.adoc,parent=comp.parser,aspice=SWE.3,impl=internal/parser/adoc.go,req=REQ-PARSE-001,REQ-INIT-001]
 ==== AsciiDoc Scanner
 
 Extracts block attributes from .adoc files using regex.
 
-[arch,id=comp.parser.jsonc,parent=comp.parser,aspice=SWE.3,
- impl=internal/parser/bausteinsicht.go]
+[arch,id=comp.parser.jsonc,parent=comp.parser,aspice=SWE.3,impl=internal/parser/bausteinsicht.go,req=REQ-PARSE-003]
 ==== Bausteinsicht Loader
 
 Parses JSONC architecture model.
 
+[arch,id=comp.parser.arch,parent=comp.parser,aspice=SWE.3,impl=internal/parser/adoc.go,req=REQ-PARSE-002]
+==== Architecture Block Parser
+
+Parses AsciiDoc [arch] blocks with hierarchy support and requirement linking.
+
 === 5.3 Level 2 — Graph Subcomponents
 
-[arch,id=comp.graph.builder,parent=comp.graph,aspice=SWE.3,
- impl=internal/graph/build.go]
+[arch,id=comp.graph.builder,parent=comp.graph,aspice=SWE.3,impl=internal/graph/build.go,req=REQ-GRAPH-001]
 ==== Graph Builder
 
 Constructs traceability graph from parsed elements.
 
-[arch,id=comp.graph.analyzer,parent=comp.graph,aspice=SWE.3,
- impl=internal/graph/analysis.go]
+[arch,id=comp.graph.analyzer,parent=comp.graph,aspice=SWE.3,impl=internal/graph/analysis.go,req=REQ-REPORT-002,REQ-VALIDATE-001]
 ==== Graph Analyzer
 
 Detects gaps, orphans, stale traces, and validates coverage.
@@ -134,7 +148,7 @@ Detects gaps, orphans, stale traces, and validates coverage.
 
 Describes dynamic behavior during execution.
 
-[arch,id=runtime.trace,aspice=SWE.2]
+[arch,id=runtime.trace,aspice=SWE.2,req=REQ-REPORT-001,REQ-VALIDATE-001]
 ==== Trace Command Sequence
 
 1. Load configuration (.req42.yaml)
@@ -145,7 +159,7 @@ Describes dynamic behavior during execution.
 6. Build traceability graph
 7. Generate report
 
-[arch,id=runtime.watch,aspice=SWE.2]
+[arch,id=runtime.watch,aspice=SWE.2,req=REQ-WATCH-001]
 ==== Watch Mode Sequence
 
 1. Start file watcher (fsnotify)
@@ -154,7 +168,7 @@ Describes dynamic behavior during execution.
 
 == 7. Deployment View
 
-[arch,id=deploy.cli]
+[arch,id=deploy.cli,req=REQ-COMPAT-001,REQ-COMPAT-002]
 ==== CLI Deployment
 
 - Single compiled binary (`req42-tracer`)
@@ -167,7 +181,7 @@ Describes dynamic behavior during execution.
 
 Central configuration via `.req42.yaml`:
 
-[arch,id=concept.config]
+[arch,id=concept.config,req=REQ-CONFIG-001,REQ-INIT-001]
 ==== Configuration
 
 - Project definitions (multi-project support)
@@ -177,7 +191,7 @@ Central configuration via `.req42.yaml`:
 
 === 8.2 Error Handling
 
-[arch,id=concept.errors]
+[arch,id=concept.errors,req=REQ-VALIDATE-001]
 ==== Error Strategy
 
 - Fail-fast on validation errors
@@ -186,7 +200,7 @@ Central configuration via `.req42.yaml`:
 
 === 8.3 Extensibility
 
-[arch,id=concept.plugins]
+[arch,id=concept.plugins,req=REQ-REPORT-001]
 ==== Plugin Points
 
 - Custom report formatters
@@ -203,21 +217,21 @@ Key ADRs are documented in `docs/arc42/ADRs/`.
 
 == 10. Quality Requirements
 
-[arch,id=quality.coverage]
+[arch,id=quality.coverage,req=REQ-TESTING-001]
 ==== Test Coverage
 
 - Parser: ≥90% unit test coverage
 - Graph builder: ≥85% coverage
 - Integration: ≥70% coverage
 
-[arch,id=quality.performance]
+[arch,id=quality.performance,req=REQ-PERF-001]
 ==== Performance
 
 - Trace generation: <1s for typical project (100 requirements)
 - HTML report generation: <2s
 - Watch mode reload: <500ms
 
-[arch,id=quality.security]
+[arch,id=quality.security,req=REQ-VALIDATE-001]
 ==== Security
 
 - No external network calls
