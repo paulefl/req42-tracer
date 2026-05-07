@@ -174,7 +174,7 @@ func (b *Builder) BuildLinks() error {
 
 		// If still unlinked, try spec matching
 		if result.LinkedSpec == "" {
-			for specID, spec := range b.graph.TestSpecs {
+			for specID := range b.graph.TestSpecs {
 				// Check if test name matches spec ID pattern
 				if strings.Contains(strings.ToLower(result.TestName), strings.ToLower(specID)) {
 					result.LinkedSpec = specID
@@ -210,7 +210,7 @@ func (b *Builder) addLink(link *model.TraceLink) {
 
 // DeriveASPICELevels automatically derives ASPICE levels from ARC42 hierarchy.
 func (b *Builder) DeriveASPICELevels() {
-	for id, arch := range b.graph.ArchElements {
+	for _, arch := range b.graph.ArchElements {
 		if arch.ASPICE != "" {
 			continue // Already explicitly set
 		}

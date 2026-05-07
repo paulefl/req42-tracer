@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -24,10 +25,25 @@ This command creates the project skeleton including:
   - .req42.yaml (configuration file)
   - .gitignore
 
-Use --interactive=false with explicit flags for CI/CD automation.`,
+Use --interactive=false with explicit flags for CI/CD automation.
+
+Examples:
+  # Interactive mode in current directory
+  req42-tracer init
+
+  # Create in specific directory
+  req42-tracer init --dir=./my-project --name=MyProject --interactive=false
+
+  # Automated (no prompts)
+  req42-tracer init \
+    --name=MyProject \
+    --module=github.com/user/myproject \
+    --description="My Project" \
+    --interactive=false`,
 		RunE: runInitCmd,
 	}
 
+	cmd.Flags().String("dir", ".", "Project directory to create (default: current directory)")
 	cmd.Flags().String("name", "", "Project name (default: req42-project)")
 	cmd.Flags().String("module", "", "Go module path (default: github.com/user/project)")
 	cmd.Flags().String("description", "", "Project description (default: REQ42 + ARC42 Project)")
@@ -37,6 +53,7 @@ Use --interactive=false with explicit flags for CI/CD automation.`,
 }
 
 func runInitCmd(cmd *cobra.Command, args []string) error {
+	projectDir, _ := cmd.Flags().GetString("dir")
 	interactive, _ := cmd.Flags().GetBool("interactive")
 
 	var projectName, modulePath, description string
@@ -63,7 +80,7 @@ func runInitCmd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	return initializeProject(projectName, modulePath, description)
+	return initializeProject(projectDir, projectName, modulePath, description)
 }
 
 // promptInteractive prompts the user for project configuration interactively.
@@ -95,8 +112,20 @@ func promptInteractive() (name, module, description string, err error) {
 }
 
 // initializeProject creates the project structure and processes templates.
-func initializeProject(projectName, modulePath, description string) error {
-	// Create directory structure
+func initializeProject(projectDir, projectName, modulePath, description string) error {
+	// Normalize project directory path
+	if projectDir == "" {
+		projectDir = "."
+	}
+
+	// Create root project directory if it doesn't exist
+	if projectDir != "." {
+		if err := os.MkdirAll(projectDir, 0755); err != nil {
+			return fmt.Errorf("failed to create project directory %s: %w", projectDir, err)
+		}
+	}
+
+	// Create subdirectory structure
 	dirs := []string{
 		"docs/requirements",
 		"docs/arc42",
@@ -104,8 +133,9 @@ func initializeProject(projectName, modulePath, description string) error {
 	}
 
 	for _, dir := range dirs {
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			return fmt.Errorf("failed to create directory %s: %w", dir, err)
+		fullPath := filepath.Join(projectDir, dir)
+		if err := os.MkdirAll(fullPath, 0755); err != nil {
+			return fmt.Errorf("failed to create directory %s: %w", fullPath, err)
 		}
 	}
 
@@ -143,18 +173,26 @@ func initializeProject(projectName, modulePath, description string) error {
 		}
 
 		// Write to destination
-		if err := os.WriteFile(tf.dest, []byte(result), 0644); err != nil {
-			return fmt.Errorf("failed to write %s: %w", tf.dest, err)
+		destPath := filepath.Join(projectDir, tf.dest)
+		if err := os.WriteFile(destPath, []byte(result), 0644); err != nil {
+			return fmt.Errorf("failed to write %s: %w", destPath, err)
 		}
 
-		fmt.Printf("✓ Created %s\n", tf.dest)
+		fmt.Printf("✓ Created %s\n", destPath)
 	}
 
 	// Summary
 	fmt.Println()
 	fmt.Println("✨ Project initialized successfully!")
 	fmt.Println()
+
+	changeDir := ""
+	if projectDir != "." {
+		changeDir = fmt.Sprintf("  0. cd %s\n", projectDir)
+	}
+
 	fmt.Printf("Next steps:\n")
+	fmt.Print(changeDir)
 	fmt.Printf("  1. Edit docs/requirements/req42.adoc to add your requirements\n")
 	fmt.Printf("  2. Edit docs/arc42/arc42.adoc to document your architecture\n")
 	fmt.Printf("  3. Update architecture.jsonc with your Bausteinsicht model\n")

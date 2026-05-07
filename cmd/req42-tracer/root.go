@@ -26,10 +26,10 @@ It supports ASPICE PAM 4.0 process validation and generates interactive reports.
 
 	// Subcommands
 	cmd.AddCommand(newInitCmd())
-	// cmd.AddCommand(newTraceCmd())
-	// cmd.AddCommand(newGapsCmd())
-	// cmd.AddCommand(newAspiceCmd())
-	// cmd.AddCommand(newValidateCmd())
+	cmd.AddCommand(newTraceCmd())
+	cmd.AddCommand(newGapsCmd())
+	cmd.AddCommand(newAspiceCmd())
+	cmd.AddCommand(newValidateCmd())
 	// cmd.AddCommand(newWatchCmd())
 	// cmd.AddCommand(newLspCmd())
 

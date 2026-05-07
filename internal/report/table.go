@@ -86,14 +86,12 @@ func (tr *TableReporter) traceabilityMatrixMarkdown(g *model.TraceabilityGraph) 
 	for _, req := range g.Requirements {
 		archCovered := false
 		testCovered := false
-		archID := ""
 
 		// Find coverage
 		for _, arch := range g.ArchElements {
 			for _, ref := range arch.Req {
 				if ref == req.ID {
 					archCovered = true
-					archID = arch.ID
 
 					for _, link := range g.Links {
 						if link.FromID == arch.ID && link.LinkType == "verified-by" {
