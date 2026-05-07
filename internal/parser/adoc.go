@@ -37,7 +37,13 @@ func (p *ADocParser) ParseRequirements(project string) ([]*model.Requirement, er
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.Contains(line, "[req,") {
-			req, err := p.parseReqBlock(line, lineNum, project, scanner)
+			// Handle multi-line blocks
+			fullBlock := line
+			for !strings.Contains(fullBlock, "]") && scanner.Scan() {
+				fullBlock += " " + strings.TrimSpace(scanner.Text())
+				lineNum++
+			}
+			req, err := p.parseReqBlock(fullBlock, lineNum, project, scanner)
 			if err == nil && req != nil {
 				requirements = append(requirements, req)
 			}
@@ -63,7 +69,13 @@ func (p *ADocParser) ParseArchElements(project string) ([]*model.ArchElement, er
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.Contains(line, "[arch,") {
-			arch, err := p.parseArchBlock(line, lineNum, project, scanner)
+			// Handle multi-line blocks
+			fullBlock := line
+			for !strings.Contains(fullBlock, "]") && scanner.Scan() {
+				fullBlock += " " + strings.TrimSpace(scanner.Text())
+				lineNum++
+			}
+			arch, err := p.parseArchBlock(fullBlock, lineNum, project, scanner)
 			if err == nil && arch != nil {
 				archElements = append(archElements, arch)
 			}
@@ -89,7 +101,13 @@ func (p *ADocParser) ParseTestSpecs(project string) ([]*model.TestSpec, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.Contains(line, "[test-spec,") {
-			spec, err := p.parseTestSpecBlock(line, lineNum, project, scanner)
+			// Handle multi-line blocks
+			fullBlock := line
+			for !strings.Contains(fullBlock, "]") && scanner.Scan() {
+				fullBlock += " " + strings.TrimSpace(scanner.Text())
+				lineNum++
+			}
+			spec, err := p.parseTestSpecBlock(fullBlock, lineNum, project, scanner)
 			if err == nil && spec != nil {
 				testSpecs = append(testSpecs, spec)
 			}
