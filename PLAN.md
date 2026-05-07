@@ -126,11 +126,12 @@ req42-tracer/
 │   └── lsp.go           # cmd: lsp — LSP-Server starten
 ├── internal/
 │   ├── templates/       # Eingebettete Templates + Fallback
-│   │   ├── req42.adoc   # REQ42-Skeleton mit Block-Beispielen
-│   │   ├── arc42.adoc   # ARC42 12 Kapitel + Block-Beispiele
-│   │   ├── req42-config.yaml  # .req42.yaml Vorlage
+│   │   ├── req42.adoc   # REQ42-Skeleton mit Block-Beispielen + Platzhalter
+│   │   ├── arc42.adoc   # ARC42 12 Kapitel + Block-Beispiele + Platzhalter
+│   │   ├── architecture.jsonc  # Bausteinsicht-Modell-Template + Platzhalter
+│   │   ├── req42-config.yaml   # .req42.yaml Vorlage mit defaults
 │   │   ├── .gitignore   # .gitignore Vorlage
-│   │   └── embed.go     # //go:embed FS für Templates
+│   │   └── embed.go     # //go:embed FS für alle Templates
 │   ├── init/
 │   │   └── initializer.go  # Template-Verarbeitung, Platzhalter-Ersetzung
 │   ├── parser/
@@ -170,14 +171,23 @@ req42-tracer/
 ```bash
 # Init: Neues Projekt erstellen (interaktiv)
 req42-tracer init
-# > Project name? MyProject
-# > Module? github.com/user/myproject
+# > Project name? [default: req42-project] MyProject
+# > Module? [default: github.com/user/myproject] 
+# > Description? [default: REQ42 + ARC42 Projekt]
 # ✓ Created docs/requirements/req42.adoc
 # ✓ Created docs/arc42/arc42.adoc
+# ✓ Created architecture.jsonc
 # ✓ Created .req42.yaml
+# ✓ Created .gitignore
+# 
+# → Projekt ist sofort einsatzbereit!
 
-# Init: Automation-freundlich
-req42-tracer init --name=MyProject --module=github.com/user/myproject --interactive=false
+# Init: Automation-freundlich (CI/CD)
+req42-tracer init \
+  --name=MyProject \
+  --module=github.com/user/myproject \
+  --description="My Requirements Project" \
+  --interactive=false
 
 # Traceability Matrix
 req42-tracer trace --format=markdown
@@ -260,20 +270,29 @@ HTML-Report: D3.js via CDN (kein Build-Step nötig).
 
 ---
 
-## Init-Feature: Projekt-Skeleton
+## Init-Feature: Vollständiges Projekt-Skeleton
 
-Neuer `req42-tracer init` Command erstellt ein komplettes Projekt-Skeleton:
+Neuer `req42-tracer init` Command erstellt ein komplettes, arbeitsfähiges Projekt:
 
 ```bash
 $ req42-tracer init --interactive
 > Project name? [default: req42-project] MyProject
 > Module path? [default: github.com/user/myproject] 
-> Description?
+> Description? [default: REQ42 + ARC42 Projekt]
 
 ✓ Created docs/requirements/req42.adoc
 ✓ Created docs/arc42/arc42.adoc
+✓ Created architecture.jsonc (Bausteinsicht-Modell)
 ✓ Created .req42.yaml
 ✓ Created .gitignore
+```
+
+Das Projekt ist **sofort einsatzbereit**:
+```bash
+cd MyProject
+req42-tracer trace           # zeigt leere Traceability-Matrix
+req42-tracer validate        # validiert Templates
+req42-tracer watch --open    # öffnet HTML-Report
 ```
 
 ### Templates (hybrid embed + Fallback)
@@ -282,15 +301,46 @@ Templates als Go-Code eingebettet (embed.FS), Fallback auf Repo:
 
 ```go
 // internal/templates/embed.go
-//go:embed req42.adoc arc42.adoc req42-config.yaml
+//go:embed req42.adoc arc42.adoc architecture.jsonc req42-config.yaml
 var FS embed.FS
 ```
 
 Templates in `/internal/templates/`:
-- `req42.adoc` — Skeleton mit Block-Beispielen + Platzhalter `{{PROJECT_NAME}}`
-- `arc42.adoc` — ARC42 12 Kapitel + Block-Beispiele + Platzhalter
+- `req42.adoc` — REQ42 Skeleton mit Block-Beispielen
+- `arc42.adoc` — ARC42 12 Kapitel + Block-Beispiele
+- `architecture.jsonc` — **Bausteinsicht-Modell mit Beispiel-Struktur**
 - `req42-config.yaml` — .req42.yaml Vorlage mit defaults
 - `.gitignore` — req42-tracer spezifische Ignores
+
+### Bausteinsicht-Integration in Init
+
+Das `architecture.jsonc` Template enthält:
+
+```jsonc
+{
+  "model": {
+    "{{PROJECT_NAME}}": {
+      "description": "{{DESCRIPTION}}",
+      "elements": {
+        "system": {
+          "description": "System-Level Container"
+        },
+        "backend": {
+          "description": "Backend API Component"
+        },
+        "frontend": {
+          "description": "Web UI Component"
+        }
+      }
+    }
+  }
+}
+```
+
+**Nach init:**
+- User kann Bausteinsicht-Modell direkt in `architecture.jsonc` erweitern
+- req42-tracer liest das Modell automatisch für `trace`, `gaps`, `aspice`
+- Keine separaten Tools nötig — alles läuft über req42-tracer
 
 ### Init-Logik
 
@@ -299,13 +349,20 @@ Templates in `/internal/templates/`:
    - Erstelle `docs/requirements/`, `docs/arc42/`
    
 2. **Template-Verarbeitung**:
-   - Lade Template aus embed.FS (oder Repo-Fallback)
-   - Ersetze Platzhalter: `{{PROJECT_NAME}}` → `MyProject`
+   - Lade Templates aus embed.FS (oder Repo-Fallback)
+   - Ersetze Platzhalter:
+     - `{{PROJECT_NAME}}` → "MyProject"
+     - `{{MODULE_PATH}}` → "github.com/user/myproject"
+     - `{{DESCRIPTION}}` → "REQ42 + ARC42 Projekt"
    - Schreibe Files in Zielverzeichnis
 
 3. **--interactive=false** für Automation:
    ```bash
-   req42-tracer init --name=MyProject --module=github.com/user/myproject --interactive=false
+   req42-tracer init \
+     --name=MyProject \
+     --module=github.com/user/myproject \
+     --description="My Requirements-Driven Project" \
+     --interactive=false
    ```
 
 ---
