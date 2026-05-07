@@ -1,0 +1,44 @@
+= {{PROJECT_NAME}} — Requirements (REQ42)
+
+:description: {{DESCRIPTION}}
+:module: {{MODULE_PATH}}
+
+== Overview
+
+This document defines all system requirements using AsciiDoc blocks with structured metadata.
+Each requirement is tagged with a unique ID, version, priority, status, and ASPICE classification.
+
+== Requirements
+
+// Example Requirement — delete or replace with actual requirements
+[req,id=SWE-001,version=1,priority=high,aspice=SWE.1,
+ status=approved,reviewed-by=unknown,reviewed-date=2026-05-07]
+== System shall provide a REST API
+
+The system shall expose a REST API for client interactions.
+
+[req,id=SWE-002,version=1,priority=high,aspice=SWE.1,
+ status=approved,reviewed-by=unknown,reviewed-date=2026-05-07]
+== System shall implement authentication
+
+The system shall support secure authentication for all API endpoints.
+
+[req,id=SWE-003,version=1,priority=medium,aspice=SWE.1,
+ status=draft,reviewed-by=unknown,reviewed-date=2026-05-07]
+== System shall log all API requests
+
+The system shall maintain a log of all API requests for audit trails.
+
+== Derived Requirements
+
+[req,id=SWE-004,version=1,priority=medium,aspice=SWE.2,
+ status=approved,reviewed-by=unknown,reviewed-date=2026-05-07]
+== Authentication shall use JWT tokens
+
+Derived from SWE-002. The system shall use JSON Web Tokens (JWT) for authentication.
+
+[req,id=SWE-005,version=1,priority=medium,aspice=SWE.2,
+ status=approved,reviewed-by=unknown,reviewed-date=2026-05-07]
+== API responses shall be JSON
+
+Derived from SWE-001. All API responses shall be formatted as JSON.
