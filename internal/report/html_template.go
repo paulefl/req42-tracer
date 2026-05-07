@@ -703,26 +703,26 @@ const HTMLTemplate = `<!DOCTYPE html>
 
             // Update simulation
             simulation.on('tick', () => {
-                link
+                globalLink
                     .attr('x1', d => d.source.x)
                     .attr('y1', d => d.source.y)
                     .attr('x2', d => d.target.x)
                     .attr('y2', d => d.target.y);
 
-                node
+                globalNode
                     .attr('cx', d => d.x)
                     .attr('cy', d => d.y);
 
-                label
+                globalLabel
                     .attr('x', d => d.x)
                     .attr('y', d => d.y);
             });
 
             // Reset view button
             document.getElementById('btn-reset').addEventListener('click', () => {
-                node.classed('selected', false);
-                link.classed('faded', false);
-                node.classed('faded', false);
+                globalNode.classed('selected', false);
+                globalLink.classed('faded', false);
+                globalNode.classed('faded', false);
             });
 
             // Filter buttons
