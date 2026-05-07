@@ -1,0 +1,179 @@
+// project — Bausteinsicht Architecture Model
+// Description: REQ42 + ARC42 Project
+// Module: https://github.com/paulefl/req42-tracer
+
+{
+  "model": {
+    "project": {
+      "description": "REQ42 + ARC42 Project",
+      "elements": {
+        "system": {
+          "description": "project System",
+          "type": "System Context"
+        },
+        "backend": {
+          "description": "Backend API Component",
+          "type": "Container",
+          "technology": "Go"
+        },
+        "backend_parser": {
+          "description": "Document Parser (AsciiDoc, JSONC)",
+          "type": "Component",
+          "parent": "backend",
+          "technology": "Go"
+        },
+        "backend_graph": {
+          "description": "Traceability Graph Engine",
+          "type": "Component",
+          "parent": "backend",
+          "technology": "Go"
+        },
+        "backend_aspice": {
+          "description": "ASPICE PAM 4.0 Validator",
+          "type": "Component",
+          "parent": "backend",
+          "technology": "Go"
+        },
+        "backend_report": {
+          "description": "Report Generator",
+          "type": "Component",
+          "parent": "backend",
+          "technology": "Go"
+        },
+        "frontend": {
+          "description": "Interactive HTML Reports",
+          "type": "Container",
+          "technology": "HTML/CSS/JavaScript"
+        },
+        "frontend_graph_view": {
+          "description": "Graph Visualization View",
+          "type": "Component",
+          "parent": "frontend",
+          "technology": "D3.js / Mermaid"
+        },
+        "frontend_matrix_view": {
+          "description": "Traceability Matrix View",
+          "type": "Component",
+          "parent": "frontend",
+          "technology": "HTML Tables"
+        },
+        "frontend_aspice_view": {
+          "description": "ASPICE Dashboard View",
+          "type": "Component",
+          "parent": "frontend",
+          "technology": "HTML/CSS"
+        },
+        "cli": {
+          "description": "CLI Tool (Cobra)",
+          "type": "Container",
+          "technology": "Go"
+        },
+        "cli_trace": {
+          "description": "Trace Command",
+          "type": "Component",
+          "parent": "cli",
+          "technology": "Go"
+        },
+        "cli_gaps": {
+          "description": "Gaps Command",
+          "type": "Component",
+          "parent": "cli",
+          "technology": "Go"
+        },
+        "cli_aspice": {
+          "description": "ASPICE Command",
+          "type": "Component",
+          "parent": "cli",
+          "technology": "Go"
+        },
+        "cli_watch": {
+          "description": "Watch Command",
+          "type": "Component",
+          "parent": "cli",
+          "technology": "Go"
+        },
+        "cli_lsp": {
+          "description": "LSP Server Command",
+          "type": "Component",
+          "parent": "cli",
+          "technology": "Go"
+        },
+        "data_asciidoc": {
+          "description": "AsciiDoc Source Files",
+          "type": "External System",
+          "technology": "Text"
+        },
+        "data_bausteinsicht": {
+          "description": "Bausteinsicht Architecture Model",
+          "type": "External System",
+          "technology": "JSONC"
+        },
+        "data_tests": {
+          "description": "Test Reports (CI)",
+          "type": "External System",
+          "technology": "JUnit XML / JSON"
+        },
+        "tool_lsp": {
+          "description": "IDE Language Server",
+          "type": "External System",
+          "technology": "LSP Protocol"
+        }
+      }
+    }
+  },
+  "views": [
+    {
+      "name": "System Context",
+      "include": [
+        "project.system",
+        "project.data_asciidoc",
+        "project.data_bausteinsicht",
+        "project.data_tests",
+        "project.tool_lsp"
+      ]
+    },
+    {
+      "name": "Container",
+      "include": [
+        "project.backend",
+        "project.frontend",
+        "project.cli",
+        "project.data_asciidoc",
+        "project.data_bausteinsicht",
+        "project.data_tests"
+      ]
+    },
+    {
+      "name": "Component — Backend",
+      "include": [
+        "project.backend_parser",
+        "project.backend_graph",
+        "project.backend_aspice",
+        "project.backend_report",
+        "project.data_asciidoc",
+        "project.data_bausteinsicht",
+        "project.data_tests"
+      ]
+    },
+    {
+      "name": "Component — Frontend",
+      "include": [
+        "project.frontend_graph_view",
+        "project.frontend_matrix_view",
+        "project.frontend_aspice_view"
+      ]
+    },
+    {
+      "name": "Component — CLI",
+      "include": [
+        "project.cli_trace",
+        "project.cli_gaps",
+        "project.cli_aspice",
+        "project.cli_watch",
+        "project.cli_lsp",
+        "project.backend_parser",
+        "project.backend_graph"
+      ]
+    }
+  ]
+}
