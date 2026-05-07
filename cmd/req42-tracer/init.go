@@ -60,7 +60,7 @@ func runInitCmd(cmd *cobra.Command, args []string) error {
 	var err error
 
 	if interactive {
-		projectName, modulePath, description, err = promptInteractive()
+		projectDir, projectName, modulePath, description, err = promptInteractive(projectDir)
 		if err != nil {
 			return err
 		}
@@ -84,8 +84,24 @@ func runInitCmd(cmd *cobra.Command, args []string) error {
 }
 
 // promptInteractive prompts the user for project configuration interactively.
-func promptInteractive() (name, module, description string, err error) {
+func promptInteractive(defaultDir string) (dir, name, module, description string, err error) {
 	reader := bufio.NewReader(os.Stdin)
+
+	// Prompt for directory
+	dirPrompt := "Project directory? [default: current directory] "
+	if defaultDir != "." && defaultDir != "" {
+		dirPrompt = fmt.Sprintf("Project directory? [default: %s] ", defaultDir)
+	}
+	fmt.Print(dirPrompt)
+	dir, _ = reader.ReadString('\n')
+	dir = strings.TrimSpace(dir)
+	if dir == "" {
+		if defaultDir != "" && defaultDir != "." {
+			dir = defaultDir
+		} else {
+			dir = "."
+		}
+	}
 
 	fmt.Print("Project name? [default: req42-project] ")
 	name, _ = reader.ReadString('\n')
@@ -108,7 +124,7 @@ func promptInteractive() (name, module, description string, err error) {
 		description = "REQ42 + ARC42 Project"
 	}
 
-	return name, module, description, nil
+	return dir, name, module, description, nil
 }
 
 // initializeProject creates the project structure and processes templates.
