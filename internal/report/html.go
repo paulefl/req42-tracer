@@ -24,7 +24,7 @@ func NewHTMLReporter(analyzer *graph.Analyzer, outputPath string) *HTMLReporter 
 	}
 }
 
-// GenerateReport creates an interactive HTML report with graph visualization.
+// GenerateReport creates an interactive HTML report with graph visualization and matrix.
 func (hr *HTMLReporter) GenerateReport() error {
 	// Get the traceability graph
 	g := hr.analyzer.GetGraph()
@@ -32,10 +32,19 @@ func (hr *HTMLReporter) GenerateReport() error {
 	// Export graph data for D3.js
 	graphData := ExportGraphData(g)
 
+	// Build matrix data
+	matrixData := BuildMatrixData(g)
+
 	// Serialize graph data to JSON
 	graphJSON, err := json.MarshalIndent(graphData, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal graph data: %w", err)
+	}
+
+	// Serialize matrix data to JSON
+	matrixJSON, err := json.MarshalIndent(matrixData, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal matrix data: %w", err)
 	}
 
 	// Create output directory if needed
@@ -46,8 +55,9 @@ func (hr *HTMLReporter) GenerateReport() error {
 		}
 	}
 
-	// Generate HTML by replacing placeholder in template
+	// Generate HTML by replacing placeholders in template
 	htmlContent := strings.ReplaceAll(HTMLTemplate, "<!--GRAPH_DATA_JSON-->", string(graphJSON))
+	htmlContent = strings.ReplaceAll(htmlContent, "<!--MATRIX_DATA_JSON-->", string(matrixJSON))
 
 	// Write HTML file
 	if err := os.WriteFile(hr.outputPath, []byte(htmlContent), 0644); err != nil {

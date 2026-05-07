@@ -151,10 +151,154 @@ const HTMLTemplate = `<!DOCTYPE html>
             font-size: 14px;
         }
 
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #e0e0e0;
+            margin-top: 15px;
+        }
+
+        .tab-button {
+            background: transparent;
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-button:hover {
+            color: #333;
+        }
+
+        .tab-button.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            background: #fff;
+            position: relative;
+            overflow: auto;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
         #graph {
             flex: 1;
             background: #fff;
             position: relative;
+        }
+
+        #matrix {
+            flex: 1;
+            flex-direction: column;
+        }
+
+        .matrix-controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .matrix-controls input,
+        .matrix-controls select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .matrix-table-wrapper {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        .matrix-table {
+            border-collapse: collapse;
+            font-size: 12px;
+            background: white;
+        }
+
+        .matrix-table th,
+        .matrix-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .matrix-table th {
+            background: #f0f0f0;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .matrix-table td.req-id {
+            text-align: left;
+            background: #f8f9fa;
+            font-weight: 500;
+            min-width: 150px;
+        }
+
+        .matrix-cell {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .matrix-cell.covered {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .matrix-cell.missing {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .matrix-cell.stale {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .matrix-stats {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 12px;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 4px;
         }
 
         svg {
@@ -377,17 +521,63 @@ const HTMLTemplate = `<!DOCTYPE html>
 
         <div class="main">
             <div class="header">
-                <h1>Traceability Graph Visualization</h1>
-                <p>Interactive dependency graph showing requirements, architecture, and test coverage</p>
+                <div>
+                    <h1>Traceability Report</h1>
+                    <p>Interactive dependency graph and traceability matrix</p>
+                </div>
+                <div class="tabs">
+                    <button class="tab-button active" onclick="switchTab('graph')">Graph View</button>
+                    <button class="tab-button" onclick="switchTab('matrix')">Matrix View</button>
+                </div>
             </div>
 
-            <div id="graph">
+            <div id="graph" class="tab-content active">
                 <div class="zoom-controls">
                     <button class="zoom-btn" id="btn-zoom-in">+</button>
                     <button class="zoom-btn" id="btn-zoom-out">−</button>
                     <button class="zoom-btn" id="btn-zoom-fit">⊙</button>
                 </div>
                 <div class="tooltip" id="tooltip"></div>
+            </div>
+
+            <div id="matrix" class="tab-content">
+                <div class="matrix-controls">
+                    <input type="text" id="search-req" placeholder="Search requirements...">
+                    <select id="filter-priority">
+                        <option value="">All Priorities</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                    <select id="filter-status">
+                        <option value="">All Status</option>
+                        <option value="approved">Approved</option>
+                        <option value="draft">Draft</option>
+                        <option value="deprecated">Deprecated</option>
+                    </select>
+                    <button onclick="exportMatrixCSV()" style="margin-left: auto;">📥 Export CSV</button>
+                </div>
+                <div class="matrix-table-wrapper" id="matrix-table-container">
+                    <!-- Matrix table will be generated by JavaScript -->
+                </div>
+                <div class="matrix-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Total Requirements</div>
+                        <div class="stat-value" id="matrix-total">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Covered</div>
+                        <div class="stat-value" id="matrix-covered">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Missing</div>
+                        <div class="stat-value" id="matrix-missing">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Coverage</div>
+                        <div class="stat-value" id="matrix-coverage">0%</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -660,6 +850,109 @@ const HTMLTemplate = `<!DOCTYPE html>
             document.getElementById('stat-total').textContent = data.nodes.length;
             document.getElementById('stat-links').textContent = data.edges.length;
         }
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            if (tabName === 'graph') {
+                document.getElementById('graph').classList.add('active');
+                document.querySelector('button[onclick="switchTab(\'graph\')"]').classList.add('active');
+            } else if (tabName === 'matrix') {
+                document.getElementById('matrix').classList.add('active');
+                document.querySelector('button[onclick="switchTab(\'matrix\')"]').classList.add('active');
+                renderMatrix();
+            }
+        }
+
+        // Matrix data will be injected here: <!--MATRIX_DATA_JSON-->
+        const matrixData = <!--MATRIX_DATA_JSON-->;
+
+        let currentMatrixData = matrixData;
+
+        function renderMatrix() {
+            const container = document.getElementById('matrix-table-container');
+            const priority = document.getElementById('filter-priority').value;
+            const status = document.getElementById('filter-status').value;
+            const search = document.getElementById('search-req').value.toLowerCase();
+
+            let filtered = matrixData.rows.filter(row => {
+                const matchesPriority = !priority || row.Priority === priority;
+                const matchesStatus = !status || row.Status === status;
+                const matchesSearch = !search || row.RequirementID.toLowerCase().includes(search) || row.Title.toLowerCase().includes(search);
+                return matchesPriority && matchesStatus && matchesSearch;
+            });
+
+            currentMatrixData = { ...matrixData, rows: filtered };
+
+            let html = '<table class="matrix-table"><thead><tr><th>Requirement</th><th>Priority</th><th>Status</th>';
+            matrixData.columns.forEach(col => {
+                html += '<th title="' + col.Title + '">' + col.ID + '</th>';
+            });
+            html += '</tr></thead><tbody>';
+
+            filtered.forEach(row => {
+                html += '<tr>';
+                html += '<td class="req-id" title="' + row.Title + '">' + row.RequirementID + '</td>';
+                html += '<td>' + row.Priority + '</td>';
+                html += '<td>' + row.Status + '</td>';
+
+                matrixData.columns.forEach(col => {
+                    const cell = row.Cells[col.ID];
+                    const status = cell ? cell.Status : 'missing';
+                    const symbol = status === 'covered' ? '✓' : (status === 'stale' ? '⚠' : '✗');
+                    html += '<td class="matrix-cell ' + status + '" title="' + (cell ? cell.Evidence : 'Not covered') + '">' + symbol + '</td>';
+                });
+
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+
+            // Update statistics
+            const stats = matrixData.statistics;
+            document.getElementById('matrix-total').textContent = stats.TotalRequirements;
+            document.getElementById('matrix-covered').textContent = stats.CoveredRequirements;
+            document.getElementById('matrix-missing').textContent = stats.MissingRequirements;
+            document.getElementById('matrix-coverage').textContent = Math.round(stats.CoveragePercentage) + '%';
+        }
+
+        function exportMatrixCSV() {
+            let csv = 'Requirement,Priority,Status';
+            matrixData.columns.forEach(col => {
+                csv += ',' + col.ID;
+            });
+            csv += '\n';
+
+            currentMatrixData.rows.forEach(row => {
+                csv += row.RequirementID + ',' + row.Priority + ',' + row.Status;
+                matrixData.columns.forEach(col => {
+                    const cell = row.Cells[col.ID];
+                    const symbol = cell && cell.Status === 'covered' ? '✓' : (cell && cell.Status === 'stale' ? '⚠' : '✗');
+                    csv += ',' + symbol;
+                });
+                csv += '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'traceability-matrix.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Wire up filter controls
+        document.getElementById('filter-priority').addEventListener('change', renderMatrix);
+        document.getElementById('filter-status').addEventListener('change', renderMatrix);
+        document.getElementById('search-req').addEventListener('input', renderMatrix);
     </script>
 </body>
 </html>
