@@ -974,14 +974,14 @@ const HTMLTemplate = `<!DOCTYPE html>
                 const tooltip = document.getElementById('tooltip');
                 let metaHTML = '';
                 Object.entries(d.metadata || {}).forEach(([k, v]) => {
-                    metaHTML += '<strong>' + k + ':</strong> ' + v + '<br>';
+                    metaHTML += '<strong>' + escHtml(k) + ':</strong> ' + escHtml(v) + '<br>';
                 });
 
                 tooltip.innerHTML =
-                    '<div class="tooltip-title">' + d.label + '</div>' +
+                    '<div class="tooltip-title">' + escHtml(d.label) + '</div>' +
                     '<div class="tooltip-content">' +
-                    '<strong>Type:</strong> ' + d.type + '<br>' +
-                    '<strong>ID:</strong> ' + d.id +
+                    '<strong>Type:</strong> ' + escHtml(d.type) + '<br>' +
+                    '<strong>ID:</strong> ' + escHtml(d.id) +
                     '</div>' +
                     '<div class="tooltip-meta">' + metaHTML + '</div>';
 
@@ -1094,6 +1094,15 @@ const HTMLTemplate = `<!DOCTYPE html>
             }
         }
 
+        function escHtml(s) {
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         function coverageClass(pct) {
             if (pct >= 80) return 'good';
             if (pct >= 50) return 'warning';
@@ -1135,14 +1144,14 @@ const HTMLTemplate = `<!DOCTYPE html>
                         if (bp.gaps && bp.gaps.length > 0) {
                             gapsHTML = '<ul class="bp-gaps">';
                             bp.gaps.forEach(function(g) {
-                                gapsHTML += '<li>' + g + '</li>';
+                                gapsHTML += '<li>' + escHtml(g) + '</li>';
                             });
                             gapsHTML += '</ul>';
                         }
                         bpHTML += '<div class="bp-item">' +
                             '<div class="bp-row">' +
-                            '<span class="bp-id">' + bp.id + '</span>' +
-                            '<span class="bp-title">' + bp.title + '</span>' +
+                            '<span class="bp-id">' + escHtml(bp.id) + '</span>' +
+                            '<span class="bp-title">' + escHtml(bp.title) + '</span>' +
                             '<span class="bp-badge ' + bcls + '">' + bpPct + '%</span>' +
                             '</div>' +
                             gapsHTML +
@@ -1152,8 +1161,8 @@ const HTMLTemplate = `<!DOCTYPE html>
 
                 html += '<div class="process-card">' +
                     '<div class="process-card-header ' + pcls + '">' +
-                    '<span class="process-id-badge">' + proc.id + '</span>' +
-                    '<span class="process-card-name">' + proc.name + '</span>' +
+                    '<span class="process-id-badge">' + escHtml(proc.id) + '</span>' +
+                    '<span class="process-card-name">' + escHtml(proc.name) + '</span>' +
                     '<span class="process-card-pct ' + pcls + '">' + covPct + '%</span>' +
                     '</div>' +
                     '<div class="process-progress">' +
@@ -1185,21 +1194,21 @@ const HTMLTemplate = `<!DOCTYPE html>
 
             let html = '<table class="matrix-table"><thead><tr><th>Requirement</th><th>Priority</th><th>Status</th>';
             matrixData.columns.forEach(col => {
-                html += '<th title="' + col.Title + '">' + col.ID + '</th>';
+                html += '<th title="' + escHtml(col.Title) + '">' + escHtml(col.ID) + '</th>';
             });
             html += '</tr></thead><tbody>';
 
             filtered.forEach(row => {
                 html += '<tr>';
-                html += '<td class="req-id" title="' + row.Title + '">' + row.RequirementID + '</td>';
-                html += '<td>' + row.Priority + '</td>';
-                html += '<td>' + row.Status + '</td>';
+                html += '<td class="req-id" title="' + escHtml(row.Title) + '">' + escHtml(row.RequirementID) + '</td>';
+                html += '<td>' + escHtml(row.Priority) + '</td>';
+                html += '<td>' + escHtml(row.Status) + '</td>';
 
                 matrixData.columns.forEach(col => {
                     const cell = row.Cells[col.ID];
                     const status = cell ? cell.Status : 'missing';
                     const symbol = status === 'covered' ? '✓' : (status === 'stale' ? '⚠' : '✗');
-                    html += '<td class="matrix-cell ' + status + '" title="' + (cell ? cell.Evidence : 'Not covered') + '">' + symbol + '</td>';
+                    html += '<td class="matrix-cell ' + status + '" title="' + escHtml(cell ? cell.Evidence : 'Not covered') + '">' + symbol + '</td>';
                 });
 
                 html += '</tr>';
