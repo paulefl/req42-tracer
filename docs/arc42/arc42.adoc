@@ -195,6 +195,13 @@ and returns filtered, sorted CompletionList from the traceability graph.
 Detects `req=`, `arch=`, `test-spec=` value under cursor and returns Markdown
 tooltip with title, description and metadata from the traceability graph.
 
+[arch,id=comp.lsp.diag,parent=comp.lsp,aspice=SWE.3,impl=internal/lsp/diag.go,req=REQ-LSP-001]
+==== LSP Diagnostics Provider
+
+Scans document lines for unknown `req=`, `arch=`, `test-spec=` values and
+publishes `textDocument/publishDiagnostics` notifications with error-severity
+ranges pointing to the unknown ID span.
+
 == 6. Runtime View
 
 Describes dynamic behavior during execution.

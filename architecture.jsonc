@@ -155,6 +155,13 @@
                   "technology": "Go",
                   "description": "Returns Markdown tooltip with title, description and metadata for the value under cursor",
                   "impl": "internal/lsp/hover.go"
+                },
+                "diag": {
+                  "kind": "component",
+                  "title": "LSP Diagnostics Provider",
+                  "technology": "Go",
+                  "description": "Scans document lines for unknown req=/arch=/test-spec= values and publishes publishDiagnostics notifications",
+                  "impl": "internal/lsp/diag.go"
                 }
               }
             }

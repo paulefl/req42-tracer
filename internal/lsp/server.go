@@ -255,6 +255,7 @@ func (s *Server) handleDidOpen(msg *message) {
 	}
 	s.docs[p.TextDocument.URI] = splitLines(p.TextDocument.Text)
 	s.reloadGraph()
+	s.publishDiagnostics(p.TextDocument.URI)
 }
 
 func (s *Server) handleDidChange(msg *message) {
@@ -267,6 +268,22 @@ func (s *Server) handleDidChange(msg *message) {
 		s.docs[p.TextDocument.URI] = splitLines(p.ContentChanges[0].Text)
 	}
 	s.reloadGraph()
+	s.publishDiagnostics(p.TextDocument.URI)
+}
+
+// publishDiagnostics sends a textDocument/publishDiagnostics notification
+// with all unknown-ID errors for the given document.
+func (s *Server) publishDiagnostics(uri string) {
+	lines := s.docs[uri]
+	diags := computeDiagnostics(uri, lines, s.graph)
+	params := publishDiagnosticsParams{URI: uri, Diagnostics: diags}
+	if err := s.send(struct {
+		JSONRPC string                   `json:"jsonrpc"`
+		Method  string                   `json:"method"`
+		Params  publishDiagnosticsParams `json:"params"`
+	}{"2.0", "textDocument/publishDiagnostics", params}); err != nil {
+		s.log.Printf("publishDiagnostics: %v", err)
+	}
 }
 
 // splitLines splits text by \n and strips trailing \r from each line
