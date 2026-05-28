@@ -5,20 +5,21 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"github.com/paulefl/req42-tracer/internal/graph"
 	"github.com/paulefl/req42-tracer/internal/model"
 	"github.com/paulefl/req42-tracer/internal/parser"
-	"github.com/paulefl/req42-tracer/internal/graph"
+	"github.com/paulefl/req42-tracer/internal/validation"
 )
 
 func newValidateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validate",
-		Short: "Validate project structure and references",
-		Long: `Validate that the project is correctly structured and all
-references are valid (requirements exist, architecture IDs match, etc.).`,
+		Short: "Validate project structure and custom rules",
+		Long: `Validate that the project is correctly structured, all references
+are valid, and custom validation rules from .req42.yaml pass.`,
 		RunE: runValidateCmd,
 	}
-
 	return cmd
 }
 
@@ -26,72 +27,74 @@ func runValidateCmd(cmd *cobra.Command, args []string) error {
 	configPath, _ := cmd.Flags().GetString("config")
 	verbose, _ := cmd.Flags().GetBool("verbose")
 
-	// Load configuration (for future use with advanced options)
-	_, err := model.LoadConfig(configPath)
+	cfg, err := model.LoadConfig(configPath)
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
-
 	if verbose {
 		fmt.Fprintf(os.Stderr, "Loaded config from %s\n", configPath)
 	}
 
-	// Build traceability graph
 	builder := graph.NewBuilder()
 
-	// Parse requirements
 	if req, err := parser.ParseAllFromDir("docs/requirements", "software"); err == nil {
 		if err := builder.MergeGraph(req); err != nil {
 			return err
-		}
-		if verbose {
-			fmt.Fprintf(os.Stderr, "Parsed requirements\n")
 		}
 	} else if verbose {
 		fmt.Fprintf(os.Stderr, "No requirements found: %v\n", err)
 	}
 
-	// Parse architecture
 	if arch, err := parser.ParseAllFromDir("docs/arc42", "software"); err == nil {
 		if err := builder.MergeGraph(arch); err != nil {
 			return err
-		}
-		if verbose {
-			fmt.Fprintf(os.Stderr, "Parsed architecture\n")
 		}
 	} else if verbose {
 		fmt.Fprintf(os.Stderr, "No architecture found: %v\n", err)
 	}
 
-	// Derive ASPICE levels
 	builder.DeriveASPICELevels()
-
-	// Build trace links
 	if err := builder.BuildLinks(); err != nil {
 		return err
 	}
 
-	// Get final graph
 	g := builder.GetGraph()
-
-	// Validate references
 	analyzer := graph.NewAnalyzer(g)
-	errors := analyzer.ValidateReferences()
 
-	// Display results
-	if len(errors) == 0 {
-		fmt.Println("✅ Project validation successful!")
-		fmt.Printf("  Requirements: %d\n", len(g.Requirements))
-		fmt.Printf("  Architecture Elements: %d\n", len(g.ArchElements))
-		fmt.Printf("  Test Specifications: %d\n", len(g.TestSpecs))
-		fmt.Printf("  Trace Links: %d\n", len(g.Links))
-		return nil
+	// Built-in reference validation
+	refErrors := analyzer.ValidateReferences()
+
+	// Custom rules from config
+	engine := validation.NewRuleEngine(cfg, analyzer)
+	ruleResults := engine.Run()
+	numErrors, numWarnings := validation.TotalViolations(ruleResults)
+
+	// --- Output ---
+	if len(refErrors) > 0 {
+		fmt.Println("❌ Reference errors:")
+		for _, e := range refErrors {
+			fmt.Printf("  ❌ [ERROR] %s\n", e)
+		}
 	}
 
-	fmt.Println("❌ Validation errors found:")
-	for _, err := range errors {
-		fmt.Printf("  - %s\n", err)
+	if output := validation.FormatResults(ruleResults); output != "" {
+		fmt.Print(output)
 	}
 
-	return fmt.Errorf("validation failed with %d errors", len(errors))
+	totalErrors := len(refErrors) + numErrors
+	if totalErrors == 0 && numWarnings == 0 {
+		fmt.Println("✅ Validation successful!")
+	} else if totalErrors == 0 {
+		fmt.Printf("✅ Validation passed with %d warning(s)\n", numWarnings)
+	} else {
+		fmt.Printf("❌ Validation failed: %d error(s), %d warning(s)\n", totalErrors, numWarnings)
+	}
+
+	fmt.Printf("  Requirements: %d | Architecture: %d | Test Specs: %d | Links: %d\n",
+		len(g.Requirements), len(g.ArchElements), len(g.TestSpecs), len(g.Links))
+
+	if totalErrors > 0 {
+		return fmt.Errorf("validation failed with %d error(s)", totalErrors)
+	}
+	return nil
 }

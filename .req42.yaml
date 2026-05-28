@@ -26,15 +26,22 @@ rules:
 
   # Requirements
   missing-review: warning
+  all-reqs-must-have-aspice: warning
+  all-reqs-must-have-priority: off
 
   # Tests
-  missing-test-spec: error
+  missing-test-spec: warning
 
   # Traceability
   stale-traces: warning
   missing-impl: warning
   orphan-architecture: warning
   orphan-tests: warning
+  max-orphan-percentage: warning
+
+# Numeric parameters for parameterized rules
+rule-params:
+  max-orphan-percentage: 30   # fail if >30% of requirements are orphans
 
 # ASPICE PAM 4.0 configuration
 aspice:

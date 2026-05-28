@@ -17,7 +17,8 @@ type Config struct {
 		Format string `yaml:"format"` // junit, go-test-json
 		Path   string `yaml:"path"`
 	} `yaml:"test-results"`
-	Rules map[string]string `yaml:"rules"` // error, warning, off
+	Rules      map[string]string `yaml:"rules"`       // error, warning, off
+	RuleParams map[string]int    `yaml:"rule-params"` // numeric thresholds per rule
 	ASPICE struct {
 		AutoDerive    bool     `yaml:"auto-derive"`
 		Processes     []string `yaml:"processes"`
