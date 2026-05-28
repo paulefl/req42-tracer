@@ -189,6 +189,12 @@ Detects gaps, orphans, stale traces, and validates coverage.
 Detects `req=`, `arch=`, `test-spec=` attribute context from cursor position
 and returns filtered, sorted CompletionList from the traceability graph.
 
+[arch,id=comp.lsp.hover,parent=comp.lsp,aspice=SWE.3,impl=internal/lsp/hover.go,req=REQ-LSP-001]
+==== LSP Hover Provider
+
+Detects `req=`, `arch=`, `test-spec=` value under cursor and returns Markdown
+tooltip with title, description and metadata from the traceability graph.
+
 == 6. Runtime View
 
 Describes dynamic behavior during execution.

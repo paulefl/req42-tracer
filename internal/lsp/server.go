@@ -183,6 +183,8 @@ func (s *Server) dispatch(msg *message, shutdownReceived *bool) (exit bool, writ
 		s.handleDidChange(msg)
 	case "textDocument/completion":
 		writeErr = s.handleCompletion(msg)
+	case "textDocument/hover":
+		writeErr = s.handleHover(msg)
 	default:
 		if msg.ID != nil {
 			writeErr = s.replyError(msg.ID, -32601, "method not found: "+msg.Method)
@@ -199,8 +201,9 @@ type initializeResult struct {
 }
 
 type serverCapabilities struct {
-	TextDocumentSync   int                  `json:"textDocumentSync"`
-	CompletionProvider *completionOptions   `json:"completionProvider,omitempty"`
+	TextDocumentSync   int                `json:"textDocumentSync"`
+	CompletionProvider *completionOptions `json:"completionProvider,omitempty"`
+	HoverProvider      bool               `json:"hoverProvider,omitempty"`
 }
 
 type completionOptions struct {
@@ -220,6 +223,7 @@ func (s *Server) handleInitialize(msg *message) error {
 			CompletionProvider: &completionOptions{
 				TriggerCharacters: []string{"=", ","},
 			},
+			HoverProvider: true,
 		},
 		ServerInfo: serverInfo{Name: "req42-tracer", Version: "0.1.0"},
 	})
@@ -308,5 +312,41 @@ func (s *Server) handleCompletion(msg *message) error {
 
 	list := buildCompletions(lineUpToCursor, s.graph)
 	return s.reply(msg.ID, list)
+}
+
+// --- Hover ---
+
+type hoverParams struct {
+	TextDocument struct {
+		URI string `json:"uri"`
+	} `json:"textDocument"`
+	Position struct {
+		Line      int `json:"line"`
+		Character int `json:"character"`
+	} `json:"position"`
+}
+
+func (s *Server) handleHover(msg *message) error {
+	var p hoverParams
+	if err := json.Unmarshal(msg.Params, &p); err != nil {
+		return s.replyError(msg.ID, -32602, "invalid params: "+err.Error())
+	}
+
+	line := ""
+	if lines, ok := s.docs[p.TextDocument.URI]; ok {
+		ln := p.Position.Line
+		if ln >= 0 && ln < len(lines) {
+			line = lines[ln]
+		}
+	}
+
+	attr, value, ok := detectHoverValue(line, p.Position.Character)
+	if !ok {
+		// No hover target — return null (valid LSP response)
+		return s.reply(msg.ID, nil)
+	}
+
+	result := buildHoverContent(attr, value, s.graph)
+	return s.reply(msg.ID, result) // nil result is valid when ID not found
 }
 
