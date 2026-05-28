@@ -46,6 +46,43 @@ jobs:
           path: coverage.out
           retention-days: 30
 
+  benchmark:
+    name: Benchmark
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      # For PR comment on regression
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache: true
+
+      - name: Run benchmarks
+        run: |
+          go test ./internal/graph/... ./internal/aspice/... \
+            -bench=. -benchtime=3s -benchmem \
+            -run='^$' \
+            | tee bench.txt
+
+      - name: Store & compare benchmark results
+        uses: benchmark-action/github-action-gh-pages@v1
+        with:
+          tool: go
+          output-file-path: bench.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Push results to gh-pages branch (only on master push)
+          auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          # Post comment on PR if regression detected
+          comment-on-alert: true
+          alert-threshold: '130%'   # alert if ≥30% slower than baseline
+          fail-on-alert: false       # don't fail CI on regression, just warn
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
