@@ -107,11 +107,11 @@ Validates project structure, configuration, and cross-references without produci
 Monitors documentation files with fsnotify, regenerates the HTML report on change,
 and serves it via HTTP with a polling live-reload script injected before `</body>`.
 
-[arch,id=comp.lsp,parent=comp.system,aspice=SWE.2,req=REQ-LSP-001]
+[arch,id=comp.lsp,parent=comp.system,aspice=SWE.2,impl=internal/lsp,req=REQ-LSP-001]
 ==== LSP Server Component
 
 Provides Language Server Protocol integration for IDE support.
-Not yet implemented — command is registered as a stub in root.go.
+JSON-RPC 2.0 over stdio; supports initialize/shutdown/exit handshake.
 
 === 5.1 Level 1 — Whitebox
 
