@@ -1,5 +1,7 @@
 # req42-tracer — Requirements Tracing Tool
 
+[![Test](https://github.com/paul-fleischmann-com/req42-tracer/actions/workflows/test.yml/badge.svg)](https://github.com/paul-fleischmann-com/req42-tracer/actions/workflows/test.yml)
+
 A Go CLI tool for tracing requirements across AsciiDoc documentation, architecture models (Bausteinsicht), and test specifications with ASPICE PAM 4.0 compliance validation.
 
 ## MVP Features

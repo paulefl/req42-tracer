@@ -1,0 +1,51 @@
+name: Test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build
+        run: go build ./...
+
+      - name: Run tests with coverage
+        run: |
+          mkdir -p reports
+          go test ./... -v -coverprofile=coverage.out 2>&1 | tee /tmp/test-output.txt
+          go tool cover -func=coverage.out
+
+      - name: Generate JUnit XML
+        if: always()
+        run: |
+          go install github.com/jstemmer/go-junit-report/v2@latest
+          go-junit-report -set-exit-code -in /tmp/test-output.txt -out reports/junit.xml
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.out
+          retention-days: 30
+
+      - name: Upload JUnit test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-results
+          path: reports/junit.xml
+          retention-days: 30
