@@ -129,7 +129,7 @@ func TestCheckCompliance_UnknownProcessSkipped(t *testing.T) {
 	checker := NewChecker(buildCheckerGraph(), config)
 	report := checker.CheckCompliance()
 	if report == nil {
-		t.Error("expected non-nil report even with unknown processes")
+		t.Fatal("expected non-nil report even with unknown processes")
 	}
 	if len(report.Processes) != 0 {
 		t.Errorf("expected 0 processes for all-unknown config, got %d", len(report.Processes))

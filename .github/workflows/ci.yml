@@ -35,6 +35,7 @@ jobs:
         run: go test ./... -v -coverprofile=coverage.out
 
       - name: Coverage summary
+        if: runner.os != 'Windows'
         run: go tool cover -func=coverage.out
 
       - name: Upload coverage
