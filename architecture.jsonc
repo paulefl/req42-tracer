@@ -162,6 +162,13 @@
                   "technology": "Go",
                   "description": "Scans document lines for unknown req=/arch=/test-spec= values and publishes publishDiagnostics notifications",
                   "impl": "internal/lsp/diag.go"
+                },
+                "godef": {
+                  "kind": "component",
+                  "title": "LSP Go-to-Definition Provider",
+                  "technology": "Go",
+                  "description": "Resolves req=/arch=/test-spec= value to Location (file URI + line) for cross-file navigation",
+                  "impl": "internal/lsp/godef.go"
                 }
               }
             }

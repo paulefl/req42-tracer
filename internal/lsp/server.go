@@ -185,6 +185,8 @@ func (s *Server) dispatch(msg *message, shutdownReceived *bool) (exit bool, writ
 		writeErr = s.handleCompletion(msg)
 	case "textDocument/hover":
 		writeErr = s.handleHover(msg)
+	case "textDocument/definition":
+		writeErr = s.handleDefinition(msg)
 	default:
 		if msg.ID != nil {
 			writeErr = s.replyError(msg.ID, -32601, "method not found: "+msg.Method)
@@ -204,6 +206,7 @@ type serverCapabilities struct {
 	TextDocumentSync   int                `json:"textDocumentSync"`
 	CompletionProvider *completionOptions `json:"completionProvider,omitempty"`
 	HoverProvider      bool               `json:"hoverProvider,omitempty"`
+	DefinitionProvider bool               `json:"definitionProvider,omitempty"`
 }
 
 type completionOptions struct {
@@ -223,7 +226,8 @@ func (s *Server) handleInitialize(msg *message) error {
 			CompletionProvider: &completionOptions{
 				TriggerCharacters: []string{"=", ","},
 			},
-			HoverProvider: true,
+			HoverProvider:      true,
+			DefinitionProvider: true,
 		},
 		ServerInfo: serverInfo{Name: "req42-tracer", Version: "0.1.0"},
 	})
@@ -343,19 +347,22 @@ type hoverParams struct {
 	} `json:"position"`
 }
 
+// lineAt returns the stored content of the given 0-based line for the URI,
+// or "" when the document is not in the cache or the line is out of range.
+func (s *Server) lineAt(uri string, line int) string {
+	if lines, ok := s.docs[uri]; ok && line >= 0 && line < len(lines) {
+		return lines[line]
+	}
+	return ""
+}
+
 func (s *Server) handleHover(msg *message) error {
 	var p hoverParams
 	if err := json.Unmarshal(msg.Params, &p); err != nil {
 		return s.replyError(msg.ID, -32602, "invalid params: "+err.Error())
 	}
 
-	line := ""
-	if lines, ok := s.docs[p.TextDocument.URI]; ok {
-		ln := p.Position.Line
-		if ln >= 0 && ln < len(lines) {
-			line = lines[ln]
-		}
-	}
+	line := s.lineAt(p.TextDocument.URI, p.Position.Line)
 
 	attr, value, ok := detectHoverValue(line, p.Position.Character)
 	if !ok {
@@ -365,5 +372,23 @@ func (s *Server) handleHover(msg *message) error {
 
 	result := buildHoverContent(attr, value, s.graph)
 	return s.reply(msg.ID, result) // nil result is valid when ID not found
+}
+
+// --- Go-to-Definition ---
+
+func (s *Server) handleDefinition(msg *message) error {
+	var p hoverParams // TextDocumentPositionParams — same wire shape as hover
+	if err := json.Unmarshal(msg.Params, &p); err != nil {
+		return s.replyError(msg.ID, -32602, "invalid params: "+err.Error())
+	}
+
+	line := s.lineAt(p.TextDocument.URI, p.Position.Line)
+	attr, value, ok := detectHoverValue(line, p.Position.Character)
+	if !ok {
+		return s.reply(msg.ID, nil)
+	}
+
+	loc := findDefinition(attr, value, s.graph)
+	return s.reply(msg.ID, loc) // nil when ID not found — valid LSP response
 }
 
