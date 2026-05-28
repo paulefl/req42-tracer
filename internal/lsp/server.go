@@ -31,6 +31,7 @@ func NewServer() *Server {
 // Run processes incoming JSON-RPC messages until shutdown/exit or EOF.
 func (s *Server) Run() error {
 	s.log.Println("LSP server started on stdio")
+	shutdownReceived := false
 	for {
 		msg, err := s.readMessage()
 		if err == io.EOF {
@@ -38,9 +39,15 @@ func (s *Server) Run() error {
 			return nil
 		}
 		if err != nil {
-			return fmt.Errorf("read: %w", err)
+			// Non-fatal parse errors: log and skip to next message.
+			s.log.Printf("read error (skipping): %v", err)
+			continue
 		}
-		if done := s.dispatch(msg); done {
+		done, writeErr := s.dispatch(msg, &shutdownReceived)
+		if writeErr != nil {
+			return fmt.Errorf("write: %w", writeErr)
+		}
+		if done {
 			return nil
 		}
 	}
@@ -75,8 +82,11 @@ func (s *Server) readMessage() (*message, error) {
 		if line == "" {
 			break
 		}
-		if strings.HasPrefix(line, "Content-Length: ") {
-			n, err := strconv.Atoi(strings.TrimPrefix(line, "Content-Length: "))
+		// Case-insensitive header match per RFC 7230.
+		lower := strings.ToLower(line)
+		if strings.HasPrefix(lower, "content-length:") {
+			val := strings.TrimSpace(line[len("content-length:"):])
+			n, err := strconv.Atoi(val)
 			if err != nil {
 				return nil, fmt.Errorf("bad Content-Length: %w", err)
 			}
@@ -97,45 +107,53 @@ func (s *Server) readMessage() (*message, error) {
 	return &msg, nil
 }
 
-func (s *Server) send(v interface{}) {
+func (s *Server) send(v interface{}) error {
 	data, err := json.Marshal(v)
 	if err != nil {
 		s.log.Printf("marshal error: %v", err)
-		return
+		return err
 	}
 	header := fmt.Sprintf("Content-Length: %d\r\n\r\n", len(data))
-	_, _ = io.WriteString(s.out, header)
-	_, _ = s.out.Write(data)
+	if _, err := io.WriteString(s.out, header); err != nil {
+		return err
+	}
+	if _, err := s.out.Write(data); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (s *Server) reply(id interface{}, result interface{}) {
-	s.send(message{JSONRPC: "2.0", ID: id, Result: result})
+func (s *Server) reply(id interface{}, result interface{}) error {
+	return s.send(message{JSONRPC: "2.0", ID: id, Result: result})
 }
 
-func (s *Server) replyError(id interface{}, code int, msg string) {
-	s.send(message{JSONRPC: "2.0", ID: id, Error: &rpcError{Code: code, Message: msg}})
+func (s *Server) replyError(id interface{}, code int, msg string) error {
+	return s.send(message{JSONRPC: "2.0", ID: id, Error: &rpcError{Code: code, Message: msg}})
 }
 
 // --- Dispatch ---
 
-func (s *Server) dispatch(msg *message) (shutdown bool) {
+// dispatch handles one message. It returns (exit, writeError).
+// exit=true means the Run loop should stop.
+func (s *Server) dispatch(msg *message, shutdownReceived *bool) (exit bool, writeErr error) {
 	s.log.Printf("← %s (id=%v)", msg.Method, msg.ID)
 	switch msg.Method {
 	case "initialize":
-		s.handleInitialize(msg)
+		writeErr = s.handleInitialize(msg)
 	case "initialized":
 		// notification, no response required
 	case "shutdown":
-		s.reply(msg.ID, nil)
-		return true
+		*shutdownReceived = true
+		writeErr = s.reply(msg.ID, nil)
+		// Keep reading: client must send exit notification next.
 	case "exit":
-		return true
+		return true, nil
 	default:
 		if msg.ID != nil {
-			s.replyError(msg.ID, -32601, "method not found: "+msg.Method)
+			writeErr = s.replyError(msg.ID, -32601, "method not found: "+msg.Method)
 		}
 	}
-	return false
+	return false, writeErr
 }
 
 // --- initialize ---
@@ -146,10 +164,7 @@ type initializeResult struct {
 }
 
 type serverCapabilities struct {
-	TextDocumentSync   int  `json:"textDocumentSync"`
-	CompletionProvider bool `json:"completionProvider,omitempty"`
-	HoverProvider      bool `json:"hoverProvider,omitempty"`
-	DefinitionProvider bool `json:"definitionProvider,omitempty"`
+	TextDocumentSync int `json:"textDocumentSync"`
 }
 
 type serverInfo struct {
@@ -157,9 +172,9 @@ type serverInfo struct {
 	Version string `json:"version"`
 }
 
-func (s *Server) handleInitialize(msg *message) {
+func (s *Server) handleInitialize(msg *message) error {
 	s.log.Println("initialize: sending capabilities")
-	s.reply(msg.ID, initializeResult{
+	return s.reply(msg.ID, initializeResult{
 		Capabilities: serverCapabilities{
 			TextDocumentSync: 1, // full sync
 		},

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -34,16 +32,4 @@ It supports ASPICE PAM 4.0 process validation and generates interactive reports.
 	cmd.AddCommand(newLspCmd())
 
 	return cmd
-}
-
-// Placeholder for future commands
-func exampleCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "example",
-		Short: "Example command",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("Example command - to be replaced")
-			return nil
-		},
-	}
 }

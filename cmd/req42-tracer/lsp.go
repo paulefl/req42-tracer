@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/paulefl/req42-tracer/internal/lsp"
 	"github.com/spf13/cobra"
@@ -22,10 +21,8 @@ in .adoc files.`,
 }
 
 func runLspCmd(_ *cobra.Command, _ []string) error {
-	srv := lsp.NewServer()
-	if err := srv.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "lsp server error: %v\n", err)
-		return err
+	if err := lsp.NewServer().Run(); err != nil {
+		return fmt.Errorf("lsp server error: %w", err)
 	}
 	return nil
 }
