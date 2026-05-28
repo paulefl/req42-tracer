@@ -60,7 +60,24 @@ gh auth switch --user dev-paul-fleischmann  # für Implementierung
 
 Siehe [`ROLES.md`](ROLES.md) für Details zur Rollentrennung.
 
-## 5. Go-Abhängigkeiten
+## 5. Bausteinsicht CLI
+
+Das Bausteinsicht-Tool (v1.1.0) liegt bereits im Repo:
+
+```bash
+# Validierung des Architecture-Modells
+./tools/bausteinsicht/bausteinsicht validate --model architecture.jsonc
+
+# Diagramm-Sync (draw.io)
+./tools/bausteinsicht/bausteinsicht sync --model architecture.jsonc
+
+# Hilfe
+./tools/bausteinsicht/bausteinsicht --help
+```
+
+> **Pfad:** `tools/bausteinsicht/bausteinsicht` (Linux amd64). Für arm64: `Bausteinsicht_1.1.0_linux_arm64.tar.gz` im Root entpacken.
+
+## 6. Go-Abhängigkeiten
 
 ```bash
 cd /workspace/req42-tracer

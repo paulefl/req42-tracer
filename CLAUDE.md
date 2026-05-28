@@ -19,7 +19,14 @@ internal/
   report/              # CLI + HTML Report-Generator
   testresult/          # Test-Result-Parser (JUnit, go-test)
   lsp/                 # LSP-Server (Minimal-MVP)
+tools/
+  bausteinsicht/       # Bausteinsicht CLI v1.1.0 (architecture.jsonc validieren + sync)
 ```
+
+## Bausteinsicht
+- **Tool:** `tools/bausteinsicht/bausteinsicht` (Linux amd64)
+- **Schema:** v1.1.0 — `architecture.jsonc` enthält `$schema`-Referenz
+- **Validieren:** `./tools/bausteinsicht/bausteinsicht validate --model architecture.jsonc`
 
 ## Implementierungsplan
 13 Schritte vom Skeleton bis zum LSP. Siehe `/home/coder/.claude/plans/kind-stargazing-torvalds.md`.
