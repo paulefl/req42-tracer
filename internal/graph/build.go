@@ -9,7 +9,8 @@ import (
 
 // Builder constructs the traceability graph from parsed artifacts.
 type Builder struct {
-	graph *model.TraceabilityGraph
+	graph    *model.TraceabilityGraph
+	linkSeen map[string]struct{} // dedup key → prevents O(n²) scan in addLink
 }
 
 // NewBuilder creates a new graph builder.
@@ -23,6 +24,7 @@ func NewBuilder() *Builder {
 			TestResults:  make(map[string]*model.TestResult),
 			Links:        []*model.TraceLink{},
 		},
+		linkSeen: make(map[string]struct{}),
 	}
 }
 
@@ -196,15 +198,13 @@ func (b *Builder) BuildLinks() error {
 	return nil
 }
 
-// addLink adds a trace link, avoiding duplicates.
+// addLink adds a trace link, avoiding duplicates via O(1) map lookup.
 func (b *Builder) addLink(link *model.TraceLink) {
-	// Check if link already exists
-	for _, existing := range b.graph.Links {
-		if existing.FromID == link.FromID && existing.ToID == link.ToID &&
-			existing.FromType == link.FromType && existing.ToType == link.ToType {
-			return // Link already exists
-		}
+	key := link.FromType + ":" + link.FromID + "->" + link.ToType + ":" + link.ToID
+	if _, exists := b.linkSeen[key]; exists {
+		return
 	}
+	b.linkSeen[key] = struct{}{}
 	b.graph.Links = append(b.graph.Links, link)
 }
 
