@@ -148,6 +148,13 @@
                   "technology": "Go",
                   "description": "Detects req=/arch=/test-spec= context and returns CompletionList",
                   "impl": "internal/lsp/complete.go"
+                },
+                "hover": {
+                  "kind": "component",
+                  "title": "LSP Hover Provider",
+                  "technology": "Go",
+                  "description": "Returns Markdown tooltip with title, description and metadata for the value under cursor",
+                  "impl": "internal/lsp/hover.go"
                 }
               }
             }
