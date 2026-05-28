@@ -39,7 +39,7 @@ List technical, organizational, and regulatory constraints.
 
 Supports multiple platforms and operating systems.
 
-[arch,id=constraints.org]
+[arch,id=constraints.org,req=REQ-COMPAT-001]
 ==== Organizational Constraints
 
 - Single-page interactive reports
