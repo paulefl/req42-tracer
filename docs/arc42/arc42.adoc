@@ -202,6 +202,13 @@ Scans document lines for unknown `req=`, `arch=`, `test-spec=` values and
 publishes `textDocument/publishDiagnostics` notifications with error-severity
 ranges pointing to the unknown ID span.
 
+[arch,id=comp.lsp.godef,parent=comp.lsp,aspice=SWE.3,impl=internal/lsp/godef.go,req=REQ-LSP-001]
+==== LSP Go-to-Definition Provider
+
+Resolves `req=`, `arch=`, `test-spec=` value under cursor to a `Location`
+(file URI + 0-based line) using `FilePath`/`LineNumber` from the graph.
+Supports cross-file navigation to any parsed source file.
+
 == 6. Runtime View
 
 Describes dynamic behavior during execution.
