@@ -45,6 +45,9 @@ internal/
 - `req42-tracer watch --open` — Watch + live-reload
 - `req42-tracer lsp` — LSP-Server
 
+## Setup
+Siehe [`SETUP.md`](SETUP.md) für die einmalige Einrichtung der Entwicklungsumgebung (Repos klonen, Claude Skill Library installieren, gh CLI einrichten).
+
 ## Rollen
 Siehe [`ROLES.md`](ROLES.md) für die vollständige Rollendefinition.
 
