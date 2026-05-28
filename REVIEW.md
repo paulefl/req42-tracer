@@ -62,6 +62,56 @@ gh api repos/OWNER/REPO/pulls/PR_NUMBER/comments \
 
 ---
 
+## Traceability-Check
+
+Bei jeder Implementierung sicherstellen, dass Requirements, Architektur und Tests korrekt verlinkt sind.
+
+### Checkliste
+
+Für jede neue Implementierung (Paket, Command, Feature) prüfen:
+
+| # | Prüfpunkt | Befehl / Ort |
+|---|-----------|-------------|
+| 1 | **`[req,id=REQ-*]` vorhanden?** Ist eine Anforderung in `docs/requirements/req42.adoc` die das Feature beschreibt? | `grep "REQ-XYZ" docs/requirements/req42.adoc` |
+| 2 | **`[arch,id=comp.*,impl=<pfad>,req=REQ-*]` vorhanden?** Hat das Arch-Element ein gültiges `impl=`-Feld das auf den echten Pfad zeigt? | `grep "comp.xyz" docs/arc42/arc42.adoc` |
+| 3 | **`impl=`-Pfad existiert auf Disk?** Stimmt der `impl=`-Pfad mit der tatsächlichen Datei/Package überein? | `ls <impl-pfad>` |
+| 4 | **`architecture.jsonc` aktualisiert?** Hat das JSONC-Element ebenfalls ein `impl=`-Feld? | `grep "backend_\|cli_" architecture.jsonc` |
+| 5 | **`[test-spec,id=TS-PKG-NNN,req="REQ-*",aspice="SWE.5.BP3"]` vorhanden?** Hat jede Testfunktion einen korrekt formatierten Test-Spec-Kommentar? | `grep "test-spec" internal/<paket>/*_test.go` |
+| 6 | **`req42-tracer validate` sauber?** Keine Validierungsfehler? | `go run ./cmd/req42-tracer validate` |
+| 7 | **`req42-tracer gaps` sauber?** Keine MissingImplementation-Gaps (außer bekannte wie comp.lsp)? | `go run ./cmd/req42-tracer gaps` |
+
+### Test-Spec Format
+
+```go
+// [test-spec,id=TS-PKG-NNN,req="REQ-PKG-NNN",aspice="SWE.5.BP3"]
+// TestFunctionName beschreibt was getestet wird.
+func TestFunctionName(t *testing.T) {
+```
+
+| Feld | Pflicht | Schema | Beispiel |
+|------|---------|--------|---------|
+| `id` | ✅ | `TS-<PAKET>-<NNN>` | `TS-LSP-001` |
+| `req` | ✅ | Quoted Req-ID | `"REQ-LSP-001"` |
+| `aspice` | ✅ | Quoted ASPICE-BP | `"SWE.5.BP3"` |
+
+### Typische Fehler
+
+| Fehler | Symptom in `gaps` | Fix |
+|--------|-------------------|-----|
+| `impl=` fehlt in arc42.adoc | `MissingImplementation: comp.xyz` | `impl=internal/xyz` ergänzen |
+| `impl=`-Pfad existiert nicht | validate-Warning | Pfad korrigieren |
+| Test-Spec ohne Quotes | Parser ignoriert Block | `req="REQ-X"` statt `req=REQ-X` |
+| Test-Spec-ID falsches Schema | Kein Trace in Report | `TS-PKG-NNN` statt `spec.pkg.name` |
+| JSONC `impl=` fehlt | Dokumentations-Inkonsistenz | `"impl": "internal/xyz"` ergänzen |
+
+### Ablauf
+
+1. Nach Implementierung: Checkliste oben Punkt für Punkt durchgehen
+2. `req42-tracer validate && req42-tracer gaps` ausführen — beide müssen sauber sein
+3. Ergebnis im PR-Review vermerken
+
+---
+
 ## Bausteinsicht-Check
 
 Bei jeder Implementierung prüfen, ob `architecture.jsonc` aktualisiert werden muss.
