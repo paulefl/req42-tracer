@@ -71,7 +71,7 @@ jobs:
             | tee bench.txt
 
       - name: Store & compare benchmark results
-        uses: benchmark-action/github-action-gh-pages@v1
+        uses: benchmark-action/github-action-benchmark@v1
         with:
           tool: go
           output-file-path: bench.txt
