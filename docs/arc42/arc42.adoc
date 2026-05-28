@@ -86,6 +86,16 @@ The tool follows a graph-based architecture:
 
 Handles project initialization and setup commands.
 
+[arch,id=comp.trace,parent=comp.system,aspice=SWE.2,impl=cmd/req42-tracer/trace.go,req=REQ-REPORT-001,REQ-VALIDATE-001]
+==== Trace Command Component
+
+Runs the traceability analysis and produces the traceability matrix report.
+
+[arch,id=comp.gaps,parent=comp.system,aspice=SWE.2,impl=cmd/req42-tracer/gaps.go,req=REQ-REPORT-002,REQ-VALIDATE-001]
+==== Gaps Command Component
+
+Analyses the traceability graph and reports orphan elements and missing links.
+
 [arch,id=comp.watch,parent=comp.system,aspice=SWE.2,impl=cmd/req42-tracer/watch.go,req=REQ-WATCH-001]
 ==== Watch Mode Component
 
