@@ -20,25 +20,85 @@
           "description": "Document Parser (AsciiDoc, JSONC)",
           "type": "Component",
           "parent": "backend",
-          "technology": "Go"
+          "technology": "Go",
+          "impl": "internal/parser"
+        },
+        "backend_parser_adoc": {
+          "description": "AsciiDoc Scanner",
+          "type": "Component",
+          "parent": "backend_parser",
+          "technology": "Go",
+          "impl": "internal/parser/adoc.go"
+        },
+        "backend_parser_arch": {
+          "description": "Architecture Block Parser",
+          "type": "Component",
+          "parent": "backend_parser",
+          "technology": "Go",
+          "impl": "internal/parser/adoc.go"
+        },
+        "backend_parser_jsonc": {
+          "description": "Bausteinsicht Loader",
+          "type": "Component",
+          "parent": "backend_parser",
+          "technology": "Go",
+          "impl": "internal/parser/bausteinsicht.go"
         },
         "backend_graph": {
           "description": "Traceability Graph Engine",
           "type": "Component",
           "parent": "backend",
-          "technology": "Go"
+          "technology": "Go",
+          "impl": "internal/graph"
+        },
+        "backend_graph_builder": {
+          "description": "Traceability Graph Builder",
+          "type": "Component",
+          "parent": "backend_graph",
+          "technology": "Go",
+          "impl": "internal/graph/build.go"
+        },
+        "backend_graph_analyzer": {
+          "description": "Gap and Coverage Analyzer",
+          "type": "Component",
+          "parent": "backend_graph",
+          "technology": "Go",
+          "impl": "internal/graph/analysis.go"
+        },
+        "backend_model": {
+          "description": "Domain Model (shared types + config)",
+          "type": "Component",
+          "parent": "backend",
+          "technology": "Go",
+          "impl": "internal/model"
+        },
+        "backend_testresult": {
+          "description": "Test Result Loader (JUnit XML, go-test JSON)",
+          "type": "Component",
+          "parent": "backend",
+          "technology": "Go",
+          "impl": "internal/testresult"
         },
         "backend_aspice": {
           "description": "ASPICE PAM 4.0 Validator",
           "type": "Component",
           "parent": "backend",
-          "technology": "Go"
+          "technology": "Go",
+          "impl": "internal/aspice"
         },
         "backend_report": {
           "description": "Report Generator",
           "type": "Component",
           "parent": "backend",
-          "technology": "Go"
+          "technology": "Go",
+          "impl": "internal/report"
+        },
+        "backend_templates": {
+          "description": "Embedded Project Templates",
+          "type": "Component",
+          "parent": "backend",
+          "technology": "Go",
+          "impl": "internal/templates"
         },
         "frontend": {
           "description": "Interactive HTML Reports",
@@ -68,32 +128,50 @@
           "type": "Container",
           "technology": "Go"
         },
+        "cli_init": {
+          "description": "Init Command",
+          "type": "Component",
+          "parent": "cli",
+          "technology": "Go",
+          "impl": "cmd/req42-tracer/init.go"
+        },
+        "cli_validate": {
+          "description": "Validate Command",
+          "type": "Component",
+          "parent": "cli",
+          "technology": "Go",
+          "impl": "cmd/req42-tracer/validate.go"
+        },
         "cli_trace": {
           "description": "Trace Command",
           "type": "Component",
           "parent": "cli",
-          "technology": "Go"
+          "technology": "Go",
+          "impl": "cmd/req42-tracer/trace.go"
         },
         "cli_gaps": {
           "description": "Gaps Command",
           "type": "Component",
           "parent": "cli",
-          "technology": "Go"
+          "technology": "Go",
+          "impl": "cmd/req42-tracer/gaps.go"
         },
         "cli_aspice": {
           "description": "ASPICE Command",
           "type": "Component",
           "parent": "cli",
-          "technology": "Go"
+          "technology": "Go",
+          "impl": "cmd/req42-tracer/aspice.go"
         },
         "cli_watch": {
           "description": "Watch Command",
           "type": "Component",
           "parent": "cli",
-          "technology": "Go"
+          "technology": "Go",
+          "impl": "cmd/req42-tracer/watch.go"
         },
         "cli_lsp": {
-          "description": "LSP Server Command",
+          "description": "LSP Server Command (planned)",
           "type": "Component",
           "parent": "cli",
           "technology": "Go"
@@ -146,10 +224,13 @@
     {
       "name": "Component — Backend",
       "include": [
+        "req42-project.backend_model",
         "req42-project.backend_parser",
         "req42-project.backend_graph",
         "req42-project.backend_aspice",
         "req42-project.backend_report",
+        "req42-project.backend_templates",
+        "req42-project.backend_testresult",
         "req42-project.data_asciidoc",
         "req42-project.data_bausteinsicht",
         "req42-project.data_tests"
@@ -166,13 +247,28 @@
     {
       "name": "Component — CLI",
       "include": [
+        "req42-project.cli_init",
         "req42-project.cli_trace",
         "req42-project.cli_gaps",
+        "req42-project.cli_validate",
         "req42-project.cli_aspice",
         "req42-project.cli_watch",
         "req42-project.cli_lsp",
         "req42-project.backend_parser",
-        "req42-project.backend_graph"
+        "req42-project.backend_graph",
+        "req42-project.backend_model"
+      ]
+    },
+    {
+      "name": "Component — Backend Level 2",
+      "include": [
+        "req42-project.backend_parser",
+        "req42-project.backend_parser_adoc",
+        "req42-project.backend_parser_arch",
+        "req42-project.backend_parser_jsonc",
+        "req42-project.backend_graph",
+        "req42-project.backend_graph_builder",
+        "req42-project.backend_graph_analyzer"
       ]
     }
   ]

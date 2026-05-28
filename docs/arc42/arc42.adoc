@@ -81,10 +81,25 @@ The tool follows a graph-based architecture:
 
 === 5.0 Level 1 — Initialization
 
-[arch,id=comp.init,parent=comp.system,aspice=SWE.2,impl=internal/cmd,req=REQ-INIT-001]
+[arch,id=comp.init,parent=comp.system,aspice=SWE.2,impl=cmd/req42-tracer/init.go,req=REQ-INIT-001]
 ==== Initialization Component
 
 Handles project initialization and setup commands.
+
+[arch,id=comp.trace,parent=comp.system,aspice=SWE.2,impl=cmd/req42-tracer/trace.go,req=REQ-REPORT-001,REQ-VALIDATE-001]
+==== Trace Command Component
+
+Runs the traceability analysis and produces the traceability matrix report.
+
+[arch,id=comp.gaps,parent=comp.system,aspice=SWE.2,impl=cmd/req42-tracer/gaps.go,req=REQ-REPORT-002,REQ-VALIDATE-001]
+==== Gaps Command Component
+
+Analyses the traceability graph and reports orphan elements and missing links.
+
+[arch,id=comp.validate,parent=comp.system,aspice=SWE.2,impl=cmd/req42-tracer/validate.go,req=REQ-VALIDATE-001,REQ-CONFIG-001]
+==== Validate Command Component
+
+Validates project structure, configuration, and cross-references without producing a full report.
 
 [arch,id=comp.watch,parent=comp.system,aspice=SWE.2,impl=cmd/req42-tracer/watch.go,req=REQ-WATCH-001]
 ==== Watch Mode Component
@@ -92,10 +107,11 @@ Handles project initialization and setup commands.
 Monitors documentation files with fsnotify, regenerates the HTML report on change,
 and serves it via HTTP with a polling live-reload script injected before `</body>`.
 
-[arch,id=comp.lsp,parent=comp.system,aspice=SWE.2,impl=internal/lsp,req=REQ-LSP-001]
+[arch,id=comp.lsp,parent=comp.system,aspice=SWE.2,req=REQ-LSP-001]
 ==== LSP Server Component
 
 Provides Language Server Protocol integration for IDE support.
+Not yet implemented — command is registered as a stub in root.go.
 
 === 5.1 Level 1 — Whitebox
 
@@ -120,6 +136,21 @@ Validates process coverage against PAM 4.0.
 ==== Report Generator
 
 Produces CLI and HTML reports.
+
+[arch,id=comp.model,parent=comp.system,aspice=SWE.2,impl=internal/model,req=REQ-CONFIG-001]
+==== Domain Model
+
+Shared data types (`Requirement`, `ArchElement`, `TraceLink`, `Graph`) and configuration loading.
+
+[arch,id=comp.testresult,parent=comp.system,aspice=SWE.2,impl=internal/testresult,req=REQ-TESTING-001]
+==== Test Result Loader
+
+Loads test execution results from JUnit XML and go-test JSON formats for traceability.
+
+[arch,id=comp.templates,parent=comp.system,aspice=SWE.2,impl=internal/templates,req=REQ-INIT-001]
+==== Project Templates
+
+Embedded default templates (req42.adoc, arc42.adoc, architecture.jsonc, .req42.yaml) used by the init command.
 
 === 5.2 Level 2 — Parser Subcomponents
 
