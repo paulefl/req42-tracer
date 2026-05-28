@@ -1,8 +1,8 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -39,8 +39,6 @@ refreshes automatically when sources change.`,
 	return cmd
 }
 
-var watchGeneration atomic.Int64
-
 func runWatchCmd(cmd *cobra.Command, args []string) error {
 	configPath, _ := cmd.Flags().GetString("config")
 	openBrowser, _ := cmd.Flags().GetBool("open")
@@ -52,8 +50,21 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
+	// Respect config output path when --output flag was not explicitly set
+	if !cmd.Flags().Changed("output") && config.Reports.HTML.Output != "" {
+		outputPath = config.Reports.HTML.Output
+	}
+
+	// Derive watch/parse directories from config instead of hardcoding
+	docsPath := "docs"
+	if p, ok := config.Projects["software"]; ok && p.Docs != "" {
+		docsPath = p.Docs
+	}
+	reqDir := filepath.Join(docsPath, "requirements")
+	arcDir := filepath.Join(docsPath, "arc42")
+
 	fmt.Fprintln(os.Stderr, "Generating initial report...")
-	if err := watchGenerateReport(config, outputPath); err != nil {
+	if err := watchGenerateReport(config, outputPath, reqDir, arcDir); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: initial generation failed: %v\n", err)
 	} else {
 		fmt.Fprintf(os.Stderr, "Report generated: %s\n", outputPath)
@@ -65,15 +76,19 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 	}
 	defer watcher.Close()
 
-	for _, dir := range []string{"docs/requirements", "docs/arc42", "docs"} {
+	for _, dir := range []string{reqDir, arcDir, docsPath} {
 		if _, err := os.Stat(dir); err == nil {
 			_ = watcher.Add(dir)
 		}
 	}
 	_ = watcher.Add(configPath)
 
+	// Local counter — avoids package-level state bleed between invocations/tests
+	var generation atomic.Int64
+
 	var (
 		mu    sync.Mutex
+		genMu sync.Mutex // serializes report generation; prevents concurrent file writes
 		timer *time.Timer
 	)
 	debounce := func() {
@@ -83,18 +98,23 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 			timer.Stop()
 		}
 		timer = time.AfterFunc(500*time.Millisecond, func() {
+			genMu.Lock()
+			defer genMu.Unlock()
 			fmt.Fprintln(os.Stderr, "Change detected, regenerating...")
-			if err := watchGenerateReport(config, outputPath); err != nil {
+			// Reload config on every regeneration so config-file edits take effect
+			cfg, cfgErr := model.LoadConfig(configPath)
+			if cfgErr != nil {
+				fmt.Fprintf(os.Stderr, "Warning: config reload failed: %v\n", cfgErr)
+				cfg = config
+			}
+			if err := watchGenerateReport(cfg, outputPath, reqDir, arcDir); err != nil {
 				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			} else {
-				watchGeneration.Add(1)
+				generation.Add(1)
 				fmt.Fprintln(os.Stderr, "Report updated")
 			}
 		})
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	go func() {
 		for {
@@ -103,7 +123,9 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 				if !ok {
 					return
 				}
-				if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) || event.Has(fsnotify.Remove) {
+				// Include Rename: many editors (vim, emacs, JetBrains) write via atomic rename
+				if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) ||
+					event.Has(fsnotify.Remove) || event.Has(fsnotify.Rename) {
 					debounce()
 				}
 			case err, ok := <-watcher.Errors:
@@ -111,8 +133,6 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 					return
 				}
 				fmt.Fprintf(os.Stderr, "Watcher error: %v\n", err)
-			case <-ctx.Done():
-				return
 			}
 		}
 	}()
@@ -135,7 +155,7 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 
 	mux.HandleFunc("/api/generation", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]int64{"generation": watchGeneration.Load()})
+		_ = json.NewEncoder(w).Encode(map[string]int64{"generation": generation.Load()})
 	})
 
 	url := fmt.Sprintf("http://localhost:%d", port)
@@ -149,18 +169,32 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 		}()
 	}
 
-	server := &http.Server{Addr: fmt.Sprintf(":%d", port), Handler: mux}
-	return server.ListenAndServe()
+	// Bind to loopback only — report contains confidential project documentation
+	server := &http.Server{
+		Addr:         fmt.Sprintf("127.0.0.1:%d", port),
+		Handler:      mux,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+	return nil
 }
 
-func watchGenerateReport(config *model.Config, outputPath string) error {
+func watchGenerateReport(config *model.Config, outputPath, reqDir, arcDir string) error {
 	builder := graph.NewBuilder()
 
-	if g, err := parser.ParseAllFromDir("docs/requirements", "software"); err == nil {
-		_ = builder.MergeGraph(g)
+	if g, err := parser.ParseAllFromDir(reqDir, "software"); err == nil {
+		if err := builder.MergeGraph(g); err != nil {
+			return fmt.Errorf("requirements merge: %w", err)
+		}
 	}
-	if g, err := parser.ParseAllFromDir("docs/arc42", "software"); err == nil {
-		_ = builder.MergeGraph(g)
+	if g, err := parser.ParseAllFromDir(arcDir, "software"); err == nil {
+		if err := builder.MergeGraph(g); err != nil {
+			return fmt.Errorf("architecture merge: %w", err)
+		}
 	}
 
 	builder.DeriveASPICELevels()
@@ -175,8 +209,12 @@ func watchGenerateReport(config *model.Config, outputPath string) error {
 		return err
 	}
 
+	// Summary failure is non-fatal — main report is already written and browser reload still fires
 	summaryPath := filepath.Join(filepath.Dir(outputPath), "summary.html")
-	return htmlReporter.GenerateSummaryReport(summaryPath)
+	if err := htmlReporter.GenerateSummaryReport(summaryPath); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: summary report failed: %v\n", err)
+	}
+	return nil
 }
 
 const liveReloadScript = `<script>(function(){var g=null;function poll(){fetch('/api/generation').then(function(r){return r.json();}).then(function(d){if(g===null){g=d.generation;}else if(d.generation!==g){location.reload();}setTimeout(poll,2000);}).catch(function(){setTimeout(poll,5000);});}poll();})();</script>`
