@@ -36,3 +36,5 @@ coverage.html
 # Local development
 .env
 .env.local
+go1.25.4.linux-amd64.tar.gz
+req42-tracer.exe

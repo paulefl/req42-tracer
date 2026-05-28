@@ -86,6 +86,12 @@ The tool follows a graph-based architecture:
 
 Handles project initialization and setup commands.
 
+[arch,id=comp.watch,parent=comp.system,aspice=SWE.2,impl=cmd/req42-tracer/watch.go,req=REQ-WATCH-001]
+==== Watch Mode Component
+
+Monitors documentation files with fsnotify, regenerates the HTML report on change,
+and serves it via HTTP with a polling live-reload script injected before `</body>`.
+
 [arch,id=comp.lsp,parent=comp.system,aspice=SWE.2,impl=internal/lsp,req=REQ-LSP-001]
 ==== LSP Server Component
 

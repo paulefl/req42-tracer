@@ -30,7 +30,7 @@ It supports ASPICE PAM 4.0 process validation and generates interactive reports.
 	cmd.AddCommand(newGapsCmd())
 	cmd.AddCommand(newAspiceCmd())
 	cmd.AddCommand(newValidateCmd())
-	// cmd.AddCommand(newWatchCmd())
+	cmd.AddCommand(newWatchCmd())
 	// cmd.AddCommand(newLspCmd())
 
 	return cmd
