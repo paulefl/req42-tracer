@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/paulefl/req42-tracer/internal/graph"
 	"github.com/paulefl/req42-tracer/internal/model"
 	"github.com/paulefl/req42-tracer/internal/parser"
 )
@@ -62,13 +63,23 @@ func (s *Server) Run() error {
 
 // reloadGraph rebuilds the traceability graph from the project's doc dirs.
 func (s *Server) reloadGraph() {
-	builder := newGraphBuilder()
+	builder := graph.NewBuilder()
+	loaded := 0
 	for _, dir := range []string{"docs/requirements", "docs/arc42"} {
-		if g, err := parser.ParseAllFromDir(dir, "software"); err == nil {
-			builder.merge(g)
+		g, err := parser.ParseAllFromDir(dir, "software")
+		if err != nil {
+			s.log.Printf("reloadGraph: skipping %q: %v", dir, err)
+			continue
 		}
+		if err := builder.MergeGraph(g); err != nil {
+			s.log.Printf("reloadGraph: merge %q: %v", dir, err)
+		}
+		loaded++
 	}
-	s.graph = builder.graph
+	if loaded == 0 {
+		s.log.Printf("reloadGraph: no docs found — start req42-tracer lsp from the project root")
+	}
+	s.graph = builder.GetGraph()
 	s.log.Printf("graph loaded: %d reqs, %d arch, %d specs",
 		len(s.graph.Requirements), len(s.graph.ArchElements), len(s.graph.TestSpecs))
 }
@@ -238,7 +249,7 @@ func (s *Server) handleDidOpen(msg *message) {
 		s.log.Printf("didOpen parse error: %v", err)
 		return
 	}
-	s.docs[p.TextDocument.URI] = strings.Split(p.TextDocument.Text, "\n")
+	s.docs[p.TextDocument.URI] = splitLines(p.TextDocument.Text)
 	s.reloadGraph()
 }
 
@@ -249,9 +260,19 @@ func (s *Server) handleDidChange(msg *message) {
 		return
 	}
 	if len(p.ContentChanges) > 0 {
-		s.docs[p.TextDocument.URI] = strings.Split(p.ContentChanges[0].Text, "\n")
+		s.docs[p.TextDocument.URI] = splitLines(p.ContentChanges[0].Text)
 	}
 	s.reloadGraph()
+}
+
+// splitLines splits text by \n and strips trailing \r from each line
+// so that CRLF-encoded files work correctly with the completion regex.
+func splitLines(text string) []string {
+	lines := strings.Split(text, "\n")
+	for i, l := range lines {
+		lines[i] = strings.TrimRight(l, "\r")
+	}
+	return lines
 }
 
 // --- Completion ---
@@ -289,31 +310,3 @@ func (s *Server) handleCompletion(msg *message) error {
 	return s.reply(msg.ID, list)
 }
 
-// --- graph builder helper ---
-
-type graphBuilder struct {
-	graph *model.TraceabilityGraph
-}
-
-func newGraphBuilder() *graphBuilder {
-	return &graphBuilder{graph: &model.TraceabilityGraph{
-		Requirements: make(map[string]*model.Requirement),
-		ArchElements: make(map[string]*model.ArchElement),
-		TestSpecs:    make(map[string]*model.TestSpec),
-		TestCodes:    make(map[string]*model.TestCode),
-		TestResults:  make(map[string]*model.TestResult),
-		Links:        nil,
-	}}
-}
-
-func (b *graphBuilder) merge(src *model.TraceabilityGraph) {
-	for k, v := range src.Requirements {
-		b.graph.Requirements[k] = v
-	}
-	for k, v := range src.ArchElements {
-		b.graph.ArchElements[k] = v
-	}
-	for k, v := range src.TestSpecs {
-		b.graph.TestSpecs[k] = v
-	}
-}
