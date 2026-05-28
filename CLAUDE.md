@@ -45,6 +45,14 @@ internal/
 - `req42-tracer watch --open` — Watch + live-reload
 - `req42-tracer lsp` — LSP-Server
 
+## Rollen
+Siehe [`ROLES.md`](ROLES.md) für die vollständige Rollendefinition.
+
+- **Implementierung:** `dev-paul-fleischmann` — Feature-Branches, Commits, PRs öffnen
+- **Review & Merge:** `paulefl` — Code/Security-Review, Approve, Merge
+
+PR erstellen: `gh pr create --assignee dev-paul-fleischmann --reviewer paulefl`
+
 ## Test Conventions
 Siehe [`TESTS.md`](TESTS.md) für die vollständigen Test-Konventionen.
 
