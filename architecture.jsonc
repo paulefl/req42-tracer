@@ -1,14 +1,14 @@
-// project — Bausteinsicht Architecture Model
+// req42-project — Bausteinsicht Architecture Model
 // Description: REQ42 + ARC42 Project
-// Module: https://github.com/paulefl/req42-tracer
+// Module: https://github.com/paul-fleischmann-com/req42-tracer
 
 {
   "model": {
-    "project": {
+    "req42-project": {
       "description": "REQ42 + ARC42 Project",
       "elements": {
         "system": {
-          "description": "project System",
+          "description": "req42-project System",
           "type": "System Context"
         },
         "backend": {
@@ -125,54 +125,54 @@
     {
       "name": "System Context",
       "include": [
-        "project.system",
-        "project.data_asciidoc",
-        "project.data_bausteinsicht",
-        "project.data_tests",
-        "project.tool_lsp"
+        "req42-project.system",
+        "req42-project.data_asciidoc",
+        "req42-project.data_bausteinsicht",
+        "req42-project.data_tests",
+        "req42-project.tool_lsp"
       ]
     },
     {
       "name": "Container",
       "include": [
-        "project.backend",
-        "project.frontend",
-        "project.cli",
-        "project.data_asciidoc",
-        "project.data_bausteinsicht",
-        "project.data_tests"
+        "req42-project.backend",
+        "req42-project.frontend",
+        "req42-project.cli",
+        "req42-project.data_asciidoc",
+        "req42-project.data_bausteinsicht",
+        "req42-project.data_tests"
       ]
     },
     {
       "name": "Component — Backend",
       "include": [
-        "project.backend_parser",
-        "project.backend_graph",
-        "project.backend_aspice",
-        "project.backend_report",
-        "project.data_asciidoc",
-        "project.data_bausteinsicht",
-        "project.data_tests"
+        "req42-project.backend_parser",
+        "req42-project.backend_graph",
+        "req42-project.backend_aspice",
+        "req42-project.backend_report",
+        "req42-project.data_asciidoc",
+        "req42-project.data_bausteinsicht",
+        "req42-project.data_tests"
       ]
     },
     {
       "name": "Component — Frontend",
       "include": [
-        "project.frontend_graph_view",
-        "project.frontend_matrix_view",
-        "project.frontend_aspice_view"
+        "req42-project.frontend_graph_view",
+        "req42-project.frontend_matrix_view",
+        "req42-project.frontend_aspice_view"
       ]
     },
     {
       "name": "Component — CLI",
       "include": [
-        "project.cli_trace",
-        "project.cli_gaps",
-        "project.cli_aspice",
-        "project.cli_watch",
-        "project.cli_lsp",
-        "project.backend_parser",
-        "project.backend_graph"
+        "req42-project.cli_trace",
+        "req42-project.cli_gaps",
+        "req42-project.cli_aspice",
+        "req42-project.cli_watch",
+        "req42-project.cli_lsp",
+        "req42-project.backend_parser",
+        "req42-project.backend_graph"
       ]
     }
   ]

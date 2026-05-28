@@ -62,6 +62,36 @@ gh api repos/OWNER/REPO/pulls/PR_NUMBER/comments \
 
 ---
 
+## Bausteinsicht-Check
+
+Bei jeder Implementierung prüfen, ob `architecture.jsonc` aktualisiert werden muss.
+
+### Checkliste
+
+1. **Neues CLI-Command** → neues `cli_<name>`-Element unter dem `cli`-Container?
+2. **Neuer interner Service/Server** (z.B. HTTP-Server im Watch-Command) → eigenes Element oder Beschreibung anpassen?
+3. **Neue externe Abhängigkeit** (Library, Protokoll, Datenquelle) → neues `External System`-Element?
+4. **Neue View** nötig (z.B. wenn ein neuer Deployment-Kontext entsteht)?
+
+### Ablauf
+
+1. `architecture.jsonc` öffnen und mit der implementierten Funktionalität abgleichen
+2. Fehlende Elemente ergänzen (ID-Schema: `<container>_<name>`, z.B. `cli_watch`)
+3. Fehlende View-Einträge ergänzen
+4. Ergebnis im PR-Review vermerken (auch wenn keine Änderung nötig war)
+
+### Beispiel (Phase 2.4 — Watch Mode)
+
+| Prüfpunkt | Ergebnis |
+|---|---|
+| `cli_watch`-Element vorhanden? | ✅ bereits in `architecture.jsonc` |
+| HTTP-Server als separates Element? | ℹ️ Implementierungsdetail von `cli_watch` — kein eigenes Element nötig |
+| Neue externe Abhängigkeit (fsnotify)? | ℹ️ Go-Library, kein externes System im C4-Sinne |
+| View-Eintrag `Component — CLI` enthält `cli_watch`? | ✅ vorhanden |
+| Projekt-Key korrekt (`req42-project`)? | ✅ nach Rename aktuell |
+
+---
+
 ## Hinweise
 
 - `commit_id` = aktueller HEAD-Commit des PR-Branches (`git rev-parse HEAD`)

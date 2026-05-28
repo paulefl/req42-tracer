@@ -1,6 +1,6 @@
-# project — REQ42 Configuration
+# req42-project — REQ42 Configuration
 # Description: REQ42 + ARC42 Project
-# Module: https://github.com/paulefl/req42-tracer
+# Module: https://github.com/paul-fleischmann-com/req42-tracer
 
 # Project definitions
 projects:
