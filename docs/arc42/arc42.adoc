@@ -137,15 +137,20 @@ Validates process coverage against PAM 4.0.
 
 Produces CLI and HTML reports.
 
-[arch,id=comp.model,parent=comp.system,aspice=SWE.2,impl=internal/model,req=REQ-CONFIG-001,REQ-PARSE-001,REQ-GRAPH-001]
+[arch,id=comp.model,parent=comp.system,aspice=SWE.2,impl=internal/model,req=REQ-CONFIG-001]
 ==== Domain Model
 
 Shared data types (`Requirement`, `ArchElement`, `TraceLink`, `Graph`) and configuration loading.
 
-[arch,id=comp.testresult,parent=comp.system,aspice=SWE.2,impl=internal/testresult,req=REQ-TESTING-001,REQ-REPORT-001,REQ-REPORT-002]
+[arch,id=comp.testresult,parent=comp.system,aspice=SWE.2,impl=internal/testresult,req=REQ-TESTING-001]
 ==== Test Result Loader
 
 Loads test execution results from JUnit XML and go-test JSON formats for traceability.
+
+[arch,id=comp.templates,parent=comp.system,aspice=SWE.2,impl=internal/templates,req=REQ-INIT-001]
+==== Project Templates
+
+Embedded default templates (req42.adoc, arc42.adoc, architecture.jsonc, .req42.yaml) used by the init command.
 
 === 5.2 Level 2 — Parser Subcomponents
 

@@ -90,7 +90,15 @@
           "description": "Report Generator",
           "type": "Component",
           "parent": "backend",
-          "technology": "Go"
+          "technology": "Go",
+          "impl": "internal/report"
+        },
+        "backend_templates": {
+          "description": "Embedded Project Templates",
+          "type": "Component",
+          "parent": "backend",
+          "technology": "Go",
+          "impl": "internal/templates"
         },
         "frontend": {
           "description": "Interactive HTML Reports",
@@ -221,6 +229,7 @@
         "req42-project.backend_graph",
         "req42-project.backend_aspice",
         "req42-project.backend_report",
+        "req42-project.backend_templates",
         "req42-project.backend_testresult",
         "req42-project.data_asciidoc",
         "req42-project.data_bausteinsicht",
