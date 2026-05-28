@@ -778,6 +778,12 @@ const HTMLTemplate = `<!DOCTYPE html>
                             </div>
                         </div>
                     </div>
+                    <div style="margin-top:12px;display:flex;align-items:center;gap:8px;">
+                        <label for="filter-process" style="font-size:13px;color:#666;">Filter process:</label>
+                        <select id="filter-process" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:13px;" onchange="renderASPICE()">
+                            <option value="">All processes</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="aspice-grid" id="aspice-grid"></div>
             </div>
@@ -794,6 +800,7 @@ const HTMLTemplate = `<!DOCTYPE html>
         let globalNode = null;
         let globalLink = null;
         let globalLabel = null;
+        let globalEdgeLabel = null;
 
         function initializeGraph(data) {
             // Update statistics
@@ -870,6 +877,26 @@ const HTMLTemplate = `<!DOCTYPE html>
                 .text(d => d.id)
                 .style('font-size', '11px');
 
+            // Create edge labels (shown on hover)
+            globalEdgeLabel = labelGroup.selectAll('.link-label')
+                .data(data.edges)
+                .enter()
+                .append('text')
+                .attr('class', 'link-label')
+                .attr('text-anchor', 'middle')
+                .text(d => d.label || '')
+                .style('pointer-events', 'none')
+                .style('opacity', '0');
+
+            // Show edge label on link hover
+            globalLink
+                .on('mouseover.label', function(event, d) {
+                    globalEdgeLabel.filter(e => e === d).style('opacity', '1');
+                })
+                .on('mouseout.label', function(event, d) {
+                    globalEdgeLabel.filter(e => e === d).style('opacity', '0');
+                });
+
             // Zoom behavior
             const zoom = d3.zoom()
                 .on('zoom', event => {
@@ -919,6 +946,12 @@ const HTMLTemplate = `<!DOCTYPE html>
                 globalLabel
                     .attr('x', d => d.x)
                     .attr('y', d => d.y);
+
+                if (globalEdgeLabel) {
+                    globalEdgeLabel
+                        .attr('x', d => (d.source.x + d.target.x) / 2)
+                        .attr('y', d => (d.source.y + d.target.y) / 2);
+                }
             });
 
             // Reset view button
@@ -954,6 +987,7 @@ const HTMLTemplate = `<!DOCTYPE html>
                     globalNode.style('display', 'block');
                     globalLabel.style('display', 'block');
                     globalLink.style('display', 'line');
+                    if (globalEdgeLabel) globalEdgeLabel.style('opacity', '0');
                     return;
                 }
                 const typeMap = {};
@@ -962,6 +996,9 @@ const HTMLTemplate = `<!DOCTYPE html>
                 globalNode.style('display', d => typeMap[d.type] ? 'block' : 'none');
                 globalLabel.style('display', d => typeMap[d.type] ? 'block' : 'none');
                 globalLink.style('display', d => typeMap[d.source.type] && typeMap[d.target.type] ? 'line' : 'none');
+                if (globalEdgeLabel) {
+                    globalEdgeLabel.style('opacity', '0');
+                }
             }
 
             function updateFilterButtons(active) {
@@ -1136,8 +1173,22 @@ const HTMLTemplate = `<!DOCTYPE html>
             var grid = document.getElementById('aspice-grid');
             if (!grid || !aspiceData.processes) return;
 
+            var filterEl = document.getElementById('filter-process');
+            var filterVal = filterEl ? filterEl.value : '';
+
+            // Populate dropdown on first render
+            if (filterEl && filterEl.options.length <= 1) {
+                aspiceData.processes.forEach(function(proc) {
+                    var opt = document.createElement('option');
+                    opt.value = proc.id;
+                    opt.textContent = proc.id + ' — ' + proc.name;
+                    filterEl.appendChild(opt);
+                });
+            }
+
             var html = '';
             aspiceData.processes.forEach(function(proc) {
+                if (filterVal && proc.id !== filterVal) return;
                 var covPct = Math.round(proc.coverage || 0);
                 var pcls = coverageClass(proc.coverage || 0);
 
@@ -1182,6 +1233,18 @@ const HTMLTemplate = `<!DOCTYPE html>
         }
 
         let currentMatrixData = matrixData;
+        let matrixSortCol = null;
+        let matrixSortAsc = true;
+
+        function sortMatrix(col) {
+            if (matrixSortCol === col) {
+                matrixSortAsc = !matrixSortAsc;
+            } else {
+                matrixSortCol = col;
+                matrixSortAsc = true;
+            }
+            renderMatrix();
+        }
 
         function renderMatrix() {
             const container = document.getElementById('matrix-table-container');
@@ -1196,11 +1259,33 @@ const HTMLTemplate = `<!DOCTYPE html>
                 return matchesPriority && matchesStatus && matchesSearch;
             });
 
+            if (matrixSortCol) {
+                filtered = filtered.slice().sort((a, b) => {
+                    let va = '', vb = '';
+                    if (matrixSortCol === 'req') { va = a.RequirementID; vb = b.RequirementID; }
+                    else if (matrixSortCol === 'priority') { va = a.Priority; vb = b.Priority; }
+                    else if (matrixSortCol === 'status') { va = a.Status; vb = b.Status; }
+                    else {
+                        const ca = a.Cells[matrixSortCol], cb = b.Cells[matrixSortCol];
+                        va = ca ? ca.Status : 'missing'; vb = cb ? cb.Status : 'missing';
+                    }
+                    return matrixSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+                });
+            }
+
             currentMatrixData = { ...matrixData, rows: filtered };
 
-            let html = '<table class="matrix-table"><thead><tr><th>Requirement</th><th>Priority</th><th>Status</th>';
+            const sortArrow = (col) => {
+                if (matrixSortCol !== col) return ' ↕';
+                return matrixSortAsc ? ' ↑' : ' ↓';
+            };
+
+            let html = '<table class="matrix-table"><thead><tr>';
+            html += '<th style="cursor:pointer" onclick="sortMatrix(\'req\')">Requirement' + sortArrow('req') + '</th>';
+            html += '<th style="cursor:pointer" onclick="sortMatrix(\'priority\')">Priority' + sortArrow('priority') + '</th>';
+            html += '<th style="cursor:pointer" onclick="sortMatrix(\'status\')">Status' + sortArrow('status') + '</th>';
             matrixData.columns.forEach(col => {
-                html += '<th title="' + escHtml(col.Title) + '">' + escHtml(col.ID) + '</th>';
+                html += '<th style="cursor:pointer" title="' + escHtml(col.Title) + '" onclick="sortMatrix(\'' + escHtml(col.ID) + '\')">' + escHtml(col.ID) + sortArrow(col.ID) + '</th>';
             });
             html += '</tr></thead><tbody>';
 

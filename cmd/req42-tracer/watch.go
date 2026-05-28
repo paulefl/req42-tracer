@@ -217,7 +217,7 @@ func watchGenerateReport(config *model.Config, outputPath, reqDir, arcDir string
 	return nil
 }
 
-const liveReloadScript = `<script>(function(){var g=null;function poll(){fetch('/api/generation').then(function(r){return r.json();}).then(function(d){if(g===null){g=d.generation;}else if(d.generation!==g){location.reload();}setTimeout(poll,2000);}).catch(function(){setTimeout(poll,5000);});}poll();})();</script>`
+const liveReloadScript = `<style>#req42-live-badge{position:fixed;bottom:12px;right:12px;padding:4px 10px;border-radius:12px;font-size:12px;font-family:monospace;z-index:9999;background:#27ae60;color:#fff;opacity:.85;transition:background .3s;}#req42-live-badge.rebuilding{background:#e67e22;}</style><div id="req42-live-badge">● Live</div><script>(function(){var g=null;var badge=document.getElementById('req42-live-badge');function poll(){fetch('/api/generation').then(function(r){return r.json();}).then(function(d){if(g===null){g=d.generation;}else if(d.generation!==g){if(badge){badge.textContent='⟳ Rebuilding…';badge.className='rebuilding';}setTimeout(function(){location.reload();},200);}setTimeout(poll,2000);}).catch(function(){setTimeout(poll,5000);});}poll();})();</script>`
 
 func injectLiveReload(content string) string {
 	return strings.Replace(content, "</body>", liveReloadScript+"</body>", 1)
