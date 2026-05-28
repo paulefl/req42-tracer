@@ -61,6 +61,23 @@ Siehe [`ROLES.md`](ROLES.md) für die vollständige Rollendefinition.
 - **Implementierung:** `dev-paul-fleischmann` — Feature-Branches, Commits, PRs öffnen
 - **Review & Merge:** `paulefl` — Code/Security-Review, Approve, Merge
 
+### Pflicht-Checkliste vor jedem Schritt
+
+**Vor Implementierung (Commit/Push/PR erstellen):**
+```bash
+gh auth switch --user dev-paul-fleischmann
+git config user.name "dev-paul-fleischmann"
+git config user.email "dev@paul-fleischmann.com"
+```
+
+**Vor Review/Merge:**
+```bash
+gh auth switch --user paulefl
+```
+
+Ein pre-commit Hook in `.git/hooks/pre-commit` blockiert Commits mit falscher Identität.
+`git config user.name` muss `dev-paul-fleischmann` sein — sonst bricht der Commit ab.
+
 PR erstellen: `gh pr create --assignee dev-paul-fleischmann --reviewer paulefl`
 
 ## Test Conventions
