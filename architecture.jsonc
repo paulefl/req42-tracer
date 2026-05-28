@@ -171,10 +171,11 @@
           "impl": "cmd/req42-tracer/watch.go"
         },
         "cli_lsp": {
-          "description": "LSP Server Command (planned)",
+          "description": "LSP Server Command",
           "type": "Component",
           "parent": "cli",
-          "technology": "Go"
+          "technology": "Go",
+          "impl": "cmd/req42-tracer/lsp.go"
         },
         "data_asciidoc": {
           "description": "AsciiDoc Source Files",

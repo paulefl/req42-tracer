@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-// [test-spec,id=spec.lsp.initialize,req=REQ-LSP-001,arch=comp.lsp,aspice=SWE.4]
+// [test-spec,id=TS-LSP-001,req="REQ-LSP-001",aspice="SWE.5.BP3"]
 // TestInitializeHandshake verifies the LSP initialize/initialized handshake.
 func TestInitializeHandshake(t *testing.T) {
 	req := buildMessage(t, message{
@@ -49,7 +49,7 @@ func TestInitializeHandshake(t *testing.T) {
 	}
 }
 
-// [test-spec,id=spec.lsp.shutdown,req=REQ-LSP-001,arch=comp.lsp,aspice=SWE.4]
+// [test-spec,id=TS-LSP-002,req="REQ-LSP-001",aspice="SWE.5.BP3"]
 // TestShutdown verifies the server exits cleanly on shutdown → exit sequence.
 func TestShutdown(t *testing.T) {
 	shutdown := buildMessage(t, message{JSONRPC: "2.0", ID: 2, Method: "shutdown"})
@@ -71,7 +71,7 @@ func TestShutdown(t *testing.T) {
 	}
 }
 
-// [test-spec,id=spec.lsp.unknown-method,req=REQ-LSP-001,arch=comp.lsp,aspice=SWE.4]
+// [test-spec,id=TS-LSP-003,req="REQ-LSP-001",aspice="SWE.5.BP3"]
 // TestUnknownMethod verifies that unknown request methods return a -32601 error.
 func TestUnknownMethod(t *testing.T) {
 	req := buildMessage(t, message{JSONRPC: "2.0", ID: 3, Method: "textDocument/foobar"})
