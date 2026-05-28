@@ -1,0 +1,213 @@
+= Configuration Reference (.req42.yaml)
+:toc: left
+:toc-title: Contents
+:icons: font
+
+`req42-tracer` is configured via a `.req42.yaml` file in the project root.
+Run `req42-tracer --config path/to/other.yaml` to use a different file.
+
+== Full example
+
+[source,yaml]
+----
+# .req42.yaml
+
+projects:
+  software:
+    path: .
+    docs: docs/
+
+bausteinsicht:
+  model: architecture.jsonc
+
+test-results:
+  - format: junit
+    path: reports/junit.xml
+  - format: go-test-json
+    path: reports/test-results.json
+
+rules:
+  missing-review: warning
+  all-reqs-must-have-aspice: error
+  missing-impl: warning
+  orphan-architecture: warning
+  orphan-tests: warning
+  stale-traces: warning
+  missing-test-spec: warning
+  max-orphan-percentage: warning
+
+rule-params:
+  max-orphan-percentage: 20
+
+aspice:
+  auto-derive: true
+  processes:
+    - SWE.1
+    - SWE.2
+    - SWE.3
+    - SWE.5
+
+reports:
+  html:
+    output: reports/traceability-report.html
+    include-graph: true
+    include-matrix: true
+    include-aspice: true
+    theme: light
+  cli:
+    format: text
+----
+
+== Section reference
+
+=== projects
+
+Defines the projects to trace. Each entry has a short key (used internally) and two paths.
+
+[source,yaml]
+----
+projects:
+  software:
+    path: .          # root directory of the project
+    docs: docs/      # documentation directory (scanned for .adoc files)
+----
+
+Multiple projects are supported; `req42-tracer trace` aggregates all of them.
+
+---
+
+=== bausteinsicht
+
+Points to the Bausteinsicht architecture model file.
+
+[source,yaml]
+----
+bausteinsicht:
+  model: architecture.jsonc   # path to the JSONC model file
+----
+
+The model is validated with `bausteinsicht validate --model architecture.jsonc`.
+
+---
+
+=== test-results
+
+List of test result files to parse for traceability.
+
+[source,yaml]
+----
+test-results:
+  - format: junit          # junit | go-test-json
+    path: reports/junit.xml
+  - format: go-test-json
+    path: reports/test-results.json
+----
+
+[cols="1,3",options="header"]
+|===
+| Format | Description
+| `junit` | JUnit XML (compatible with pytest, Maven Surefire, etc.)
+| `go-test-json` | Output of `go test -json ./...`
+|===
+
+---
+
+=== rules
+
+Custom validation rules evaluated by `req42-tracer validate`. Each rule has a severity.
+
+[source,yaml]
+----
+rules:
+  <rule-id>: error | warning | off
+----
+
+==== Available rules
+
+[cols="1,1,3",options="header"]
+|===
+| Rule ID | Default | Description
+| `missing-review` | warning | Requirements without `reviewed-by=` attribute
+| `all-reqs-must-have-aspice` | warning | Requirements without `aspice=` attribute
+| `all-reqs-must-have-priority` | off | Requirements without `priority=` attribute
+| `missing-impl` | warning | `[arch]` elements (non-root) without `impl=`
+| `missing-test-spec` | warning | `[arch]` elements (non-root) without a linked test spec
+| `orphan-architecture` | warning | `[arch]` elements (non-root) without `req=`
+| `orphan-tests` | warning | `[test-spec]` blocks with no `req=` or `arch=`
+| `stale-traces` | warning | Trace links with `status=stale`
+| `max-orphan-percentage` | warning | Orphan requirement percentage exceeds threshold (see `rule-params`)
+| `undocumented-bausteinsicht-elements` | warning | Bausteinsicht elements missing from `[arch]` blocks
+|===
+
+---
+
+=== rule-params
+
+Numeric parameters for parameterized rules.
+
+[source,yaml]
+----
+rule-params:
+  max-orphan-percentage: 20   # max % orphan requirements before violation
+----
+
+[cols="1,1,3",options="header"]
+|===
+| Parameter | Default | Description
+| `max-orphan-percentage` | `20` | Maximum allowed percentage of orphan requirements
+|===
+
+---
+
+=== aspice
+
+Controls ASPICE PAM 4.0 compliance checking.
+
+[source,yaml]
+----
+aspice:
+  auto-derive: true          # derive SWE.2/SWE.3 from arch hierarchy automatically
+  processes:                 # processes to check (default: SWE.1, SWE.2, SWE.3, SWE.5)
+    - SWE.1
+    - SWE.2
+    - SWE.3
+    - SWE.5
+----
+
+==== auto-derive
+
+When `true`, arch elements without an explicit `aspice=` attribute get their level derived from hierarchy:
+
+* Root elements (no `parent=`) → `SWE.2`
+* Child elements (with `parent=`) → `SWE.3`
+
+==== Supported processes
+
+[cols="1,3",options="header"]
+|===
+| Process | Best Practices checked
+| `SWE.1` | BP2 (req→arch traceability), BP6 (testability), BP8 (bidirectional traceability)
+| `SWE.2` | BP4 (arch→req traceability)
+| `SWE.3` | BP3 (impl→arch traceability)
+| `SWE.5` | BP3 (test→req traceability)
+|===
+
+---
+
+=== reports
+
+Controls report generation.
+
+[source,yaml]
+----
+reports:
+  html:
+    output: reports/traceability-report.html  # output file path
+    include-graph: true     # include D3.js dependency graph
+    include-matrix: true    # include traceability matrix table
+    include-aspice: true    # include ASPICE compliance dashboard
+    theme: light            # light | dark
+
+  cli:
+    format: text            # text | markdown | json
+----

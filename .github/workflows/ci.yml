@@ -70,15 +70,22 @@ jobs:
             -run='^$' \
             | tee bench.txt
 
-      - name: Store & compare benchmark results
-        uses: benchmark-action/github-action-gh-pages@v1
+      - name: Upload benchmark results (PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-results
+          path: bench.txt
+          retention-days: 14
+
+      - name: Store & track benchmark results (master only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: benchmark-action/github-action-benchmark@v1
         with:
           tool: go
           output-file-path: bench.txt
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          # Push results to gh-pages branch (only on master push)
-          auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-          # Post comment on PR if regression detected
+          auto-push: true
           comment-on-alert: true
           alert-threshold: '130%'   # alert if ≥30% slower than baseline
           fail-on-alert: false       # don't fail CI on regression, just warn
