@@ -44,3 +44,18 @@ internal/
 - `req42-tracer validate` — Model validation
 - `req42-tracer watch --open` — Watch + live-reload
 - `req42-tracer lsp` — LSP-Server
+
+## Code Review Workflow
+Nach jedem Code-Review (z.B. `/code-review`) müssen alle bestätigten Findings (CONFIRMED/PLAUSIBLE) als **Inline-Kommentare direkt im GitHub PR** an der exakten Codezeile dokumentiert werden:
+
+```bash
+gh api repos/OWNER/REPO/pulls/PR_NUMBER/comments \
+  --method POST \
+  --field body="**Bug (Code Review):** ..." \
+  --field commit_id="COMMIT_SHA" \
+  --field path="path/to/file.go" \
+  --field line=LINE_NUMBER \
+  --field side="RIGHT"
+```
+
+REFUTED-Findings werden nicht kommentiert. Bugs die dabei gefunden werden sofort fixen, committen und pushen — dann den Kommentar an die geänderte Zeile setzen.
