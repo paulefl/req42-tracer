@@ -950,6 +950,12 @@ const HTMLTemplate = `<!DOCTYPE html>
             });
 
             function filterByType(...types) {
+                if (types.length === 1 && types[0] === 'all') {
+                    globalNode.style('display', 'block');
+                    globalLabel.style('display', 'block');
+                    globalLink.style('display', 'line');
+                    return;
+                }
                 const typeMap = {};
                 types.forEach(t => typeMap[t] = true);
 
@@ -1225,15 +1231,23 @@ const HTMLTemplate = `<!DOCTYPE html>
             document.getElementById('matrix-coverage').textContent = Math.round(stats.CoveragePercentage) + '%';
         }
 
+        function csvQuote(s) {
+            const str = String(s);
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+        }
+
         function exportMatrixCSV() {
             let csv = 'Requirement,Priority,Status';
             matrixData.columns.forEach(col => {
-                csv += ',' + col.ID;
+                csv += ',' + csvQuote(col.ID);
             });
             csv += '\n';
 
             currentMatrixData.rows.forEach(row => {
-                csv += row.RequirementID + ',' + row.Priority + ',' + row.Status;
+                csv += csvQuote(row.RequirementID) + ',' + csvQuote(row.Priority) + ',' + csvQuote(row.Status);
                 matrixData.columns.forEach(col => {
                     const cell = row.Cells[col.ID];
                     const symbol = cell && cell.Status === 'covered' ? '✓' : (cell && cell.Status === 'stale' ? '⚠' : '✗');
@@ -1257,14 +1271,13 @@ const HTMLTemplate = `<!DOCTYPE html>
         document.getElementById('search-req').addEventListener('input', renderMatrix);
 
         // Initialize graph visualization after all functions are defined
-        document.addEventListener('DOMContentLoaded', function() {
-            if (graphData && graphData.nodes) {
-                initializeGraph(graphData);
-            }
-        });
-
-        // Also initialize immediately if DOM is already loaded
-        if (document.readyState !== 'loading') {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                if (graphData && graphData.nodes) {
+                    initializeGraph(graphData);
+                }
+            });
+        } else {
             if (graphData && graphData.nodes) {
                 initializeGraph(graphData);
             }
