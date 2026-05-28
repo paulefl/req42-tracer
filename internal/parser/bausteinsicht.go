@@ -125,58 +125,55 @@ func (p *BausteinsichtParser) flattenElements(
 	}
 }
 
-// removeComments removes JSONC comments from a string.
+// removeComments removes JSONC comments (// and /* */) from a string.
 func removeComments(jsonc string) string {
 	var result strings.Builder
 	inString := false
-	escapeNext := false
+	inBlock := false
 
-	lines := strings.Split(jsonc, "\n")
-	for _, line := range lines {
-		for i, char := range line {
-			if escapeNext {
-				result.WriteRune(char)
-				escapeNext = false
-				continue
+	for i := 0; i < len(jsonc); i++ {
+		ch := jsonc[i]
+
+		if inBlock {
+			if i+1 < len(jsonc) && ch == '*' && jsonc[i+1] == '/' {
+				inBlock = false
+				i++ // skip '/'
 			}
-
-			if char == '\\' && inString {
-				result.WriteRune(char)
-				escapeNext = true
-				continue
-			}
-
-			if char == '"' && !escapeNext {
-				inString = !inString
-				result.WriteRune(char)
-				continue
-			}
-
-			if !inString && i+1 < len(line) {
-				if char == '/' && line[i+1] == '/' {
-					// Line comment; skip rest of line
-					break
-				}
-				if char == '/' && line[i+1] == '*' {
-					// Block comment; skip until */
-					// For simplicity, assume block comments don't nest
-					for j := i + 2; j < len(line); j++ {
-						if j+1 < len(line) && line[j] == '*' && line[j+1] == '/' {
-							// Skip to after */
-							i = j + 1
-							break
-						}
-					}
-					continue
-				}
-			}
-
-			result.WriteRune(char)
+			continue
 		}
 
-		if !inString {
-			result.WriteString("\n")
+		if ch == '\\' && inString && i+1 < len(jsonc) {
+			result.WriteByte(ch)
+			i++
+			result.WriteByte(jsonc[i])
+			continue
 		}
+
+		if ch == '"' {
+			inString = !inString
+			result.WriteByte(ch)
+			continue
+		}
+
+		if !inString && i+1 < len(jsonc) {
+			if ch == '/' && jsonc[i+1] == '/' {
+				// Skip to end of line
+				for i < len(jsonc) && jsonc[i] != '\n' {
+					i++
+				}
+				if i < len(jsonc) {
+					result.WriteByte('\n')
+				}
+				continue
+			}
+			if ch == '/' && jsonc[i+1] == '*' {
+				inBlock = true
+				i++ // skip '*'
+				continue
+			}
+		}
+
+		result.WriteByte(ch)
 	}
 
 	return result.String()

@@ -117,19 +117,20 @@ func TestBausteinsichtParser_WithComments(t *testing.T) {
 }
 
 // [test-spec,id=TS-PARSE-026,req="REQ-PARSE-002",aspice="SWE.5.BP3"]
-// TestRemoveComments verifies that JSONC line comments are stripped.
+// TestRemoveComments verifies that JSONC line and block comments are stripped.
 func TestRemoveComments(t *testing.T) {
 	cases := []struct {
 		input   string
 		noMatch string // substring that should NOT appear in output
 	}{
 		{`{"a": 1} // line comment`, "line comment"},
+		{`{"a": /* block comment */ 1}`, "block comment"},
 		{`{"url": "http://example.com"}`, ""},
 	}
 	for _, tc := range cases {
 		got := removeComments(tc.input)
 		if tc.noMatch != "" && containsStr(got, tc.noMatch) {
-			t.Errorf("removeComments(%q) still contains %q", tc.input, tc.noMatch)
+			t.Errorf("removeComments(%q) still contains %q\ngot: %q", tc.input, tc.noMatch, got)
 		}
 	}
 }

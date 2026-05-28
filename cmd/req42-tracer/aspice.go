@@ -78,7 +78,7 @@ func runAspiceCmd(cmd *cobra.Command, args []string) error {
 
 	// Display report
 	fmt.Println("ASPICE PAM 4.0 Compliance Report")
-	fmt.Println(fmt.Sprintf("Overall Coverage: %.1f%%\n", report.Overall))
+	fmt.Printf("Overall Coverage: %.1f%%\n\n", report.Overall)
 
 	for processID, results := range report.Processes {
 		totalCoverage := 0.0

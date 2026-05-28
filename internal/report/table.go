@@ -162,12 +162,12 @@ func (tr *TableReporter) traceabilityMatrixJSON(g *model.TraceabilityGraph) stri
 			}
 		}
 
-		buf.WriteString(fmt.Sprintf("    {\n"))
+		buf.WriteString("    {\n")
 		buf.WriteString(fmt.Sprintf("      \"id\": \"%s\",\n", req.ID))
 		buf.WriteString(fmt.Sprintf("      \"priority\": \"%s\",\n", req.Priority))
 		buf.WriteString(fmt.Sprintf("      \"arch_covered\": %v,\n", archCovered))
 		buf.WriteString(fmt.Sprintf("      \"test_covered\": %v\n", testCovered))
-		buf.WriteString(fmt.Sprintf("    }"))
+		buf.WriteString("    }")
 	}
 
 	buf.WriteString("\n  ]\n")
@@ -330,15 +330,15 @@ func (tr *TableReporter) coverageReportMarkdown(coverage *model.CoverageReport) 
 
 	buf.WriteString("# Coverage Report\n\n")
 	buf.WriteString("## Requirements\n\n")
-	buf.WriteString(fmt.Sprintf("| Metric | Count | Coverage |\n"))
-	buf.WriteString(fmt.Sprintf("|--------|-------|----------|\n"))
+	buf.WriteString("| Metric | Count | Coverage |\n")
+	buf.WriteString("|--------|-------|----------|\n")
 	buf.WriteString(fmt.Sprintf("| Total | %d | — |\n", coverage.TotalRequirements))
 	buf.WriteString(fmt.Sprintf("| Covered by Architecture | %d | %.1f%% |\n", coverage.CoveredByArch, coverage.RequirementCoverage))
 	buf.WriteString(fmt.Sprintf("| Covered by Tests | %d | %.1f%% |\n\n", coverage.CoveredByTests, coverage.TestCoverage))
 
 	buf.WriteString("## Tests\n\n")
-	buf.WriteString(fmt.Sprintf("| Status | Count |\n"))
-	buf.WriteString(fmt.Sprintf("|--------|-------|\n"))
+	buf.WriteString("| Status | Count |\n")
+	buf.WriteString("|--------|-------|\n")
 	buf.WriteString(fmt.Sprintf("| Passed | %d |\n", coverage.PassedTests))
 	buf.WriteString(fmt.Sprintf("| Failed | %d |\n", coverage.FailedTests))
 	buf.WriteString(fmt.Sprintf("| Skipped | %d |\n", coverage.SkippedTests))
