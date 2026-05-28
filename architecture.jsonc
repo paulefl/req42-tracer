@@ -1,290 +1,308 @@
-// req42-project — Bausteinsicht Architecture Model
-// Description: REQ42 + ARC42 Project
-// Module: https://github.com/paul-fleischmann-com/req42-tracer
+// req42-tracer — Bausteinsicht Architecture Model (v1.1.0 schema)
+// https://github.com/paul-fleischmann-com/req42-tracer
 
 {
-  "model": {
-    "req42-project": {
-      "description": "REQ42 + ARC42 Project",
-      "elements": {
-        "system": {
-          "description": "req42-project System",
-          "type": "System Context"
-        },
-        "backend": {
-          "description": "Backend API Component",
-          "type": "Container",
-          "technology": "Go"
-        },
-        "backend_parser": {
-          "description": "Document Parser (AsciiDoc, JSONC)",
-          "type": "Component",
-          "parent": "backend",
-          "technology": "Go",
-          "impl": "internal/parser"
-        },
-        "backend_parser_adoc": {
-          "description": "AsciiDoc Scanner",
-          "type": "Component",
-          "parent": "backend_parser",
-          "technology": "Go",
-          "impl": "internal/parser/adoc.go"
-        },
-        "backend_parser_arch": {
-          "description": "Architecture Block Parser",
-          "type": "Component",
-          "parent": "backend_parser",
-          "technology": "Go",
-          "impl": "internal/parser/adoc.go"
-        },
-        "backend_parser_jsonc": {
-          "description": "Bausteinsicht Loader",
-          "type": "Component",
-          "parent": "backend_parser",
-          "technology": "Go",
-          "impl": "internal/parser/bausteinsicht.go"
-        },
-        "backend_graph": {
-          "description": "Traceability Graph Engine",
-          "type": "Component",
-          "parent": "backend",
-          "technology": "Go",
-          "impl": "internal/graph"
-        },
-        "backend_graph_builder": {
-          "description": "Traceability Graph Builder",
-          "type": "Component",
-          "parent": "backend_graph",
-          "technology": "Go",
-          "impl": "internal/graph/build.go"
-        },
-        "backend_graph_analyzer": {
-          "description": "Gap and Coverage Analyzer",
-          "type": "Component",
-          "parent": "backend_graph",
-          "technology": "Go",
-          "impl": "internal/graph/analysis.go"
-        },
-        "backend_model": {
-          "description": "Domain Model (shared types + config)",
-          "type": "Component",
-          "parent": "backend",
-          "technology": "Go",
-          "impl": "internal/model"
-        },
-        "backend_testresult": {
-          "description": "Test Result Loader (JUnit XML, go-test JSON)",
-          "type": "Component",
-          "parent": "backend",
-          "technology": "Go",
-          "impl": "internal/testresult"
-        },
-        "backend_aspice": {
-          "description": "ASPICE PAM 4.0 Validator",
-          "type": "Component",
-          "parent": "backend",
-          "technology": "Go",
-          "impl": "internal/aspice"
-        },
-        "backend_report": {
-          "description": "Report Generator",
-          "type": "Component",
-          "parent": "backend",
-          "technology": "Go",
-          "impl": "internal/report"
-        },
-        "backend_templates": {
-          "description": "Embedded Project Templates",
-          "type": "Component",
-          "parent": "backend",
-          "technology": "Go",
-          "impl": "internal/templates"
-        },
-        "frontend": {
-          "description": "Interactive HTML Reports",
-          "type": "Container",
-          "technology": "HTML/CSS/JavaScript"
-        },
-        "frontend_graph_view": {
-          "description": "Graph Visualization View",
-          "type": "Component",
-          "parent": "frontend",
-          "technology": "D3.js / Mermaid"
-        },
-        "frontend_matrix_view": {
-          "description": "Traceability Matrix View",
-          "type": "Component",
-          "parent": "frontend",
-          "technology": "HTML Tables"
-        },
-        "frontend_aspice_view": {
-          "description": "ASPICE Dashboard View",
-          "type": "Component",
-          "parent": "frontend",
-          "technology": "HTML/CSS"
-        },
-        "cli": {
-          "description": "CLI Tool (Cobra)",
-          "type": "Container",
-          "technology": "Go"
-        },
-        "cli_init": {
-          "description": "Init Command",
-          "type": "Component",
-          "parent": "cli",
-          "technology": "Go",
-          "impl": "cmd/req42-tracer/init.go"
-        },
-        "cli_validate": {
-          "description": "Validate Command",
-          "type": "Component",
-          "parent": "cli",
-          "technology": "Go",
-          "impl": "cmd/req42-tracer/validate.go"
-        },
-        "cli_trace": {
-          "description": "Trace Command",
-          "type": "Component",
-          "parent": "cli",
-          "technology": "Go",
-          "impl": "cmd/req42-tracer/trace.go"
-        },
-        "cli_gaps": {
-          "description": "Gaps Command",
-          "type": "Component",
-          "parent": "cli",
-          "technology": "Go",
-          "impl": "cmd/req42-tracer/gaps.go"
-        },
-        "cli_aspice": {
-          "description": "ASPICE Command",
-          "type": "Component",
-          "parent": "cli",
-          "technology": "Go",
-          "impl": "cmd/req42-tracer/aspice.go"
-        },
-        "cli_watch": {
-          "description": "Watch Command",
-          "type": "Component",
-          "parent": "cli",
-          "technology": "Go",
-          "impl": "cmd/req42-tracer/watch.go"
-        },
-        "cli_lsp": {
-          "description": "LSP Server Command",
-          "type": "Component",
-          "parent": "cli",
-          "technology": "Go",
-          "impl": "cmd/req42-tracer/lsp.go"
-        },
-        "backend_lsp": {
-          "description": "LSP Server (JSON-RPC 2.0 stdio)",
-          "type": "Component",
-          "parent": "backend",
-          "technology": "Go",
-          "impl": "internal/lsp"
-        },
-        "backend_lsp_complete": {
-          "description": "LSP Completion Provider",
-          "type": "Component",
-          "parent": "backend_lsp",
-          "technology": "Go",
-          "impl": "internal/lsp/complete.go"
-        },
-        "data_asciidoc": {
-          "description": "AsciiDoc Source Files",
-          "type": "External System",
-          "technology": "Text"
-        },
-        "data_bausteinsicht": {
-          "description": "Bausteinsicht Architecture Model",
-          "type": "External System",
-          "technology": "JSONC"
-        },
-        "data_tests": {
-          "description": "Test Reports (CI)",
-          "type": "External System",
-          "technology": "JUnit XML / JSON"
-        },
-        "tool_lsp": {
-          "description": "IDE Language Server",
-          "type": "External System",
-          "technology": "LSP Protocol"
-        }
+  "$schema": "https://raw.githubusercontent.com/docToolchain/Bausteinsicht/main/schema/bausteinsicht.schema.json",
+
+  // Element kinds used in this model
+  "specification": {
+    "elements": {
+      "system": {
+        "notation": "Software System",
+        "description": "Top-level software system",
+        "container": true
+      },
+      "container": {
+        "notation": "Container",
+        "description": "Deployable unit (binary, service)",
+        "container": true
+      },
+      "component": {
+        "notation": "Component",
+        "description": "Logical module within a container",
+        "container": true
+      },
+      "external_system": {
+        "notation": "External System",
+        "description": "Data source or tool outside the system boundary"
       }
+    },
+    "relationships": {
+      "uses": { "notation": "uses" },
+      "reads": { "notation": "reads" },
+      "writes": { "notation": "writes" }
     }
   },
-  "views": [
-    {
-      "name": "System Context",
-      "include": [
-        "req42-project.system",
-        "req42-project.data_asciidoc",
-        "req42-project.data_bausteinsicht",
-        "req42-project.data_tests",
-        "req42-project.tool_lsp"
-      ]
+
+  // Architecture model — hierarchical via children
+  "model": {
+    "system": {
+      "kind": "system",
+      "title": "req42-tracer System",
+      "description": "Requirements Tracing Tool for ASPICE PAM 4.0",
+      "children": {
+        "backend": {
+          "kind": "container",
+          "title": "Backend",
+          "technology": "Go",
+          "description": "Core analysis engine",
+          "children": {
+            "model": {
+              "kind": "component",
+              "title": "Domain Model",
+              "technology": "Go",
+              "description": "Shared data types (Requirement, ArchElement, TraceLink, Graph) and configuration loading",
+              "impl": "internal/model"
+            },
+            "parser": {
+              "kind": "component",
+              "title": "Document Parser",
+              "technology": "Go",
+              "description": "Parses AsciiDoc files and Bausteinsicht JSONC models",
+              "impl": "internal/parser",
+              "children": {
+                "adoc": {
+                  "kind": "component",
+                  "title": "AsciiDoc Scanner",
+                  "technology": "Go",
+                  "description": "Extracts [req], [arch], [test-spec] blocks via regex",
+                  "impl": "internal/parser/adoc.go"
+                },
+                "arch": {
+                  "kind": "component",
+                  "title": "Architecture Block Parser",
+                  "technology": "Go",
+                  "description": "Parses [arch] blocks with hierarchy and req links",
+                  "impl": "internal/parser/adoc.go"
+                },
+                "jsonc": {
+                  "kind": "component",
+                  "title": "Bausteinsicht Loader",
+                  "technology": "Go",
+                  "description": "Parses JSONC architecture model",
+                  "impl": "internal/parser/bausteinsicht.go"
+                }
+              }
+            },
+            "graph": {
+              "kind": "component",
+              "title": "Traceability Graph Engine",
+              "technology": "Go",
+              "description": "Builds and analyzes the traceability graph",
+              "impl": "internal/graph",
+              "children": {
+                "builder": {
+                  "kind": "component",
+                  "title": "Graph Builder",
+                  "technology": "Go",
+                  "description": "Constructs traceability graph from parsed elements",
+                  "impl": "internal/graph/build.go"
+                },
+                "analyzer": {
+                  "kind": "component",
+                  "title": "Graph Analyzer",
+                  "technology": "Go",
+                  "description": "Detects gaps, orphans, stale traces and validates coverage",
+                  "impl": "internal/graph/analysis.go"
+                }
+              }
+            },
+            "aspice": {
+              "kind": "component",
+              "title": "ASPICE Checker",
+              "technology": "Go",
+              "description": "Validates process coverage against PAM 4.0",
+              "impl": "internal/aspice"
+            },
+            "report": {
+              "kind": "component",
+              "title": "Report Generator",
+              "technology": "Go",
+              "description": "Produces CLI and HTML reports",
+              "impl": "internal/report"
+            },
+            "templates": {
+              "kind": "component",
+              "title": "Project Templates",
+              "technology": "Go",
+              "description": "Embedded default templates used by the init command",
+              "impl": "internal/templates"
+            },
+            "testresult": {
+              "kind": "component",
+              "title": "Test Result Loader",
+              "technology": "Go",
+              "description": "Loads JUnit XML and go-test JSON test results",
+              "impl": "internal/testresult"
+            },
+            "lsp": {
+              "kind": "component",
+              "title": "LSP Server",
+              "technology": "Go",
+              "description": "JSON-RPC 2.0 over stdio; initialize/completion/diagnostics",
+              "impl": "internal/lsp",
+              "children": {
+                "complete": {
+                  "kind": "component",
+                  "title": "LSP Completion Provider",
+                  "technology": "Go",
+                  "description": "Detects req=/arch=/test-spec= context and returns CompletionList",
+                  "impl": "internal/lsp/complete.go"
+                }
+              }
+            }
+          }
+        },
+        "frontend": {
+          "kind": "container",
+          "title": "Frontend",
+          "technology": "HTML/CSS/JavaScript",
+          "description": "Interactive HTML report views",
+          "children": {
+            "graph_view": {
+              "kind": "component",
+              "title": "Graph Visualization View",
+              "technology": "D3.js",
+              "description": "Force-directed dependency graph with hover labels"
+            },
+            "matrix_view": {
+              "kind": "component",
+              "title": "Traceability Matrix View",
+              "technology": "HTML Tables",
+              "description": "Sortable, filterable requirements traceability matrix with CSV export"
+            },
+            "aspice_view": {
+              "kind": "component",
+              "title": "ASPICE Dashboard View",
+              "technology": "HTML/CSS",
+              "description": "Per-process coverage bars with process filter"
+            }
+          }
+        },
+        "cli": {
+          "kind": "container",
+          "title": "CLI",
+          "technology": "Go",
+          "description": "Cobra-based CLI tool",
+          "children": {
+            "init": {
+              "kind": "component",
+              "title": "Init Command",
+              "technology": "Go",
+              "description": "Initializes new req42+arc42 project with templates",
+              "impl": "cmd/req42-tracer/init.go"
+            },
+            "trace": {
+              "kind": "component",
+              "title": "Trace Command",
+              "technology": "Go",
+              "description": "Runs traceability analysis and produces matrix report",
+              "impl": "cmd/req42-tracer/trace.go"
+            },
+            "gaps": {
+              "kind": "component",
+              "title": "Gaps Command",
+              "technology": "Go",
+              "description": "Analyses graph and reports orphan elements and missing links",
+              "impl": "cmd/req42-tracer/gaps.go"
+            },
+            "validate": {
+              "kind": "component",
+              "title": "Validate Command",
+              "technology": "Go",
+              "description": "Validates project structure and cross-references",
+              "impl": "cmd/req42-tracer/validate.go"
+            },
+            "aspice": {
+              "kind": "component",
+              "title": "ASPICE Command",
+              "technology": "Go",
+              "description": "Validates ASPICE PAM 4.0 compliance",
+              "impl": "cmd/req42-tracer/aspice.go"
+            },
+            "watch": {
+              "kind": "component",
+              "title": "Watch Command",
+              "technology": "Go",
+              "description": "File watcher with live-reload HTML report server",
+              "impl": "cmd/req42-tracer/watch.go"
+            },
+            "lsp": {
+              "kind": "component",
+              "title": "LSP Command",
+              "technology": "Go",
+              "description": "Starts LSP server on stdio",
+              "impl": "cmd/req42-tracer/lsp.go"
+            }
+          }
+        }
+      }
     },
-    {
-      "name": "Container",
-      "include": [
-        "req42-project.backend",
-        "req42-project.frontend",
-        "req42-project.cli",
-        "req42-project.data_asciidoc",
-        "req42-project.data_bausteinsicht",
-        "req42-project.data_tests"
-      ]
+
+    // External data sources
+    "data_asciidoc": {
+      "kind": "external_system",
+      "title": "AsciiDoc Source Files",
+      "technology": "Text",
+      "description": "Requirements, architecture and test-spec blocks in .adoc files"
     },
-    {
-      "name": "Component — Backend",
-      "include": [
-        "req42-project.backend_model",
-        "req42-project.backend_parser",
-        "req42-project.backend_graph",
-        "req42-project.backend_aspice",
-        "req42-project.backend_report",
-        "req42-project.backend_templates",
-        "req42-project.backend_testresult",
-        "req42-project.data_asciidoc",
-        "req42-project.data_bausteinsicht",
-        "req42-project.data_tests"
-      ]
+    "data_bausteinsicht": {
+      "kind": "external_system",
+      "title": "Bausteinsicht Model",
+      "technology": "JSONC",
+      "description": "Architecture model file (architecture.jsonc)"
     },
-    {
-      "name": "Component — Frontend",
-      "include": [
-        "req42-project.frontend_graph_view",
-        "req42-project.frontend_matrix_view",
-        "req42-project.frontend_aspice_view"
-      ]
+    "data_tests": {
+      "kind": "external_system",
+      "title": "Test Reports",
+      "technology": "JUnit XML / JSON",
+      "description": "CI-generated test result artifacts"
     },
-    {
-      "name": "Component — CLI",
-      "include": [
-        "req42-project.cli_init",
-        "req42-project.cli_trace",
-        "req42-project.cli_gaps",
-        "req42-project.cli_validate",
-        "req42-project.cli_aspice",
-        "req42-project.cli_watch",
-        "req42-project.cli_lsp",
-        "req42-project.backend_parser",
-        "req42-project.backend_graph",
-        "req42-project.backend_model"
-      ]
-    },
-    {
-      "name": "Component — Backend Level 2",
-      "include": [
-        "req42-project.backend_parser",
-        "req42-project.backend_parser_adoc",
-        "req42-project.backend_parser_arch",
-        "req42-project.backend_parser_jsonc",
-        "req42-project.backend_graph",
-        "req42-project.backend_graph_builder",
-        "req42-project.backend_graph_analyzer"
-      ]
+    "tool_lsp": {
+      "kind": "external_system",
+      "title": "IDE / Editor",
+      "technology": "LSP Protocol",
+      "description": "VS Code, IntelliJ or any LSP-capable editor"
     }
-  ]
+  },
+
+  // Views — each becomes a diagram page
+  "views": {
+    "context": {
+      "title": "System Context",
+      "include": ["system", "data_asciidoc", "data_bausteinsicht", "data_tests", "tool_lsp"],
+      "layout": "layered"
+    },
+    "containers": {
+      "title": "Containers",
+      "scope": "system",
+      "include": ["system.*", "data_asciidoc", "data_bausteinsicht", "data_tests"],
+      "layout": "layered"
+    },
+    "backend": {
+      "title": "Component — Backend",
+      "scope": "system.backend",
+      "include": ["system.backend.*", "data_asciidoc", "data_bausteinsicht", "data_tests"],
+      "layout": "layered"
+    },
+    "backend_level2": {
+      "title": "Component — Backend Level 2",
+      "scope": "system.backend",
+      "include": [
+        "system.backend.parser", "system.backend.parser.*",
+        "system.backend.graph", "system.backend.graph.*"
+      ]
+    },
+    "frontend": {
+      "title": "Component — Frontend",
+      "scope": "system.frontend",
+      "include": ["system.frontend.*"]
+    },
+    "cli": {
+      "title": "Component — CLI",
+      "scope": "system.cli",
+      "include": ["system.cli.*", "system.backend.parser", "system.backend.graph", "system.backend.model"],
+      "layout": "layered"
+    }
+  }
 }
