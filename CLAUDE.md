@@ -45,20 +45,5 @@ internal/
 - `req42-tracer watch --open` — Watch + live-reload
 - `req42-tracer lsp` — LSP-Server
 
-## Security Review Workflow
-Nach jedem Security-Review (z.B. `/security-review`) müssen alle Findings als **Inline-Kommentare direkt im GitHub PR** an der exakten Codezeile dokumentiert werden — gleicher Mechanismus wie beim Code Review (siehe unten). Schweregrad im Kommentar angeben: 🔴 Critical / 🟠 High / 🟡 Medium / 🔵 Low. Kritische Findings sofort fixen vor dem Merge.
-
-## Code Review Workflow
-Nach jedem Code-Review (z.B. `/code-review`) müssen alle bestätigten Findings (CONFIRMED/PLAUSIBLE) als **Inline-Kommentare direkt im GitHub PR** an der exakten Codezeile dokumentiert werden:
-
-```bash
-gh api repos/OWNER/REPO/pulls/PR_NUMBER/comments \
-  --method POST \
-  --field body="**Bug (Code Review):** ..." \
-  --field commit_id="COMMIT_SHA" \
-  --field path="path/to/file.go" \
-  --field line=LINE_NUMBER \
-  --field side="RIGHT"
-```
-
-REFUTED-Findings werden nicht kommentiert. Bugs die dabei gefunden werden sofort fixen, committen und pushen — dann den Kommentar an die geänderte Zeile setzen.
+## Review Workflow
+Siehe [`REVIEW.md`](REVIEW.md) für den vollständigen Code- und Security-Review-Prozess inkl. Inline-Kommentare im PR.
