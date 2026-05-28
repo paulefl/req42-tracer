@@ -65,11 +65,26 @@
           "technology": "Go",
           "impl": "internal/graph/analysis.go"
         },
+        "backend_model": {
+          "description": "Domain Model (shared types + config)",
+          "type": "Component",
+          "parent": "backend",
+          "technology": "Go",
+          "impl": "internal/model"
+        },
+        "backend_testresult": {
+          "description": "Test Result Loader (JUnit XML, go-test JSON)",
+          "type": "Component",
+          "parent": "backend",
+          "technology": "Go",
+          "impl": "internal/testresult"
+        },
         "backend_aspice": {
           "description": "ASPICE PAM 4.0 Validator",
           "type": "Component",
           "parent": "backend",
-          "technology": "Go"
+          "technology": "Go",
+          "impl": "internal/aspice"
         },
         "backend_report": {
           "description": "Report Generator",
@@ -110,7 +125,14 @@
           "type": "Component",
           "parent": "cli",
           "technology": "Go",
-          "impl": "internal/cmd"
+          "impl": "cmd/req42-tracer/init.go"
+        },
+        "cli_validate": {
+          "description": "Validate Command",
+          "type": "Component",
+          "parent": "cli",
+          "technology": "Go",
+          "impl": "cmd/req42-tracer/validate.go"
         },
         "cli_trace": {
           "description": "Trace Command",
@@ -141,11 +163,10 @@
           "impl": "cmd/req42-tracer/watch.go"
         },
         "cli_lsp": {
-          "description": "LSP Server Command",
+          "description": "LSP Server Command (planned)",
           "type": "Component",
           "parent": "cli",
-          "technology": "Go",
-          "impl": "cmd/req42-tracer/lsp.go"
+          "technology": "Go"
         },
         "data_asciidoc": {
           "description": "AsciiDoc Source Files",
@@ -195,10 +216,12 @@
     {
       "name": "Component — Backend",
       "include": [
+        "req42-project.backend_model",
         "req42-project.backend_parser",
         "req42-project.backend_graph",
         "req42-project.backend_aspice",
         "req42-project.backend_report",
+        "req42-project.backend_testresult",
         "req42-project.data_asciidoc",
         "req42-project.data_bausteinsicht",
         "req42-project.data_tests"
@@ -218,11 +241,13 @@
         "req42-project.cli_init",
         "req42-project.cli_trace",
         "req42-project.cli_gaps",
+        "req42-project.cli_validate",
         "req42-project.cli_aspice",
         "req42-project.cli_watch",
         "req42-project.cli_lsp",
         "req42-project.backend_parser",
-        "req42-project.backend_graph"
+        "req42-project.backend_graph",
+        "req42-project.backend_model"
       ]
     },
     {
