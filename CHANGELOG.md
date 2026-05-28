@@ -6,6 +6,15 @@ All notable changes to this project will be documented in this file.
 
 ### Features
 
+- **feat(lsp): Phase 3.3 — Hover Tooltips** (#7, PR #32)
+  - `textDocument/hover` → Markdown-Tooltip für `req=`, `arch=`, `test-spec=` Werte unter dem Cursor
+  - `detectHoverValue()`: findet Attribut-Wert an Cursor-Position (byte-genaue Bereichsprüfung)
+  - `buildHoverContent()`: gibt Titel, Text und Metadaten (Priority/Status/ASPICE, impl/parent) zurück
+  - `hoverProvider: true` in Capabilities advertised
+  - Traceability: `comp.lsp.hover`, `TS-LSP-010/011/012`, `bausteinsicht validate` ✅
+
+### Features
+
 - **feat(lsp): Phase 3.1 — LSP Server Skeleton** (#5, PR #30)
   - `internal/lsp/server.go`: JSON-RPC 2.0 over stdio mit Content-Length-Framing
   - `initialize` → `InitializeResult` (textDocumentSync:1, serverInfo)
