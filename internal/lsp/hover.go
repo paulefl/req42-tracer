@@ -16,12 +16,9 @@ var hoverPattern = regexp.MustCompile(`(?:^|[,\s])(req|arch|test-spec)=([^,\]"'\
 // column in the line, or ("", "", false) if the cursor is not over a value.
 func detectHoverValue(line string, col int) (attr, value string, ok bool) {
 	for _, m := range hoverPattern.FindAllStringSubmatchIndex(line, -1) {
-		// m[4],m[5] = start/end of attr name, m[6],m[7] = start/end of value
-		attrStart, attrEnd := m[2], m[3]
+		// m[2]:m[3] = attr name (group 1), m[4]:m[5] = value (group 2); valEnd is exclusive
 		valStart, valEnd := m[4], m[5]
-		_ = attrStart
-		_ = attrEnd
-		if col >= valStart && col <= valEnd {
+		if col >= valStart && col < valEnd {
 			return line[m[2]:m[3]], line[valStart:valEnd], true
 		}
 	}

@@ -1,6 +1,7 @@
 package lsp
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/paulefl/req42-tracer/internal/model"
@@ -52,8 +53,10 @@ func TestDetectHoverValue(t *testing.T) {
 		{"[req,id=SWE-001,req=REQ-LSP-001]", 24, "req", "REQ-LSP-001", true},
 		// cursor at start of req value
 		{"[req,id=SWE-001,req=REQ-LSP-001]", 20, "req", "REQ-LSP-001", true},
-		// cursor at end of req value
+		// cursor at last char of req value (inclusive)
 		{"[req,id=SWE-001,req=REQ-LSP-001]", 30, "req", "REQ-LSP-001", true},
+		// cursor one past end of value (exclusive — on ']')
+		{"[req,id=SWE-001,req=REQ-LSP-001]", 31, "", "", false},
 		// cursor on arch value
 		{"[arch,id=comp.api,arch=comp.lsp]", 24, "arch", "comp.lsp", true},
 		// cursor on test-spec value
@@ -96,7 +99,7 @@ func TestBuildHoverContent_Req(t *testing.T) {
 	}
 	// Must contain ID and title
 	for _, want := range []string{"REQ-LSP-001", "LSP server integration"} {
-		if !containsStr(result.Contents.Value, want) {
+		if !strings.Contains(result.Contents.Value, want) {
 			t.Errorf("hover content missing %q\ncontent: %s", want, result.Contents.Value)
 		}
 	}
@@ -111,7 +114,7 @@ func TestBuildHoverContent_Arch(t *testing.T) {
 		t.Fatal("expected non-nil hover result for known arch element")
 	}
 	for _, want := range []string{"comp.lsp", "LSP Server Component"} {
-		if !containsStr(result.Contents.Value, want) {
+		if !strings.Contains(result.Contents.Value, want) {
 			t.Errorf("hover content missing %q\ncontent: %s", want, result.Contents.Value)
 		}
 	}
@@ -132,21 +135,8 @@ func TestBuildHoverContent_TestSpec(t *testing.T) {
 		t.Fatal("expected non-nil hover result for known test spec")
 	}
 	for _, want := range []string{"TS-LSP-001", "Initialize handshake"} {
-		if !containsStr(result.Contents.Value, want) {
+		if !strings.Contains(result.Contents.Value, want) {
 			t.Errorf("hover content missing %q", want)
 		}
 	}
-}
-
-func containsStr(s, sub string) bool {
-	return len(s) >= len(sub) && (s == sub || len(s) > 0 && containsSubstr(s, sub))
-}
-
-func containsSubstr(s, sub string) bool {
-	for i := 0; i <= len(s)-len(sub); i++ {
-		if s[i:i+len(sub)] == sub {
-			return true
-		}
-	}
-	return false
 }
