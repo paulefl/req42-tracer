@@ -884,7 +884,7 @@ const HTMLTemplate = `<!DOCTYPE html>
                 .append('text')
                 .attr('class', 'link-label')
                 .attr('text-anchor', 'middle')
-                .text(d => d.type || '')
+                .text(d => d.label || '')
                 .style('pointer-events', 'none')
                 .style('opacity', '0');
 
@@ -987,6 +987,7 @@ const HTMLTemplate = `<!DOCTYPE html>
                     globalNode.style('display', 'block');
                     globalLabel.style('display', 'block');
                     globalLink.style('display', 'line');
+                    if (globalEdgeLabel) globalEdgeLabel.style('opacity', '0');
                     return;
                 }
                 const typeMap = {};
@@ -995,6 +996,9 @@ const HTMLTemplate = `<!DOCTYPE html>
                 globalNode.style('display', d => typeMap[d.type] ? 'block' : 'none');
                 globalLabel.style('display', d => typeMap[d.type] ? 'block' : 'none');
                 globalLink.style('display', d => typeMap[d.source.type] && typeMap[d.target.type] ? 'line' : 'none');
+                if (globalEdgeLabel) {
+                    globalEdgeLabel.style('opacity', '0');
+                }
             }
 
             function updateFilterButtons(active) {
@@ -1281,7 +1285,7 @@ const HTMLTemplate = `<!DOCTYPE html>
             html += '<th style="cursor:pointer" onclick="sortMatrix(\'priority\')">Priority' + sortArrow('priority') + '</th>';
             html += '<th style="cursor:pointer" onclick="sortMatrix(\'status\')">Status' + sortArrow('status') + '</th>';
             matrixData.columns.forEach(col => {
-                html += '<th style="cursor:pointer" title="' + escHtml(col.Title) + '" onclick="sortMatrix(' + JSON.stringify(col.ID) + ')">' + escHtml(col.ID) + sortArrow(col.ID) + '</th>';
+                html += '<th style="cursor:pointer" title="' + escHtml(col.Title) + '" onclick="sortMatrix(\'' + escHtml(col.ID) + '\')">' + escHtml(col.ID) + sortArrow(col.ID) + '</th>';
             });
             html += '</tr></thead><tbody>';
 
