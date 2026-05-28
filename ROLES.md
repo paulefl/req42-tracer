@@ -61,11 +61,30 @@ dev-paul-fleischmann          paulefl
         │  <─────────────────────┤
 ```
 
+## Account-Switching via gh CLI
+
+Beide Accounts sind in der lokalen `gh`-Session hinterlegt. Claude Code kann jederzeit zwischen ihnen wechseln:
+
+```bash
+# Für Implementierung (commit, push, PR öffnen)
+gh auth switch --user dev-paul-fleischmann
+
+# Für Review & Merge (approve, merge, inline-Kommentare)
+gh auth switch --user paulefl
+
+# Aktuell aktiven Account prüfen
+gh auth status
+```
+
+**Konvention:** Nach jedem PR-Merge zurück auf `paulefl` wechseln (Default-Account).
+
+Claude Code wendet das Switching automatisch an — vor Implementierungsschritten auf `dev-paul-fleischmann`, vor Review-Schritten auf `paulefl`.
+
 ## GitHub Konfiguration
 
 | Setting | Wert |
 |---|---|
 | Default branch | `master` |
 | Branch protection | PR required, 1 approval (`paulefl`) |
-| Implementierung | `dev-paul-fleischmann` |
-| Review & Merge | `paulefl` |
+| Implementierung | `dev-paul-fleischmann` (write) |
+| Review & Merge | `paulefl` (admin) |
