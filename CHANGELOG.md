@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Features
+
+- **feat(lsp): Phase 3.1 — LSP Server Skeleton** (#5, PR #30)
+  - `internal/lsp/server.go`: JSON-RPC 2.0 over stdio mit Content-Length-Framing
+  - `initialize` → `InitializeResult` (textDocumentSync:1, serverInfo)
+  - `shutdown` + `exit` Lifecycle korrekt implementiert (shutdown wartet auf exit)
+  - Write-Fehler propagiert; non-fatal read errors werden geloggt und übersprungen
+  - Case-insensitive `Content-Length`-Header-Matching
+  - `cmd/req42-tracer/lsp.go`: Cobra-Command aktiviert in root.go
+  - 3 Tests: initialize handshake, shutdown/exit sequence, unknown method
+  - `REVIEW.md`: Traceability-Check Sektion (7-Punkte-Checkliste, Test-Spec-Format)
+
 ### Documentation
 
 - **docs(arch): sync architecture.jsonc with arc42.adoc** (#25)
