@@ -151,8 +151,18 @@ func TestBuildASPICEDashboardData_DefaultProcesses(t *testing.T) {
 
 	data := BuildASPICEDashboardData(analyzer, config)
 
-	if len(data.Processes) == 0 {
-		t.Error("Expected default processes when config list is empty")
+	expectedDefaults := []string{"SWE.1", "SWE.2", "SWE.3", "SWE.5"}
+	if len(data.Processes) != len(expectedDefaults) {
+		t.Errorf("Expected %d default processes, got %d", len(expectedDefaults), len(data.Processes))
+	}
+	ids := make(map[string]bool)
+	for _, p := range data.Processes {
+		ids[p.ID] = true
+	}
+	for _, want := range expectedDefaults {
+		if !ids[want] {
+			t.Errorf("Expected default process %s missing from result", want)
+		}
 	}
 }
 
