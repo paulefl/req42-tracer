@@ -177,6 +177,20 @@
           "technology": "Go",
           "impl": "cmd/req42-tracer/lsp.go"
         },
+        "backend_lsp": {
+          "description": "LSP Server (JSON-RPC 2.0 stdio)",
+          "type": "Component",
+          "parent": "backend",
+          "technology": "Go",
+          "impl": "internal/lsp"
+        },
+        "backend_lsp_complete": {
+          "description": "LSP Completion Provider",
+          "type": "Component",
+          "parent": "backend_lsp",
+          "technology": "Go",
+          "impl": "internal/lsp/complete.go"
+        },
         "data_asciidoc": {
           "description": "AsciiDoc Source Files",
           "type": "External System",

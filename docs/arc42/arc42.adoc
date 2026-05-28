@@ -181,6 +181,14 @@ Constructs traceability graph from parsed elements.
 
 Detects gaps, orphans, stale traces, and validates coverage.
 
+=== 5.4 Level 2 — LSP Subcomponents
+
+[arch,id=comp.lsp.complete,parent=comp.lsp,aspice=SWE.3,impl=internal/lsp/complete.go,req=REQ-LSP-001]
+==== LSP Completion Provider
+
+Detects `req=`, `arch=`, `test-spec=` attribute context from cursor position
+and returns filtered, sorted CompletionList from the traceability graph.
+
 == 6. Runtime View
 
 Describes dynamic behavior during execution.
