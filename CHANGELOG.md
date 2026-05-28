@@ -49,3 +49,16 @@ All notable changes to this project will be documented in this file.
 
 - **feat(watch):** Watch mode with HTTP server and live-reload (Phase 2.4) (#24)
 - **feat(report):** ASPICE Dashboard Tab in HTML reports (Phase 2.3) (#23)
+
+### Features (Phase 3.4 + 3.5)
+
+- **feat(lsp): Phase 3.4 — Diagnostics** (#8, PR #34)
+  - `textDocument/publishDiagnostics` nach jedem `didOpen`/`didChange`
+  - Unbekannte `req=`/`arch=`/`test-spec=`-Werte → rote Unterstreichung (error severity)
+  - `source: "req42-tracer"`, byte-exakter Range
+
+- **feat(lsp): Phase 3.5 — Go-to-Definition F12** (#9, PR #35)
+  - `textDocument/definition` → `Location {file:// URI, 0-based line}`
+  - Cross-File-Navigation zu `.adoc` und `_test.go` Definitionen
+  - RFC-8089-konformes URI-Format (Unix + Windows)
+  - `lineAt()` Helper extrahiert, `TS-LSP-016..019`
