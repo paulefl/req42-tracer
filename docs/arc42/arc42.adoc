@@ -58,6 +58,13 @@ The project tool connects three primary data sources:
 - Bausteinsicht architecture model (JSON)
 - CI test reports (JUnit XML, go-test JSON)
 
+[arch,id=diag.context,parent=system.context,aspice=SWE.2,impl=docs/arc42/diagrams/context.adoc,req=REQ-REPORT-001]
+==== Context Diagram (Bausteinsicht)
+
+Generated from `architecture.jsonc` via `scripts/generate-diagrams.sh`.
+
+include::diagrams/context.adoc[]
+
 == 4. Solution Strategy
 
 === 4.1 Overview
@@ -78,6 +85,13 @@ The tool follows a graph-based architecture:
 - Analysis: coverage, orphans, stale-detection
 
 == 5. Building Block View
+
+[arch,id=diag.containers,parent=comp.system,aspice=SWE.2,impl=docs/arc42/diagrams/containers.adoc,req=REQ-REPORT-001]
+==== Container Diagram (Bausteinsicht)
+
+Generated from `architecture.jsonc` via `scripts/generate-diagrams.sh`.
+
+include::diagrams/containers.adoc[]
 
 === 5.0 Level 1 — Initialization
 
@@ -115,6 +129,23 @@ JSON-RPC 2.0 over stdio; supports initialize/shutdown/exit handshake.
 
 === 5.1 Level 1 — Whitebox
 
+[arch,id=diag.backend,parent=comp.system,aspice=SWE.2,impl=docs/arc42/diagrams/backend.adoc,req=REQ-REPORT-001]
+==== Component Diagram — Backend (Bausteinsicht)
+
+Generated from `architecture.jsonc` via `scripts/generate-diagrams.sh`.
+
+include::diagrams/backend.adoc[]
+
+[arch,id=diag.frontend,parent=comp.system,aspice=SWE.2,impl=docs/arc42/diagrams/frontend.adoc,req=REQ-REPORT-001]
+==== Component Diagram — Frontend (Bausteinsicht)
+
+include::diagrams/frontend.adoc[]
+
+[arch,id=diag.cli,parent=comp.system,aspice=SWE.2,impl=docs/arc42/diagrams/cli.adoc,req=REQ-REPORT-001]
+==== Component Diagram — CLI (Bausteinsicht)
+
+include::diagrams/cli.adoc[]
+
 The system consists of the following top-level components:
 
 [arch,id=comp.parser,parent=comp.system,aspice=SWE.2,impl=internal/parser,req=REQ-PARSE-001,REQ-PARSE-002,REQ-PARSE-003,REQ-INIT-001]
@@ -151,6 +182,11 @@ Loads test execution results from JUnit XML and go-test JSON formats for traceab
 ==== Project Templates
 
 Embedded default templates (req42.adoc, arc42.adoc, architecture.jsonc, .req42.yaml) used by the init command.
+
+[arch,id=diag.backend_level2,parent=comp.system,aspice=SWE.3,impl=docs/arc42/diagrams/backend_level2.adoc,req=REQ-REPORT-001]
+==== Component Diagram — Backend Level 2 (Bausteinsicht)
+
+include::diagrams/backend_level2.adoc[]
 
 === 5.2 Level 2 — Parser Subcomponents
 
