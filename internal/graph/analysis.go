@@ -9,6 +9,13 @@ import (
 // Analyzer performs gap analysis and coverage reporting on a traceability graph.
 type Analyzer struct {
 	graph *model.TraceabilityGraph
+
+	// Precomputed index: requirement ID → set of arch IDs that reference it.
+	// Built lazily on first use, reset to nil when graph changes.
+	reqToArch map[string]map[string]struct{}
+
+	// Precomputed index: arch IDs that have at least one verified-by link.
+	testedArchIDs map[string]struct{}
 }
 
 // NewAnalyzer creates a new graph analyzer.
@@ -21,8 +28,35 @@ func (a *Analyzer) GetGraph() *model.TraceabilityGraph {
 	return a.graph
 }
 
+// buildIndex computes reqToArch and testedArchIDs if not already done.
+// O(|ArchElements| × avg|Req|) + O(|Links|)
+func (a *Analyzer) buildIndex() {
+	if a.reqToArch != nil {
+		return
+	}
+	a.reqToArch = make(map[string]map[string]struct{}, len(a.graph.Requirements))
+	a.testedArchIDs = make(map[string]struct{})
+
+	for archID, arch := range a.graph.ArchElements {
+		for _, reqID := range arch.Req {
+			if a.reqToArch[reqID] == nil {
+				a.reqToArch[reqID] = make(map[string]struct{})
+			}
+			a.reqToArch[reqID][archID] = struct{}{}
+		}
+	}
+
+	for _, link := range a.graph.Links {
+		if link.LinkType == "verified-by" && link.FromType == "arch" {
+			a.testedArchIDs[link.FromID] = struct{}{}
+		}
+	}
+}
+
 // AnalyzeGaps performs a comprehensive gap analysis.
 func (a *Analyzer) AnalyzeGaps() *model.GapAnalysisResult {
+	a.buildIndex()
+
 	gap := &model.GapAnalysisResult{
 		OrphanRequirements:    []*model.Requirement{},
 		OrphanArchElements:    []*model.ArchElement{},
@@ -32,44 +66,38 @@ func (a *Analyzer) AnalyzeGaps() *model.GapAnalysisResult {
 		StaleTraces:           []*model.TraceLink{},
 	}
 
-	// Find orphan requirements (not referenced by architecture)
+	// O(|Requirements|) — O(1) lookup via index
 	for _, req := range a.graph.Requirements {
-		if !a.isRequirementCovered(req.ID) {
+		if len(a.reqToArch[req.ID]) == 0 {
 			gap.OrphanRequirements = append(gap.OrphanRequirements, req)
 		}
 	}
 
-	// Find orphan architecture elements (not referencing requirements)
+	// O(|ArchElements|)
 	for _, arch := range a.graph.ArchElements {
 		if len(arch.Req) == 0 && arch.Parent != "" {
-			// Only flag child elements without requirements
 			gap.OrphanArchElements = append(gap.OrphanArchElements, arch)
+		}
+		if arch.Impl == "" && arch.Parent != "" {
+			gap.MissingImplementation = append(gap.MissingImplementation, arch)
 		}
 	}
 
-	// Find orphan test specs (not linked to requirements or arch)
+	// O(|TestSpecs|)
 	for _, spec := range a.graph.TestSpecs {
 		if len(spec.Req) == 0 && len(spec.Arch) == 0 {
 			gap.OrphanTestSpecs = append(gap.OrphanTestSpecs, spec)
 		}
 	}
 
-	// Find untraced test results (not linked to specs or codes)
+	// O(|TestResults|)
 	for _, result := range a.graph.TestResults {
 		if result.LinkedSpec == "" && result.LinkedCode == "" {
 			gap.UntracedTestResults = append(gap.UntracedTestResults, result)
 		}
 	}
 
-	// Find architecture without implementation
-	for _, arch := range a.graph.ArchElements {
-		if arch.Impl == "" && arch.Parent != "" {
-			// Only flag detailed elements without impl
-			gap.MissingImplementation = append(gap.MissingImplementation, arch)
-		}
-	}
-
-	// Find stale traces (references to outdated versions)
+	// O(|Links|)
 	for _, link := range a.graph.Links {
 		if link.Status == "stale" {
 			gap.StaleTraces = append(gap.StaleTraces, link)
@@ -81,28 +109,34 @@ func (a *Analyzer) AnalyzeGaps() *model.GapAnalysisResult {
 
 // CalculateCoverage computes traceability coverage metrics.
 func (a *Analyzer) CalculateCoverage() *model.CoverageReport {
+	a.buildIndex()
+
 	report := &model.CoverageReport{
 		TotalRequirements: len(a.graph.Requirements),
 		TotalTestResults:  len(a.graph.TestResults),
 	}
 
-	// Count covered requirements
+	// O(|Requirements|) — O(1) index lookups
 	for _, req := range a.graph.Requirements {
-		if a.isRequirementCovered(req.ID) {
+		archIDs := a.reqToArch[req.ID]
+		if len(archIDs) > 0 {
 			report.CoveredByArch++
-			if a.isRequirementTestedByArch(req.ID) {
-				report.CoveredByTests++
+			// Tested if any covering arch has a verified-by link
+			for archID := range archIDs {
+				if _, tested := a.testedArchIDs[archID]; tested {
+					report.CoveredByTests++
+					break
+				}
 			}
 		}
 	}
 
-	// Calculate percentages
 	if report.TotalRequirements > 0 {
 		report.RequirementCoverage = float64(report.CoveredByArch) / float64(report.TotalRequirements) * 100
 		report.TestCoverage = float64(report.CoveredByTests) / float64(report.TotalRequirements) * 100
 	}
 
-	// Count test results by status
+	// O(|TestResults|)
 	for _, result := range a.graph.TestResults {
 		switch result.Status {
 		case "passed":
@@ -114,12 +148,10 @@ func (a *Analyzer) CalculateCoverage() *model.CoverageReport {
 		}
 	}
 
-	// Calculate pass rate
 	if report.TotalTestResults > 0 {
 		report.PassRate = float64(report.PassedTests) / float64(report.TotalTestResults-report.SkippedTests) * 100
 	}
 
-	// Architecture coverage (all elements referenced by at least one requirement)
 	totalArch := len(a.graph.ArchElements)
 	coveredArch := 0
 	for _, arch := range a.graph.ArchElements {
@@ -134,41 +166,12 @@ func (a *Analyzer) CalculateCoverage() *model.CoverageReport {
 	return report
 }
 
-// isRequirementCovered checks if a requirement is referenced by at least one architecture element.
-func (a *Analyzer) isRequirementCovered(reqID string) bool {
-	for _, arch := range a.graph.ArchElements {
-		for _, ref := range arch.Req {
-			if ref == reqID {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// isRequirementTestedByArch checks if a requirement is transitively covered by tests.
-func (a *Analyzer) isRequirementTestedByArch(reqID string) bool {
-	// Find architecture elements covering this requirement
-	for _, arch := range a.graph.ArchElements {
-		for _, ref := range arch.Req {
-			if ref == reqID {
-				// Check if this arch element is tested
-				for _, link := range a.graph.Links {
-					if link.FromID == arch.ID && link.LinkType == "verified-by" {
-						return true
-					}
-				}
-			}
-		}
-	}
-	return false
-}
-
 // GetOrphanRequirementsByProject returns orphan requirements for a specific project.
 func (a *Analyzer) GetOrphanRequirementsByProject(project string) []*model.Requirement {
+	a.buildIndex()
 	var orphans []*model.Requirement
 	for _, req := range a.graph.Requirements {
-		if req.Project == project && !a.isRequirementCovered(req.ID) {
+		if req.Project == project && len(a.reqToArch[req.ID]) == 0 {
 			orphans = append(orphans, req)
 		}
 	}
@@ -177,27 +180,30 @@ func (a *Analyzer) GetOrphanRequirementsByProject(project string) []*model.Requi
 
 // GetCoverageByProject returns coverage metrics for a specific project.
 func (a *Analyzer) GetCoverageByProject(project string) *model.CoverageReport {
+	a.buildIndex()
 	report := &model.CoverageReport{}
 
 	for _, req := range a.graph.Requirements {
 		if req.Project == project {
 			report.TotalRequirements++
-			if a.isRequirementCovered(req.ID) {
+			archIDs := a.reqToArch[req.ID]
+			if len(archIDs) > 0 {
 				report.CoveredByArch++
-				if a.isRequirementTestedByArch(req.ID) {
-					report.CoveredByTests++
+				for archID := range archIDs {
+					if _, ok := a.testedArchIDs[archID]; ok {
+						report.CoveredByTests++
+						break
+					}
 				}
 			}
 		}
 	}
 
-	// Calculate percentages
 	if report.TotalRequirements > 0 {
 		report.RequirementCoverage = float64(report.CoveredByArch) / float64(report.TotalRequirements) * 100
 		report.TestCoverage = float64(report.CoveredByTests) / float64(report.TotalRequirements) * 100
 	}
 
-	// Count test results by project
 	for _, result := range a.graph.TestResults {
 		if result.Project == project {
 			report.TotalTestResults++
@@ -212,7 +218,6 @@ func (a *Analyzer) GetCoverageByProject(project string) *model.CoverageReport {
 		}
 	}
 
-	// Calculate pass rate
 	activeTests := report.TotalTestResults - report.SkippedTests
 	if activeTests > 0 {
 		report.PassRate = float64(report.PassedTests) / float64(activeTests) * 100
@@ -236,7 +241,6 @@ func (a *Analyzer) GetLinksFor(artifactID string) []*model.TraceLink {
 func (a *Analyzer) ValidateReferences() []string {
 	var errors []string
 
-	// Check requirement references in architecture
 	for archID, arch := range a.graph.ArchElements {
 		for _, reqID := range arch.Req {
 			if _, exists := a.graph.Requirements[reqID]; !exists {
@@ -245,17 +249,12 @@ func (a *Analyzer) ValidateReferences() []string {
 		}
 	}
 
-	// Check architecture references in test specs
 	for specID, spec := range a.graph.TestSpecs {
 		for _, archID := range spec.Arch {
 			if _, exists := a.graph.ArchElements[archID]; !exists {
 				errors = append(errors, fmt.Sprintf("TestSpec %s references unknown architecture %s", specID, archID))
 			}
 		}
-	}
-
-	// Check requirement references in test specs
-	for specID, spec := range a.graph.TestSpecs {
 		for _, reqID := range spec.Req {
 			if _, exists := a.graph.Requirements[reqID]; !exists {
 				errors = append(errors, fmt.Sprintf("TestSpec %s references unknown requirement %s", specID, reqID))
@@ -263,7 +262,6 @@ func (a *Analyzer) ValidateReferences() []string {
 		}
 	}
 
-	// Check test spec references in test codes
 	for codeID, code := range a.graph.TestCodes {
 		if code.TestSpec != "" {
 			if _, exists := a.graph.TestSpecs[code.TestSpec]; !exists {
