@@ -1,0 +1,181 @@
+= AsciiDoc Block Attribute Reference
+:toc: left
+:toc-title: Contents
+:icons: font
+
+req42-tracer reads three types of structured blocks from AsciiDoc files.
+Each block is defined by a block attribute line `[type,key=value,...]` followed by a heading `== Title`.
+
+== [req] — Requirement
+
+Defines a software or system requirement.
+
+=== Syntax
+
+[source,asciidoc]
+----
+[req,id=<ID>,version=<N>,priority=<priority>,aspice=<process>,
+ status=<status>,reviewed-by=<reviewer>,reviewed-date=<YYYY-MM-DD>,
+ derives=<ID1>,<ID2>]
+== Requirement Title
+
+Requirement description text.
+----
+
+=== Attributes
+
+[cols="1,1,1,4",options="header"]
+|===
+| Attribute | Required | Example | Description
+| `id` | ✅ | `REQ-LOGIN-001` | Unique requirement ID. Convention: `REQ-<AREA>-<NNN>`
+| `version` | — | `1` | Integer version number (default: 0)
+| `priority` | — | `high` | `high`, `medium` (default), `low`
+| `aspice` | — | `SWE.1` | ASPICE process this requirement belongs to
+| `status` | — | `approved` | `draft` (default), `approved`, `deprecated`
+| `reviewed-by` | — | `paulefl` | Reviewer identifier
+| `reviewed-date` | — | `2026-03-15` | Review date in `YYYY-MM-DD` format
+| `derives` | — | `SYS-001,SYS-002` | IDs of parent requirements (comma-separated)
+|===
+
+=== Example
+
+[source,asciidoc]
+----
+[req,id=REQ-AUTH-001,version=2,priority=high,aspice=SWE.1,
+ status=approved,reviewed-by=paulefl,reviewed-date=2026-04-01,
+ derives=SYS-003]
+== System shall support session-based authentication
+
+The system shall create an authenticated session upon successful login.
+Sessions shall expire after 30 minutes of inactivity.
+
+Acceptance Criteria:
+- Login with valid credentials creates a session cookie
+- Expired sessions redirect to login page
+- Session tokens are cryptographically random (256 bit)
+----
+
+---
+
+== [arch] — Architecture Element
+
+Defines an architecture component, module, or sub-system.
+
+=== Syntax
+
+[source,asciidoc]
+----
+[arch,id=<ID>,parent=<parent-ID>,aspice=<process>,
+ req=<REQ-ID1>,<REQ-ID2>,impl=<path>,test-spec=<spec-ID>]
+== Component Title
+----
+
+=== Attributes
+
+[cols="1,1,1,4",options="header"]
+|===
+| Attribute | Required | Example | Description
+| `id` | ✅ | `comp.auth` | Unique element ID. Convention: dot-notation hierarchy `comp.area.sub`
+| `parent` | — | `comp.system` | Parent element ID. Omit for top-level (Level 1) elements
+| `aspice` | — | `SWE.2` | ASPICE process level. Auto-derived if `aspice.auto-derive: true`
+| `req` | — | `REQ-AUTH-001` | Referenced requirement IDs (comma-separated)
+| `impl` | — | `internal/auth/handler.go` | Implementation file or package path
+| `test-spec` | — | `TS-AUTH-001` | Linked test specification ID
+|===
+
+NOTE: Commas are also attribute separators in AsciiDoc block syntax. To reference multiple requirements, use separate `[arch]` blocks or list them consecutively: `req=REQ-001` (one per block).
+
+=== Hierarchy
+
+[source,asciidoc]
+----
+[arch,id=comp.system,aspice=SWE.2]           <1>
+== System (Level 1 — no parent)
+
+[arch,id=comp.auth,parent=comp.system,        <2>
+ aspice=SWE.2,req=REQ-AUTH-001,
+ impl=internal/auth]
+== Authentication Component (Level 2)
+
+[arch,id=comp.auth.session,parent=comp.auth,  <3>
+ aspice=SWE.3,req=REQ-AUTH-001,
+ impl=internal/auth/session.go]
+=== Session Manager (Level 3)
+----
+<1> Root element (no parent) — typically the whole system
+<2> Sub-component — references requirements via `req=`
+<3> Implementation unit — `SWE.3` level with `impl=` path
+
+---
+
+== [test-spec] — Test Specification
+
+Defines a test specification that links tests to requirements and architecture.
+
+=== Syntax
+
+[source,asciidoc]
+----
+[test-spec,id=<ID>,req=<REQ-ID>,arch=<ARCH-ID>,aspice=<process>]
+== Test Specification Title
+----
+
+=== Attributes
+
+[cols="1,1,1,4",options="header"]
+|===
+| Attribute | Required | Example | Description
+| `id` | ✅ | `TS-AUTH-001` | Unique spec ID. Convention: `TS-<AREA>-<NNN>`
+| `req` | — | `REQ-AUTH-001` | Referenced requirement IDs (comma-separated)
+| `arch` | — | `comp.auth` | Referenced architecture element IDs (comma-separated)
+| `aspice` | — | `SWE.5.BP3` | ASPICE best practice this test covers
+|===
+
+=== In-code test annotations
+
+For Go test functions, place the `[test-spec]` block as a comment directly before the function:
+
+[source,go]
+----
+// [test-spec,id=TS-AUTH-001,req="REQ-AUTH-001",aspice="SWE.5.BP3"]
+// TestSessionExpiry verifies that sessions expire after 30 minutes of inactivity.
+func TestSessionExpiry(t *testing.T) {
+    // ...
+}
+----
+
+req42-tracer parses `_test.go` files for these comments and includes them in the traceability graph.
+
+---
+
+== Traceability chain
+
+A complete trace from requirement to test looks like this:
+
+[source,asciidoc]
+----
+                [req,id=REQ-AUTH-001]          ← requirement
+                        ↓ req=
+                [arch,id=comp.auth]            ← architecture
+                        ↓ arch=
+          [test-spec,id=TS-AUTH-001]           ← specification
+                        ↓ (name-match)
+              func TestSessionLogin            ← test code
+                        ↓ (JUnit/go-test)
+                  TestSessionLogin PASS        ← test result
+----
+
+`req42-tracer trace` traverses this chain and reports coverage at each level.
+
+---
+
+== Naming conventions
+
+[cols="1,2",options="header"]
+|===
+| Artifact | Convention
+| Requirements | `REQ-<AREA>-<NNN>` e.g. `REQ-AUTH-001`, `REQ-PERF-002`
+| System-level | `SYS-<NNN>` e.g. `SYS-001`
+| Architecture | dot-notation `comp.<area>.<sub>` e.g. `comp.auth.session`
+| Test specs | `TS-<AREA>-<NNN>` e.g. `TS-AUTH-001`
+|===
