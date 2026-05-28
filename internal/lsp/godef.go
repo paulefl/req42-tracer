@@ -1,8 +1,8 @@
 package lsp
 
 import (
-	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/paulefl/req42-tracer/internal/model"
 )
@@ -45,15 +45,14 @@ func findDefinition(attr, id string, g *model.TraceabilityGraph) *Location {
 	if filePath == "" {
 		return nil
 	}
-
-	// Convert OS path to LSP file URI.
-	uri := pathToURI(filePath)
-
-	// LSP line numbers are 0-based; model stores 1-based.
-	line := lineNumber - 1
-	if line < 0 {
-		line = 0
+	// lineNumber == 0 is the Go zero-value (unset); model stores 1-based numbers.
+	// Return nil so the client doesn't silently jump to line 0 of the wrong file.
+	if lineNumber == 0 {
+		return nil
 	}
+
+	uri := pathToURI(filePath)
+	line := lineNumber - 1 // convert 1-based → 0-based
 
 	return &Location{
 		URI: uri,
@@ -64,14 +63,17 @@ func findDefinition(attr, id string, g *model.TraceabilityGraph) *Location {
 	}
 }
 
-// pathToURI converts a file system path to a file:// URI.
+// pathToURI converts a file system path to a file:// URI per RFC 8089.
+// Unix:    /abs/path       → file:///abs/path
+// Windows: C:\abs\path     → file:///C:/abs/path  (empty authority + drive)
 func pathToURI(path string) string {
 	abs, err := filepath.Abs(path)
 	if err != nil {
 		abs = path
 	}
-	// On all supported platforms the path separator is already '/'; on Windows
-	// filepath.Abs uses '\' but LSP URIs require '/'.
 	abs = filepath.ToSlash(abs)
-	return fmt.Sprintf("file://%s", abs)
+	if strings.HasPrefix(abs, "/") {
+		return "file://" + abs // Unix: leading '/' gives file:///abs/path
+	}
+	return "file:///" + abs // Windows: prepend empty authority for file:///C:/...
 }

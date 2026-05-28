@@ -86,6 +86,8 @@ func TestFindDefinition_Unknown(t *testing.T) {
 	}
 }
 
+// [test-spec,id=TS-LSP-019,req="REQ-LSP-001",aspice="SWE.5.BP3"]
+// TestFindDefinition_TestSpec verifies go-to-definition for a known test-spec ID.
 func TestFindDefinition_TestSpec(t *testing.T) {
 	g := godefGraph()
 	loc := findDefinition("test-spec", "TS-LSP-001", g)

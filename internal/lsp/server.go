@@ -347,19 +347,22 @@ type hoverParams struct {
 	} `json:"position"`
 }
 
+// lineAt returns the stored content of the given 0-based line for the URI,
+// or "" when the document is not in the cache or the line is out of range.
+func (s *Server) lineAt(uri string, line int) string {
+	if lines, ok := s.docs[uri]; ok && line >= 0 && line < len(lines) {
+		return lines[line]
+	}
+	return ""
+}
+
 func (s *Server) handleHover(msg *message) error {
 	var p hoverParams
 	if err := json.Unmarshal(msg.Params, &p); err != nil {
 		return s.replyError(msg.ID, -32602, "invalid params: "+err.Error())
 	}
 
-	line := ""
-	if lines, ok := s.docs[p.TextDocument.URI]; ok {
-		ln := p.Position.Line
-		if ln >= 0 && ln < len(lines) {
-			line = lines[ln]
-		}
-	}
+	line := s.lineAt(p.TextDocument.URI, p.Position.Line)
 
 	attr, value, ok := detectHoverValue(line, p.Position.Character)
 	if !ok {
@@ -374,19 +377,12 @@ func (s *Server) handleHover(msg *message) error {
 // --- Go-to-Definition ---
 
 func (s *Server) handleDefinition(msg *message) error {
-	var p hoverParams // same shape as hoverParams
+	var p hoverParams // TextDocumentPositionParams — same wire shape as hover
 	if err := json.Unmarshal(msg.Params, &p); err != nil {
 		return s.replyError(msg.ID, -32602, "invalid params: "+err.Error())
 	}
 
-	line := ""
-	if lines, ok := s.docs[p.TextDocument.URI]; ok {
-		ln := p.Position.Line
-		if ln >= 0 && ln < len(lines) {
-			line = lines[ln]
-		}
-	}
-
+	line := s.lineAt(p.TextDocument.URI, p.Position.Line)
 	attr, value, ok := detectHoverValue(line, p.Position.Character)
 	if !ok {
 		return s.reply(msg.ID, nil)
