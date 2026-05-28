@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/paulefl/req42-tracer/internal/model"
@@ -32,8 +33,7 @@ func runTraceCmd(cmd *cobra.Command, args []string) error {
 	outputPath, _ := cmd.Flags().GetString("output")
 	verbose, _ := cmd.Flags().GetBool("verbose")
 
-	// Load configuration (for future use with advanced options)
-	_, err := model.LoadConfig(configPath)
+	config, err := model.LoadConfig(configPath)
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
@@ -84,11 +84,11 @@ func runTraceCmd(cmd *cobra.Command, args []string) error {
 		if outputPath == "" {
 			outputPath = "reports/graph.html"
 		}
-		htmlReporter := report.NewHTMLReporter(analyzer, outputPath)
+		htmlReporter := report.NewHTMLReporter(analyzer, config, outputPath)
 		if err := htmlReporter.GenerateReport(); err != nil {
 			return fmt.Errorf("failed to generate HTML report: %w", err)
 		}
-		summaryPath := "reports/summary.html"
+		summaryPath := filepath.Join(filepath.Dir(outputPath), "summary.html")
 		if err := htmlReporter.GenerateSummaryReport(summaryPath); err != nil {
 			return fmt.Errorf("failed to generate summary report: %w", err)
 		}

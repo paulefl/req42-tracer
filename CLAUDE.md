@@ -44,3 +44,31 @@ internal/
 - `req42-tracer validate` — Model validation
 - `req42-tracer watch --open` — Watch + live-reload
 - `req42-tracer lsp` — LSP-Server
+
+## Rollen
+Siehe [`ROLES.md`](ROLES.md) für die vollständige Rollendefinition.
+
+- **Implementierung:** `dev-paul-fleischmann` — Feature-Branches, Commits, PRs öffnen
+- **Review & Merge:** `paulefl` — Code/Security-Review, Approve, Merge
+
+PR erstellen: `gh pr create --assignee dev-paul-fleischmann --reviewer paulefl`
+
+## Test Conventions
+Siehe [`TESTS.md`](TESTS.md) für die vollständigen Test-Konventionen.
+
+Kurzfassung: Jeder Test braucht einen `[test-spec]`-Block mit `req=` und `aspice=` Linkage direkt oberhalb der Testfunktion.
+
+### Coverage-Ziele (Phase 4)
+| Paket | Ziel |
+|---|---|
+| `internal/parser` | ≥ 80% |
+| `internal/graph` | ≥ 80% |
+| `internal/aspice` | ≥ 75% |
+| `internal/report` | ≥ 70% |
+| `internal/model` | ≥ 60% |
+| `internal/testresult` | ≥ 70% |
+
+Coverage prüfen: `go test ./... -coverprofile=coverage.out && go tool cover -func=coverage.out`
+
+## Review Workflow
+Siehe [`REVIEW.md`](REVIEW.md) für den vollständigen Code- und Security-Review-Prozess inkl. Inline-Kommentare im PR.
