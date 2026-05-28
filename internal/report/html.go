@@ -8,18 +8,21 @@ import (
 	"strings"
 
 	"github.com/paulefl/req42-tracer/internal/graph"
+	"github.com/paulefl/req42-tracer/internal/model"
 )
 
 // HTMLReporter generates interactive HTML reports with D3.js graph visualization.
 type HTMLReporter struct {
-	analyzer *graph.Analyzer
+	analyzer   *graph.Analyzer
+	config     *model.Config
 	outputPath string
 }
 
 // NewHTMLReporter creates a new HTML reporter.
-func NewHTMLReporter(analyzer *graph.Analyzer, outputPath string) *HTMLReporter {
+func NewHTMLReporter(analyzer *graph.Analyzer, config *model.Config, outputPath string) *HTMLReporter {
 	return &HTMLReporter{
 		analyzer:   analyzer,
+		config:     config,
 		outputPath: outputPath,
 	}
 }
@@ -47,6 +50,13 @@ func (hr *HTMLReporter) GenerateReport() error {
 		return fmt.Errorf("failed to marshal matrix data: %w", err)
 	}
 
+	// Build and serialize ASPICE dashboard data
+	aspiceData := BuildASPICEDashboardData(hr.analyzer, hr.config)
+	aspiceJSON, err := json.MarshalIndent(aspiceData, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal aspice data: %w", err)
+	}
+
 	// Create output directory if needed
 	dir := filepath.Dir(hr.outputPath)
 	if dir != "." && dir != "" {
@@ -58,6 +68,7 @@ func (hr *HTMLReporter) GenerateReport() error {
 	// Generate HTML by replacing placeholders in template
 	htmlContent := strings.ReplaceAll(HTMLTemplate, "<!--GRAPH_DATA_JSON-->", string(graphJSON))
 	htmlContent = strings.ReplaceAll(htmlContent, "<!--MATRIX_DATA_JSON-->", string(matrixJSON))
+	htmlContent = strings.ReplaceAll(htmlContent, "<!--ASPICE_DATA_JSON-->", string(aspiceJSON))
 
 	// Write HTML file
 	if err := os.WriteFile(hr.outputPath, []byte(htmlContent), 0644); err != nil {

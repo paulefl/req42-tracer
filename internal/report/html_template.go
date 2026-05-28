@@ -432,6 +432,191 @@ const HTMLTemplate = `<!DOCTYPE html>
                 max-height: 200px;
             }
         }
+
+        /* ASPICE Dashboard */
+        #aspice {
+            flex: 1;
+            flex-direction: column;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .aspice-overview {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 24px 30px;
+        }
+
+        .aspice-overview h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .overall-coverage {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .overall-pct {
+            font-size: 42px;
+            font-weight: bold;
+            min-width: 90px;
+        }
+
+        .overall-pct.good { color: #27ae60; }
+        .overall-pct.warning { color: #f39c12; }
+        .overall-pct.danger { color: #e74c3c; }
+
+        .overall-bar-wrap { flex: 1; }
+
+        .overall-bar-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .overall-bar-track {
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .overall-bar-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.6s ease;
+        }
+
+        .overall-bar-fill.good { background: #27ae60; }
+        .overall-bar-fill.warning { background: #f39c12; }
+        .overall-bar-fill.danger { background: #e74c3c; }
+
+        .aspice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 16px;
+            padding: 20px;
+        }
+
+        .process-card {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .process-card-header {
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 4px solid #3498db;
+        }
+
+        .process-card-header.good { border-left-color: #27ae60; }
+        .process-card-header.warning { border-left-color: #f39c12; }
+        .process-card-header.danger { border-left-color: #e74c3c; }
+
+        .process-id-badge {
+            background: #2c3e50;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .process-card-name {
+            flex: 1;
+            font-weight: 600;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .process-card-pct {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .process-card-pct.good { color: #27ae60; }
+        .process-card-pct.warning { color: #f39c12; }
+        .process-card-pct.danger { color: #e74c3c; }
+
+        .process-progress {
+            height: 4px;
+            background: #f0f0f0;
+        }
+
+        .process-progress-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        .process-progress-fill.good { background: #27ae60; }
+        .process-progress-fill.warning { background: #f39c12; }
+        .process-progress-fill.danger { background: #e74c3c; }
+
+        .bp-list { padding: 4px 0; }
+
+        .bp-item {
+            padding: 8px 16px;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .bp-item:last-child { border-bottom: none; }
+
+        .bp-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bp-id {
+            font-size: 11px;
+            font-weight: bold;
+            color: #888;
+            min-width: 72px;
+        }
+
+        .bp-title {
+            flex: 1;
+            font-size: 12px;
+            color: #444;
+        }
+
+        .bp-badge {
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .bp-badge.good { background: #d5f5e3; color: #1e8449; }
+        .bp-badge.warning { background: #fef9e7; color: #b7950b; }
+        .bp-badge.danger { background: #fdedec; color: #c0392b; }
+
+        .bp-gaps {
+            margin: 4px 0 0 80px;
+            padding: 0;
+            list-style: none;
+        }
+
+        .bp-gaps li {
+            font-size: 11px;
+            color: #e74c3c;
+            padding: 1px 0;
+        }
+
+        .bp-gaps li::before {
+            content: "→ ";
+        }
     </style>
 </head>
 <body>
@@ -528,6 +713,7 @@ const HTMLTemplate = `<!DOCTYPE html>
                 <div class="tabs">
                     <button class="tab-button active" onclick="switchTab('graph')">Graph View</button>
                     <button class="tab-button" onclick="switchTab('matrix')">Matrix View</button>
+                    <button class="tab-button" onclick="switchTab('aspice')">ASPICE Dashboard</button>
                 </div>
             </div>
 
@@ -579,6 +765,22 @@ const HTMLTemplate = `<!DOCTYPE html>
                     </div>
                 </div>
             </div>
+
+            <div id="aspice" class="tab-content">
+                <div class="aspice-overview">
+                    <h2>ASPICE PAM 4.0 Compliance</h2>
+                    <div class="overall-coverage">
+                        <div class="overall-pct" id="aspice-overall-pct">-</div>
+                        <div class="overall-bar-wrap">
+                            <div class="overall-bar-label">Overall Coverage</div>
+                            <div class="overall-bar-track">
+                                <div class="overall-bar-fill" id="aspice-overall-fill" style="width:0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="aspice-grid" id="aspice-grid"></div>
+            </div>
         </div>
     </div>
 
@@ -586,6 +788,7 @@ const HTMLTemplate = `<!DOCTYPE html>
         // Graph data will be injected here: <!--GRAPH_DATA-->
         const graphData = <!--GRAPH_DATA_JSON-->;
         const matrixData = <!--MATRIX_DATA_JSON-->;
+        const aspiceData = <!--ASPICE_DATA_JSON-->;
 
         // Global variables for filtering
         let globalNode = null;
@@ -884,7 +1087,83 @@ const HTMLTemplate = `<!DOCTYPE html>
                 document.getElementById('matrix').classList.add('active');
                 document.querySelector('button[onclick="switchTab(\'matrix\')"]').classList.add('active');
                 renderMatrix();
+            } else if (tabName === 'aspice') {
+                document.getElementById('aspice').classList.add('active');
+                document.querySelector('button[onclick="switchTab(\'aspice\')"]').classList.add('active');
+                renderASPICE();
             }
+        }
+
+        function coverageClass(pct) {
+            if (pct >= 80) return 'good';
+            if (pct >= 50) return 'warning';
+            return 'danger';
+        }
+
+        function renderASPICE() {
+            if (!aspiceData) return;
+
+            var overall = aspiceData.overall || 0;
+            var overallPct = Math.round(overall);
+            var cls = coverageClass(overall);
+
+            var pctEl = document.getElementById('aspice-overall-pct');
+            var fillEl = document.getElementById('aspice-overall-fill');
+            if (pctEl) {
+                pctEl.textContent = overallPct + '%';
+                pctEl.className = 'overall-pct ' + cls;
+            }
+            if (fillEl) {
+                fillEl.style.width = overallPct + '%';
+                fillEl.className = 'overall-bar-fill ' + cls;
+            }
+
+            var grid = document.getElementById('aspice-grid');
+            if (!grid || !aspiceData.processes) return;
+
+            var html = '';
+            aspiceData.processes.forEach(function(proc) {
+                var covPct = Math.round(proc.coverage || 0);
+                var pcls = coverageClass(proc.coverage || 0);
+
+                var bpHTML = '';
+                if (proc.bps) {
+                    proc.bps.forEach(function(bp) {
+                        var bpPct = Math.round(bp.coverage || 0);
+                        var bcls = coverageClass(bp.coverage || 0);
+                        var gapsHTML = '';
+                        if (bp.gaps && bp.gaps.length > 0) {
+                            gapsHTML = '<ul class="bp-gaps">';
+                            bp.gaps.forEach(function(g) {
+                                gapsHTML += '<li>' + g + '</li>';
+                            });
+                            gapsHTML += '</ul>';
+                        }
+                        bpHTML += '<div class="bp-item">' +
+                            '<div class="bp-row">' +
+                            '<span class="bp-id">' + bp.id + '</span>' +
+                            '<span class="bp-title">' + bp.title + '</span>' +
+                            '<span class="bp-badge ' + bcls + '">' + bpPct + '%</span>' +
+                            '</div>' +
+                            gapsHTML +
+                            '</div>';
+                    });
+                }
+
+                html += '<div class="process-card">' +
+                    '<div class="process-card-header ' + pcls + '">' +
+                    '<span class="process-id-badge">' + proc.id + '</span>' +
+                    '<span class="process-card-name">' + proc.name + '</span>' +
+                    '<span class="process-card-pct ' + pcls + '">' + covPct + '%</span>' +
+                    '</div>' +
+                    '<div class="process-progress">' +
+                    '<div class="process-progress-fill ' + pcls + '" style="width:' + covPct + '%"></div>' +
+                    '</div>' +
+                    '<div class="bp-list">' + bpHTML + '</div>' +
+                    '</div>';
+            });
+
+            grid.innerHTML = html || '<p style="padding:20px;color:#999;">No ASPICE process data available.</p>';
         }
 
         let currentMatrixData = matrixData;
