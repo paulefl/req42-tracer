@@ -2,20 +2,20 @@ package graph
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/paulefl/req42-tracer/internal/model"
 )
 
 // Analyzer performs gap analysis and coverage reporting on a traceability graph.
+// The graph must not be modified after the first call to any analysis method —
+// the internal index is built lazily via sync.Once and is not invalidated on mutation.
 type Analyzer struct {
 	graph *model.TraceabilityGraph
 
-	// Precomputed index: requirement ID → set of arch IDs that reference it.
-	// Built lazily on first use, reset to nil when graph changes.
-	reqToArch map[string]map[string]struct{}
-
-	// Precomputed index: arch IDs that have at least one verified-by link.
-	testedArchIDs map[string]struct{}
+	once          sync.Once
+	reqToArch     map[string]map[string]struct{} // requirement ID → arch IDs referencing it
+	testedArchIDs map[string]struct{}             // arch IDs with at least one verified-by link
 }
 
 // NewAnalyzer creates a new graph analyzer.
@@ -28,29 +28,28 @@ func (a *Analyzer) GetGraph() *model.TraceabilityGraph {
 	return a.graph
 }
 
-// buildIndex computes reqToArch and testedArchIDs if not already done.
+// buildIndex computes reqToArch and testedArchIDs exactly once (thread-safe).
 // O(|ArchElements| × avg|Req|) + O(|Links|)
 func (a *Analyzer) buildIndex() {
-	if a.reqToArch != nil {
-		return
-	}
-	a.reqToArch = make(map[string]map[string]struct{}, len(a.graph.Requirements))
-	a.testedArchIDs = make(map[string]struct{})
+	a.once.Do(func() {
+		a.reqToArch = make(map[string]map[string]struct{}, len(a.graph.Requirements))
+		a.testedArchIDs = make(map[string]struct{})
 
-	for archID, arch := range a.graph.ArchElements {
-		for _, reqID := range arch.Req {
-			if a.reqToArch[reqID] == nil {
-				a.reqToArch[reqID] = make(map[string]struct{})
+		for archID, arch := range a.graph.ArchElements {
+			for _, reqID := range arch.Req {
+				if a.reqToArch[reqID] == nil {
+					a.reqToArch[reqID] = make(map[string]struct{})
+				}
+				a.reqToArch[reqID][archID] = struct{}{}
 			}
-			a.reqToArch[reqID][archID] = struct{}{}
 		}
-	}
 
-	for _, link := range a.graph.Links {
-		if link.LinkType == "verified-by" && link.FromType == "arch" {
-			a.testedArchIDs[link.FromID] = struct{}{}
+		for _, link := range a.graph.Links {
+			if link.LinkType == "verified-by" && link.FromType == "arch" {
+				a.testedArchIDs[link.FromID] = struct{}{}
+			}
 		}
-	}
+	})
 }
 
 // AnalyzeGaps performs a comprehensive gap analysis.
@@ -121,7 +120,6 @@ func (a *Analyzer) CalculateCoverage() *model.CoverageReport {
 		archIDs := a.reqToArch[req.ID]
 		if len(archIDs) > 0 {
 			report.CoveredByArch++
-			// Tested if any covering arch has a verified-by link
 			for archID := range archIDs {
 				if _, tested := a.testedArchIDs[archID]; tested {
 					report.CoveredByTests++

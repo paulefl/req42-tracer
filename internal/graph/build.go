@@ -70,6 +70,11 @@ func (b *Builder) MergeGraph(other *model.TraceabilityGraph) error {
 		b.graph.TestResults[id] = result
 	}
 
+	// Register merged links in linkSeen so BuildLinks() treats them as existing.
+	for _, link := range other.Links {
+		key := link.FromType + ":" + link.FromID + "->" + link.ToType + ":" + link.ToID
+		b.linkSeen[key] = struct{}{}
+	}
 	b.graph.Links = append(b.graph.Links, other.Links...)
 
 	return nil

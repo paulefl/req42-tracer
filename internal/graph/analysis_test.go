@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/paulefl/req42-tracer/internal/model"
@@ -344,5 +345,51 @@ func TestCalculateCoverage_PassRate(t *testing.T) {
 	// PassRate = 2/3 * 100 ≈ 66.67
 	if cov.PassRate < 66 || cov.PassRate > 67 {
 		t.Errorf("PassRate = %.2f, want ~66.67", cov.PassRate)
+	}
+}
+
+// [test-spec,id=TS-GRAPH-037,req="REQ-GRAPH-001",aspice="SWE.5.BP3"]
+// TestAnalyzer_ConcurrentBuildIndex verifies thread-safe lazy index construction.
+func TestAnalyzer_ConcurrentBuildIndex(t *testing.T) {
+	a := NewAnalyzer(buildAnalysisGraph())
+	var wg sync.WaitGroup
+	// 20 goroutines all trigger buildIndex() simultaneously
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_ = a.AnalyzeGaps()
+			_ = a.CalculateCoverage()
+		}()
+	}
+	wg.Wait()
+	// If there's a data race, -race will catch it; if maps are corrupt this panics
+}
+
+// [test-spec,id=TS-GRAPH-038,req="REQ-GRAPH-001",aspice="SWE.5.BP3"]
+// TestMergeGraph_LinkSeenPopulated verifies MergeGraph registers existing links in linkSeen.
+func TestMergeGraph_LinkSeenPopulated(t *testing.T) {
+	existingLink := &model.TraceLink{
+		FromID: "REQ-001", FromType: "requirement",
+		ToID: "comp.api", ToType: "arch",
+		LinkType: "satisfied-by", Status: "active",
+	}
+	b := NewBuilder()
+	g := &model.TraceabilityGraph{
+		Requirements: map[string]*model.Requirement{"REQ-001": {ID: "REQ-001"}},
+		ArchElements: map[string]*model.ArchElement{"comp.api": {ID: "comp.api", Req: []string{"REQ-001"}}},
+		TestSpecs:    make(map[string]*model.TestSpec),
+		TestCodes:    make(map[string]*model.TestCode),
+		TestResults:  make(map[string]*model.TestResult),
+		Links:        []*model.TraceLink{existingLink},
+	}
+	b.MergeGraph(g)
+	linkCountBefore := len(b.GetGraph().Links)
+
+	// BuildLinks tries to add the same req→arch link — should be deduped
+	b.BuildLinks()
+	linkCountAfter := len(b.GetGraph().Links)
+	if linkCountAfter != linkCountBefore {
+		t.Errorf("MergeGraph+BuildLinks added duplicate link: before=%d, after=%d", linkCountBefore, linkCountAfter)
 	}
 }

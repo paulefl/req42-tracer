@@ -33,8 +33,9 @@ func buildLargeASPICEGraph(n int) *graph.Analyzer {
 			&model.TraceLink{FromID: reqID, ToID: archID, LinkType: "satisfied-by", Status: "active"},
 		)
 		if i%2 == 0 {
+			// arch→spec verified-by: FromType="arch" so testedArchIDs gets populated
 			g.Links = append(g.Links,
-				&model.TraceLink{FromID: reqID, ToID: specID, LinkType: "verified-by", Status: "active"},
+				&model.TraceLink{FromID: archID, ToID: specID, FromType: "arch", ToType: "test-spec", LinkType: "verified-by", Status: "active"},
 			)
 		}
 	}
