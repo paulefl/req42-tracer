@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Bug Fixes
+
+- **fix(ci): Benchmark-Job — gh-pages Branch initialisiert** (#55)
+  - Leerer Orphan-Branch `gh-pages` remote angelegt (via `git commit-tree`)
+  - `github-action-benchmark@v1`: `gh-pages-branch: gh-pages` und `benchmark-data-dir-path: dev/bench` explizit gesetzt
+  - Behebt `fatal: couldn't find remote ref gh-pages` bei jedem Master-Push
+
 ### Features
 
 - **feat(lsp): Phase 3.3 — Hover Tooltips** (#7, PR #32)
