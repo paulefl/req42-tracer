@@ -57,10 +57,10 @@ project/req42-tracer/
 - `req42-tracer lsp` — LSP-Server
 
 ## Setup
-Siehe [`SETUP.md`](SETUP.md) für die einmalige Einrichtung der Entwicklungsumgebung (Repos klonen, Claude Skill Library installieren, gh CLI einrichten).
+Siehe [`SETUP.md`](project/req42-tracer/SETUP.md) für die einmalige Einrichtung der Entwicklungsumgebung (Repos klonen, Claude Skill Library installieren, gh CLI einrichten).
 
 ## Rollen
-Siehe [`ROLES.md`](ROLES.md) für die vollständige Rollendefinition.
+Siehe [`ROLES.md`](project/req42-tracer/ROLES.md) für die vollständige Rollendefinition.
 
 - **Implementierung:** `dev-paul-fleischmann` — Feature-Branches, Commits, PRs öffnen
 - **Review & Merge:** `paulefl` — Code/Security-Review, Approve, Merge
@@ -85,21 +85,21 @@ Ein pre-commit Hook in `.git/hooks/pre-commit` blockiert Commits mit falscher Id
 PR erstellen: `gh pr create --assignee dev-paul-fleischmann --reviewer paulefl`
 
 ## Test Conventions
-Siehe [`TESTS.md`](TESTS.md) für die vollständigen Test-Konventionen.
+Siehe [`TESTS.md`](project/req42-tracer/TESTS.md) für die vollständigen Test-Konventionen.
 
 Kurzfassung: Jeder Test braucht einen `[test-spec]`-Block mit `req=` und `aspice=` Linkage direkt oberhalb der Testfunktion.
 
 ### Coverage-Ziele (Phase 4)
 | Paket | Ziel |
 |---|---|
-| `internal/parser` | ≥ 80% |
-| `internal/graph` | ≥ 80% |
-| `internal/aspice` | ≥ 75% |
-| `internal/report` | ≥ 70% |
-| `internal/model` | ≥ 60% |
-| `internal/testresult` | ≥ 70% |
+| `src/internal/parser` | ≥ 80% |
+| `src/internal/graph` | ≥ 80% |
+| `src/internal/aspice` | ≥ 75% |
+| `src/internal/report` | ≥ 70% |
+| `src/internal/model` | ≥ 60% |
+| `src/internal/testresult` | ≥ 70% |
 
 Coverage prüfen: `go test ./... -coverprofile=coverage.out && go tool cover -func=coverage.out`
 
 ## Review Workflow
-Siehe [`REVIEW.md`](REVIEW.md) für den vollständigen Code- und Security-Review-Prozess inkl. Inline-Kommentare im PR.
+Siehe [`REVIEW.md`](project/req42-tracer/REVIEW.md) für den vollständigen Code- und Security-Review-Prozess inkl. Inline-Kommentare im PR.
