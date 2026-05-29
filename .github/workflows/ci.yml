@@ -68,7 +68,7 @@ jobs:
 
       - name: Run benchmarks
         run: |
-          go test ./internal/graph/... ./internal/aspice/... \
+          go test ./src/internal/graph/... ./src/internal/aspice/... \
             -bench=. -benchtime=3s -benchmem \
             -run='^$' \
             | tee bench.txt
@@ -149,11 +149,11 @@ jobs:
           mkdir -p dist
           VERSION="${{ github.ref_name }}"
           LDFLAGS="-s -w -trimpath -X main.version=${VERSION}"
-          GOOS=linux   GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-linux-amd64   ./cmd/req42-tracer
-          GOOS=linux   GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-linux-arm64   ./cmd/req42-tracer
-          GOOS=darwin  GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-darwin-amd64  ./cmd/req42-tracer
-          GOOS=darwin  GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-darwin-arm64  ./cmd/req42-tracer
-          GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-windows-amd64.exe ./cmd/req42-tracer
+          GOOS=linux   GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-linux-amd64   ./src/cmd/req42-tracer
+          GOOS=linux   GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-linux-arm64   ./src/cmd/req42-tracer
+          GOOS=darwin  GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-darwin-amd64  ./src/cmd/req42-tracer
+          GOOS=darwin  GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-darwin-arm64  ./src/cmd/req42-tracer
+          GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-windows-amd64.exe ./src/cmd/req42-tracer
 
       - name: Create checksums
         run: |
