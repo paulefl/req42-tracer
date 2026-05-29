@@ -24,8 +24,10 @@ builds:
         goarch: "386"
       - goos: windows
         goarch: arm64
+    flags:
+      - -trimpath
     ldflags:
-      - -s -w -trimpath -X main.version={{.Version}}
+      - -s -w -X main.version={{.Version}}
     env:
       - CGO_ENABLED=0
 
@@ -40,8 +42,8 @@ checksum:
   name_template: SHA256SUMS
   algorithm: sha256
 
-sbom:
-  artifacts: archive
+sboms:
+  - artifacts: archive
 
 changelog:
   sort: asc
