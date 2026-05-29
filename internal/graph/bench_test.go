@@ -49,9 +49,10 @@ func buildLargeGraph(n int) *model.TraceabilityGraph {
 			LinkType: "satisfied-by", Status: "active",
 		})
 		if i%2 == 0 {
+			// arch→spec verified-by link: FromType must be "arch" so testedArchIDs is populated
 			g.Links = append(g.Links, &model.TraceLink{
-				FromID: reqID, ToID: specID,
-				FromType: "requirement", ToType: "test-spec",
+				FromID: archID, ToID: specID,
+				FromType: "arch", ToType: "test-spec",
 				LinkType: "verified-by", Status: "active",
 			})
 		}
