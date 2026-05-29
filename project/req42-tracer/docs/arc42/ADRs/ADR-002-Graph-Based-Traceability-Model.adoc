@@ -1,0 +1,168 @@
+= ADR-002: Graph-Based Traceability Model
+
+**Status:** Accepted
+**Decision Date:** 2026-05-07
+**Last Updated:** 2026-05-07
+
+== Problem Statement
+
+req42-tracer must represent relationships between requirements, architecture, and tests in a way that enables:
+- Bidirectional traceability queries: "Which requirements does component X satisfy?" → "What implements requirement Y?"
+- Coverage analysis: "Are all requirements tested?" "Are all architecture elements implemented?"
+- Gap detection: "Which requirements have no test coverage?" "Which components are orphaned?"
+- ASPICE compliance checking: "Does the architecture hierarchy satisfy SWE.2 and SWE.3 process requirements?"
+
+The question: **What is the best internal data structure to represent these relationships?**
+
+== Context & Constraints
+
+1. **Relationship types** that must be modeled:
+   - Requirement → Architecture: satisfies (1:N)
+   - Architecture → Test Spec: verified-by (1:N)
+   - Requirement → Test Spec: verifies (direct; 1:N or via architecture)
+   - Requirement → Requirement: derives (parent dependency; 1:N)
+   - Test Result → Requirement: proves/disproves (1:1)
+
+2. **Query patterns** that must be efficient:
+   - Forward trace: Req → Arch → TestSpec → TestResult
+   - Reverse trace: Req → Requirements that derive from it
+   - Orphan detection: ArchElements with no Requirement mapping
+   - Coverage percentage: (satisfied requirements / total requirements)
+   - ASPICE level derivation: (has parent) ? SWE.3 : SWE.2
+
+3. **Scalability target:**
+   - Typical project: 100-200 requirements, 50-100 architecture elements, 50+ test specs
+   - Large project: 1000+ requirements (enterprise)
+   - Performance goal: <2 seconds for trace + analysis
+
+== Decision: Directed Acyclic Graph (DAG) with Adjacency Lists
+
+**Internal representation: Nodes (Requirements, ArchElements, TestSpecs, TestResults) + Directed Edges (Links with LinkType annotations).**
+
+### Structure
+
+```go
+// model/types.go
+type TraceabilityGraph struct {
+  Requirements map[string]*Requirement      // Key: req ID (e.g., "SWE-001")
+  ArchElements map[string]*ArchElement      // Key: arch ID (e.g., "comp.api")
+  TestSpecs    map[string]*TestSpec         // Key: spec ID (e.g., "spec.api")
+  TestResults  map[string]*TestResult       // Key: result ID (e.g., "junit:test.api")
+  Links        []*TraceLink                 // Edges between nodes
+}
+
+type TraceLink struct {
+  FromID      string  // Source node ID
+  ToID        string  // Target node ID
+  LinkType    string  // "satisfies", "verified-by", "derives", "proves"
+  Explicit    bool    // true: user-defined, false: inferred
+  Source      string  // File location of the link definition
+}
+```
+
+### Construction Algorithm
+
+1. **Parse phase:** internal/parser/adoc.go extracts [req], [arch], [test-spec] blocks → populate Requirements, ArchElements, TestSpecs maps
+2. **Merge phase:** internal/graph/build.go merges Bausteinsicht JSONC model into graph (ArchElements)
+3. **Link phase:** internal/graph/build.go constructs TraceLinks:
+   - **Explicit links:** from block attributes (req=, arch=, test-spec=)
+   - **Inferred links:** name-based matching (fallback for test results)
+4. **Analysis phase:** internal/graph/analysis.go traverses graph for coverage, gaps, orphans
+
+### Rationale
+
+| Dimension | DAG + Adjacency | Alternative | Winner |
+|-----------|-----------------|-------------|--------|
+| **Query efficiency** | O(1) node lookup, O(k) edge traversal | Matrix: O(1) lookup, O(n²) iteration | DAG wins |
+| **Memory usage** | O(n + m) = nodes + edges | Matrix: O(n²) = dense array | DAG wins |
+| **Circular detection** | Trivial (check parent pointers) | Requires cycle search | DAG wins |
+| **Extensibility** | Easy to add new link types | Requires new matrix dimension | DAG wins |
+| **Visualization** | D3.js, Mermaid compatible | Requires transformation | DAG wins |
+| **Incremental updates** | Add/remove links without recompute | Recompute matrix | DAG wins |
+
+== Consequences
+
+=== Positive
+
+- **Efficient queries:** O(n) for full trace, O(k) for single-node neighbors
+- **Extensible:** New link types (cross-project derives, test-code relationships) don't require schema changes
+- **Circular detection:** Simple parent-pointer check prevents infinite loops
+- **ASPICE-friendly:** Level derivation (parent= → SWE.3) is a simple graph property
+- **Visualization-ready:** D3.js, Mermaid, PlantUML can render directly from graph structure
+- **Incremental:** Phase 2 (watch mode) can re-link without reconstructing entire graph
+
+=== Negative
+
+- **Construction complexity:** Three-phase build (parse → merge → link) has error scenarios
+- **Conflicting links:** If two blocks claim different relationships, resolution is manual
+- **Test result matching:** Fallback to name-based matching can produce false positives
+- **Bidirectional queries:** Must maintain both forward and reverse adjacency lists (2x memory)
+
+=== Mitigations
+
+- Validation phase (cmd/req42-tracer/validate.go) detects conflicting links early
+- Explicit link precedence: block attributes override inferred matches
+- Test result matching: hybrid strategy with confidence scores and warnings
+- Reverse indexing: internal/graph/build.go constructs reverse-adjacency maps on demand
+
+== Alternatives Considered
+
+=== Alternative 1: Relational Model (SQL Database)
+
+**Pros:**
+- ACID semantics, transactions
+- Complex queries via SQL
+- Persistent (survives process restart)
+
+**Cons:**
+- External dependency (SQLite adds 10+ MB)
+- Overkill for static analysis tool
+- Performance: SQL parsing overhead
+
+**Verdict:** Rejected — static analysis doesn't need ACID, and offline-first CLI is simpler.
+
+=== Alternative 2: Matrix Representation (Dense Array)
+
+**Pros:**
+- Simple: matrix[req_idx][arch_idx] = boolean
+- Fast lookups (O(1))
+- Easy to visualize
+
+**Cons:**
+- O(n²) memory for 1000+ requirements
+- Circular dependency detection requires cycle-search algorithm
+- Hard to add new link types (requires new matrix dimension)
+
+**Verdict:** Rejected — DAG is more flexible and scales better.
+
+=== Alternative 3: JSON Embedded in .adoc (Single Source)
+
+**Pros:**
+- Single file per requirement
+- No sync needed
+
+**Cons:**
+- Loses human readability of AsciiDoc
+- ASPICE compliance annotations become verbose
+- Versioning harder (JSON blocks harder to review in diffs)
+
+**Verdict:** Rejected — violates ADR-001 (AsciiDoc as primary).
+
+== Related Issues
+
+- Issue #10 (Phase 4.1): Document req42-tracer Requirements — demonstrates graph structure in practice
+- Issue #13 (Phase 4.4): Unit Tests — test graph construction (80%+ coverage on graph/)
+- Issue #1 (Phase 2): HTML Report with D3.js Graph — visualization of this structure
+
+== Implementation Notes
+
+1. **Bidirectional linking:** internal/graph/build.go constructs reverse-adjacency maps for efficient "who depends on me?" queries
+2. **Duplicate detection:** builder.BuildLinks() checks for duplicate TraceLink entries and warns on conflicts
+3. **ASPICE level derivation:** builder.DeriveASPICELevels() sets aspice field based on parent= attribute
+4. **Test result integration:** Deferred to Phase 2 (testresult/ parsers already built)
+
+== Sign-Off
+
+**Author:** Paul Fleischmann
+**Reviewers:** [pending review]
+**Approved By:** [pending approval]

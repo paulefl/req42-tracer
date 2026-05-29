@@ -1,0 +1,280 @@
+= Command Reference
+:toc: left
+:toc-title: Contents
+:icons: font
+
+All commands support the following global flags:
+
+[cols="1,1,3",options="header"]
+|===
+| Flag | Default | Description
+| `--config` | `.req42.yaml` | Path to configuration file
+| `--format` | `text` | Output format: `text`, `markdown`, `json`, `html`
+| `--verbose` | `false` | Print detailed progress to stderr
+|===
+
+== req42-tracer init
+
+Initialize a new REQ42 + ARC42 project.
+
+[source,bash]
+----
+req42-tracer init [flags]
+----
+
+=== Flags
+
+[cols="1,1,3",options="header"]
+|===
+| Flag | Default | Description
+| `--dir` | `.` | Target directory (created if absent)
+| `--name` | `req42-project` | Project name
+| `--module` | `github.com/user/project` | Go module path
+| `--description` | `REQ42 + ARC42 Project` | Short description
+| `--interactive` | `true` | Use interactive prompts
+|===
+
+=== Examples
+
+[source,bash]
+----
+# Interactive (default)
+req42-tracer init
+
+# Non-interactive for CI
+req42-tracer init --dir=./my-project --name=MyProject --module=github.com/org/myproject --interactive=false
+----
+
+---
+
+== req42-tracer trace
+
+Generate the traceability matrix — shows which requirements are covered by architecture and tests.
+
+[source,bash]
+----
+req42-tracer trace [flags]
+----
+
+=== Flags
+
+[cols="1,1,3",options="header"]
+|===
+| Flag | Default | Description
+| `--output` | `reports/graph.html` | Output file path for HTML report (only used with `--format=html`)
+|===
+
+=== Output formats
+
+[cols="1,3",options="header"]
+|===
+| Format | Description
+| `text` | Human-readable ASCII table (default)
+| `markdown` | GitHub-compatible markdown table
+| `json` | Machine-readable JSON
+| `html` | Interactive D3.js graph + coverage dashboard (written to `--output` path)
+|===
+
+=== Examples
+
+[source,bash]
+----
+# Text output (default)
+req42-tracer trace
+
+# Markdown for GitHub wiki
+req42-tracer trace --format=markdown
+
+# Generate HTML report
+req42-tracer trace --format=html --output=reports/matrix.html
+
+# JSON for CI integration
+req42-tracer trace --format=json | jq '.requirements | length'
+----
+
+=== Understanding the output
+
+----
+Req: REQ-001 (high)
+  My Requirement Title
+  ✅ Architecture: comp.api (API Component)   ← linked via req= attribute
+  ✅ Tests: spec.api (API Test Spec)          ← linked via req= or arch= attribute
+
+Req: REQ-002 (medium)
+  Another Requirement
+  ⚠️  Architecture: not covered              ← gap: no arch element references this req
+  ⚠️  Tests: not covered
+----
+
+---
+
+== req42-tracer gaps
+
+Analyze traceability gaps — finds orphan requirements, arch elements without requirements, and missing implementations.
+
+[source,bash]
+----
+req42-tracer gaps [flags]
+----
+
+=== Examples
+
+[source,bash]
+----
+req42-tracer gaps
+req42-tracer gaps --format=json
+req42-tracer gaps --format=markdown
+----
+
+=== What gaps are reported
+
+[cols="1,3",options="header"]
+|===
+| Gap type | Description
+| Orphan requirements | Requirements with no `[arch]` element referencing them via `req=`
+| Orphan architecture | `[arch]` elements with no `req=` attribute (child elements only)
+| Missing implementation | `[arch]` elements with no `impl=` attribute (child elements only)
+| Orphan test specs | `[test-spec]` blocks with neither `req=` nor `arch=` attribute
+| Stale traces | Links with `status=stale`
+|===
+
+---
+
+== req42-tracer aspice
+
+Validate ASPICE PAM 4.0 compliance. Reports coverage per process and per best practice.
+
+[source,bash]
+----
+req42-tracer aspice [flags]
+----
+
+Processes checked are configured in `.req42.yaml` under `aspice.processes`. Defaults to `SWE.1`, `SWE.2`, `SWE.3`, `SWE.5`.
+
+=== Example output
+
+----
+ASPICE PAM 4.0 Compliance Report
+Overall Coverage: 73.2%
+
+SWE.1 — Software Requirement Analysis
+  SWE.1.BP2  satisfied  85.0%  Bidirectional traceability to system requirements
+  SWE.1.BP6  partial    60.0%  Ensure testability (12/20 requirements have test coverage)
+  SWE.1.BP8  partial    75.0%  Traceability between requirements and design
+
+SWE.2 — Software Design
+  SWE.2.BP4  satisfied  100.0% Ensure traceability to software requirements
+----
+
+---
+
+== req42-tracer validate
+
+Validate project structure, broken references, and custom rules from `.req42.yaml`.
+
+[source,bash]
+----
+req42-tracer validate [flags]
+----
+
+Runs two checks:
+
+1. **Reference validation** — finds arch elements referencing non-existent requirements, test specs referencing missing arch elements, etc.
+2. **Custom rules** — evaluates all rules configured under `rules:` in `.req42.yaml`.
+
+=== Exit codes
+
+[cols="1,3",options="header"]
+|===
+| Code | Meaning
+| `0` | All validations passed (warnings are OK)
+| `1` | At least one rule with severity `error` was violated, or broken references found
+|===
+
+=== Example output
+
+----
+⚠️  [WARNING] requirement REQ-003 has no reviewed-by (docs/requirements/req42.adoc:45)
+⚠️  [WARNING] architecture element comp.db not linked to any requirement (docs/arc42/arc42.adoc:88)
+❌ [ERROR]   requirement REQ-005 has no aspice= attribute (docs/requirements/req42.adoc:72)
+
+❌ Validation failed: 1 error(s), 2 warning(s)
+  Requirements: 20 | Architecture: 15 | Test Specs: 12 | Links: 42
+----
+
+---
+
+== req42-tracer watch
+
+Watch documentation files for changes and serve a live-reloading HTML report.
+
+[source,bash]
+----
+req42-tracer watch [flags]
+----
+
+=== Flags
+
+[cols="1,1,3",options="header"]
+|===
+| Flag | Default | Description
+| `--open` | `false` | Open the report in the default browser on start
+| `--port` | `8042` | HTTP server port
+| `--output` | `reports/traceability-report.html` | Path for the generated HTML file
+|===
+
+=== Examples
+
+[source,bash]
+----
+# Start server and open browser
+req42-tracer watch --open
+
+# Custom port
+req42-tracer watch --port=9000 --open
+
+# Custom output path
+req42-tracer watch --output=docs/report.html --open
+----
+
+The server watches all `.adoc` files under `docs/`. The browser page refreshes automatically within 1–2 seconds of saving a file.
+
+---
+
+== req42-tracer lsp
+
+Start a Language Server Protocol server on stdio for editor integration.
+
+[source,bash]
+----
+req42-tracer lsp
+----
+
+Communicates over stdio (stdin/stdout) using the LSP 3.17 protocol.
+
+=== Supported LSP features
+
+[cols="1,1,3",options="header"]
+|===
+| Feature | Key | Description
+| Hover | Hover over `id=`, `req=`, `arch=` | Shows requirement/arch title and metadata
+| Diagnostics | On save | Highlights unknown IDs in `req=`, `arch=`, `test-spec=` attributes
+| Go-to-Definition | F12 | Jumps to the definition of a referenced `[req]` or `[arch]` block
+| Completion | Ctrl+Space | Suggests known IDs when typing `req=`, `arch=`, `id=` values
+|===
+
+=== VS Code setup
+
+Add to `.vscode/settings.json`:
+
+[source,json]
+----
+{
+  "asciidoc.extensions.enableKroki": false,
+  "[asciidoc]": {
+    "editor.defaultFormatter": "asciidoctor.asciidoctor-vscode"
+  }
+}
+----
+
+Configure the LSP client to run `req42-tracer lsp` on stdio for `.adoc` files.

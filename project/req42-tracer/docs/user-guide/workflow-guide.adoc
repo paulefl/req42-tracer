@@ -1,0 +1,260 @@
+= Workflow Guide
+:toc: left
+:toc-title: Contents
+:icons: font
+
+This guide shows how to integrate req42-tracer into a real development workflow — from writing a user story to shipping a traced, ASPICE-compliant feature.
+
+== The req42 Development Loop
+
+----
+┌─────────────────────────────────────────────────────────────┐
+│  1. Write requirement [req]                                  │
+│         ↓                                                    │
+│  2. Design architecture [arch] with req= linkage            │
+│         ↓                                                    │
+│  3. Write test spec [test-spec] with req= and arch= links   │
+│         ↓                                                    │
+│  4. Implement code (impl= reference in [arch])              │
+│         ↓                                                    │
+│  5. Run req42-tracer validate → no errors                   │
+│         ↓                                                    │
+│  6. Run req42-tracer aspice → coverage report               │
+└─────────────────────────────────────────────────────────────┘
+----
+
+== Step-by-step example: adding a new feature
+
+=== User Story: "Password reset via email"
+
+**Story:** As a user, I want to reset my password via email so I can recover my account.
+
+=== Step 1 — Write the requirement
+
+`docs/requirements/req42.adoc`:
+
+[source,asciidoc]
+----
+[req,id=REQ-AUTH-002,version=1,priority=high,aspice=SWE.1,
+ status=draft,derives=REQ-AUTH-001]
+== System shall allow password reset via email
+
+The system shall provide a password reset flow:
+1. User enters email address
+2. System sends a reset link (valid 24h)
+3. User clicks link and enters new password
+4. System validates and updates credentials
+
+Acceptance Criteria:
+- Reset link expires after 24 hours
+- Link is single-use
+- New password must meet strength requirements
+----
+
+=== Step 2 — Design the architecture
+
+`docs/arc42/arc42.adoc`:
+
+[source,asciidoc]
+----
+[arch,id=comp.auth.reset,parent=comp.auth,aspice=SWE.2,
+ req=REQ-AUTH-002,impl=internal/auth/reset.go]
+=== Password Reset Handler
+
+Manages the password reset token lifecycle:
+generates tokens, validates expiry, and triggers email delivery.
+----
+
+=== Step 3 — Write the test specification
+
+Add `[test-spec]` blocks to your AsciiDoc documentation (e.g. `docs/arc42/arc42.adoc`):
+
+[source,asciidoc]
+----
+[test-spec,id=TS-AUTH-002,req=REQ-AUTH-002,arch=comp.auth.reset,aspice=SWE.5.BP3]
+== Reset token expires after 24 hours
+
+Verify that a password reset token cannot be used after the 24-hour expiry window.
+
+[test-spec,id=TS-AUTH-003,req=REQ-AUTH-002,arch=comp.auth.reset,aspice=SWE.5.BP3]
+== Reset token is single-use
+
+Verify that a password reset token is invalidated after first successful use.
+----
+
+NOTE: As a convention, you can also place matching `[test-spec]` comments in your Go test files to keep spec and code co-located. These comments are not automatically parsed — the authoritative source is always the `.adoc` file.
+
+=== Step 4 — Check traceability
+
+[source,bash]
+----
+req42-tracer trace
+----
+
+Expected output:
+
+----
+Req: REQ-AUTH-002 (high)
+  System shall allow password reset via email
+  ✅ Architecture: comp.auth.reset (Password Reset Handler)
+  ✅ Tests: TS-AUTH-002, TS-AUTH-003
+----
+
+=== Step 5 — Validate
+
+[source,bash]
+----
+req42-tracer validate
+----
+
+All rules should pass (no errors). Warnings are acceptable.
+
+=== Step 6 — Check ASPICE
+
+[source,bash]
+----
+req42-tracer aspice
+----
+
+SWE.1.BP2 and SWE.5.BP3 should improve as the new requirement is fully traced.
+
+---
+
+== CI/CD Integration
+
+=== GitHub Actions example
+
+[source,yaml]
+----
+name: Traceability Check
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '**/*.go'
+
+jobs:
+  trace:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download req42-tracer
+        run: |
+          curl -L https://github.com/paul-fleischmann-com/req42-tracer/releases/latest/download/req42-tracer-linux-amd64 \
+            -o req42-tracer && chmod +x req42-tracer
+
+      - name: Run tests and capture results
+        run: go test ./... -json > reports/test-results.json
+
+      - name: Validate traceability
+        run: ./req42-tracer validate
+
+      - name: Generate report
+        run: ./req42-tracer trace --format=html --output=reports/matrix.html
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: traceability-report
+          path: reports/matrix.html
+----
+
+=== Make targets
+
+[source,makefile]
+----
+.PHONY: trace validate aspice watch
+
+trace:
+    req42-tracer trace --format=markdown
+
+validate:
+    req42-tracer validate
+
+aspice:
+    req42-tracer aspice
+
+watch:
+    req42-tracer watch --open
+
+report:
+    req42-tracer trace --format=html --output=reports/matrix.html
+----
+
+---
+
+== Best Practices
+
+=== Requirement ID conventions
+
+Use structured IDs that encode area and number:
+
+----
+REQ-AUTH-001  Authentication requirement #1
+REQ-PERF-001  Performance requirement #1
+REQ-SEC-001   Security requirement #1
+----
+
+This makes gap reports readable at a glance.
+
+=== Status lifecycle
+
+----
+draft → approved → deprecated
+----
+
+* Start new requirements as `status=draft`
+* Set `status=approved` after review (`reviewed-by=`, `reviewed-date=`)
+* Set `status=deprecated` when superseded — never delete, as this breaks history
+
+=== Arch element granularity
+
+* **Level 1 (no parent):** Whole system or subsystem — `aspice=SWE.2` context
+* **Level 2 (one parent):** Component — link to requirements here
+* **Level 3 (two parents):** Implementation unit — add `impl=` path here
+
+Avoid going deeper than Level 3. Flatten if the hierarchy grows complex.
+
+=== Test spec placement
+
+* **In arc42.adoc** (required for tracing): `[test-spec]` blocks that req42-tracer parses and includes in the traceability graph
+* **In test files** (convention): matching `[test-spec]` comments above Go test functions for code review readability — these are not parsed automatically
+
+The `.adoc` file is always the authoritative source for traceability.
+
+=== Keep `impl=` paths accurate
+
+The `impl=` attribute is checked by the `missing-impl` rule. When you move a file, update `impl=` in the corresponding `[arch]` block. Consider adding a CI check that verifies the paths exist:
+
+[source,bash]
+----
+req42-tracer trace --format=json | jq -r \
+  '.arch_elements[] | select(.impl != "") | .impl' | \
+  while read f; do test -e "$f" || echo "Missing: $f"; done
+----
+
+=== Review workflow
+
+1. Developer opens PR with new `[req]` and `[arch]` blocks
+2. CI runs `req42-tracer validate` — must pass (no errors)
+3. Reviewer checks `req42-tracer trace --format=markdown` output in PR description
+4. After merge: `req42-tracer aspice` baseline is updated
+
+---
+
+== Dogfooding: req42-tracer traces itself
+
+req42-tracer uses itself for traceability. To see the tool's own trace:
+
+[source,bash]
+----
+# Clone the repo and run
+git clone https://github.com/paul-fleischmann-com/req42-tracer.git
+cd req42-tracer
+go run ./cmd/req42-tracer trace
+go run ./cmd/req42-tracer aspice
+----
+
+The requirements are in `docs/requirements/req42.adoc`, architecture in `docs/arc42/arc42.adoc`. Test spec blocks in `_test.go` files serve as a code-level convention — the parseable `[test-spec]` blocks for traceability live in the `.adoc` files.

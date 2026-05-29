@@ -10,23 +10,27 @@ Requirements Tracing Tool für ASPICE PAM 4.0 (Go CLI).
 
 ## Projektstruktur
 ```
-cmd/req42-tracer/       # CLI commands (trace, gaps, aspice, validate, watch, lsp)
-internal/
-  parser/              # AsciiDoc + Bausteinsicht-Parser
-  model/               # Typen + Konfiguration
-  graph/               # Traceability-Graph + Analyse
-  aspice/              # ASPICE PAM 4.0 Prozess-Checker
-  report/              # CLI + HTML Report-Generator
-  testresult/          # Test-Result-Parser (JUnit, go-test)
-  lsp/                 # LSP-Server (Minimal-MVP)
-tools/
-  bausteinsicht/       # Bausteinsicht CLI v1.1.0 (architecture.jsonc validieren + sync)
+src/
+  cmd/req42-tracer/    # CLI commands (trace, gaps, aspice, validate, watch, lsp)
+  internal/
+    parser/            # AsciiDoc + Bausteinsicht-Parser
+    model/             # Typen + Konfiguration
+    graph/             # Traceability-Graph + Analyse
+    aspice/            # ASPICE PAM 4.0 Prozess-Checker
+    report/            # CLI + HTML Report-Generator
+    testresult/        # Test-Result-Parser (JUnit, go-test)
+    lsp/               # LSP-Server (Minimal-MVP)
+    validation/        # Custom Validation Rules Engine
+project/req42-tracer/
+  docs/                # arc42, requirements, user-guide
+  scripts/             # generate-diagrams.sh etc.
+  tools/bausteinsicht/ # Bausteinsicht CLI v1.1.0
 ```
 
 ## Bausteinsicht
-- **Tool:** `tools/bausteinsicht/bausteinsicht` (Linux amd64)
+- **Tool:** `project/req42-tracer/tools/bausteinsicht/bausteinsicht` (Linux amd64)
 - **Schema:** v1.1.0 — `architecture.jsonc` enthält `$schema`-Referenz
-- **Validieren:** `./tools/bausteinsicht/bausteinsicht validate --model architecture.jsonc`
+- **Validieren:** `./project/req42-tracer/tools/bausteinsicht/bausteinsicht validate --model architecture.jsonc`
 
 ## Implementierungsplan
 13 Schritte vom Skeleton bis zum LSP. Siehe `/home/coder/.claude/plans/kind-stargazing-torvalds.md`.

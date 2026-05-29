@@ -6,7 +6,7 @@
 projects:
   software:
     path: .
-    docs: docs/
+    docs: project/req42-tracer/docs/
 
 # Bausteinsicht architecture model
 bausteinsicht:
