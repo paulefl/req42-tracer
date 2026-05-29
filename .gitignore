@@ -36,5 +36,14 @@ coverage.html
 # Local development
 .env
 .env.local
-go1.25.4.linux-amd64.tar.gz
+go*.linux-amd64.tar.gz
 req42-tracer.exe
+
+# Bausteinsicht release tarballs (binary, not tracked)
+Bausteinsicht_*.tar.gz
+
+# Draw.io source files (generated from architecture.jsonc)
+*.drawio
+
+# Built binaries
+/bin/req42-tracer
