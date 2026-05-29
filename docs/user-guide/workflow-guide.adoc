@@ -67,22 +67,22 @@ generates tokens, validates expiry, and triggers email delivery.
 
 === Step 3 — Write the test specification
 
-Either in a dedicated `docs/arc42/arc42.adoc` section or directly in the test file:
+Add `[test-spec]` blocks to your AsciiDoc documentation (e.g. `docs/arc42/arc42.adoc`):
 
-[source,go]
+[source,asciidoc]
 ----
-// [test-spec,id=TS-AUTH-002,req="REQ-AUTH-002",aspice="SWE.5.BP3"]
-// TestResetTokenExpiry verifies that reset tokens expire after 24 hours.
-func TestResetTokenExpiry(t *testing.T) {
-    // ...
-}
+[test-spec,id=TS-AUTH-002,req=REQ-AUTH-002,arch=comp.auth.reset,aspice=SWE.5.BP3]
+== Reset token expires after 24 hours
 
-// [test-spec,id=TS-AUTH-003,req="REQ-AUTH-002",aspice="SWE.5.BP3"]
-// TestResetTokenSingleUse verifies that a token cannot be used twice.
-func TestResetTokenSingleUse(t *testing.T) {
-    // ...
-}
+Verify that a password reset token cannot be used after the 24-hour expiry window.
+
+[test-spec,id=TS-AUTH-003,req=REQ-AUTH-002,arch=comp.auth.reset,aspice=SWE.5.BP3]
+== Reset token is single-use
+
+Verify that a password reset token is invalidated after first successful use.
 ----
+
+NOTE: As a convention, you can also place matching `[test-spec]` comments in your Go test files to keep spec and code co-located. These comments are not automatically parsed — the authoritative source is always the `.adoc` file.
 
 === Step 4 — Check traceability
 
@@ -219,8 +219,10 @@ Avoid going deeper than Level 3. Flatten if the hierarchy grows complex.
 
 === Test spec placement
 
-* **In test files** (recommended): `[test-spec]` as Go comments above test functions — keeps spec and code co-located
-* **In arc42.adoc**: Suitable for high-level integration test specs that span multiple units
+* **In arc42.adoc** (required for tracing): `[test-spec]` blocks that req42-tracer parses and includes in the traceability graph
+* **In test files** (convention): matching `[test-spec]` comments above Go test functions for code review readability — these are not parsed automatically
+
+The `.adoc` file is always the authoritative source for traceability.
 
 === Keep `impl=` paths accurate
 
@@ -255,4 +257,4 @@ go run ./cmd/req42-tracer trace
 go run ./cmd/req42-tracer aspice
 ----
 
-The requirements are in `docs/requirements/req42.adoc`, architecture in `docs/arc42/arc42.adoc`, and test specs are in `_test.go` comments throughout `internal/`.
+The requirements are in `docs/requirements/req42.adoc`, architecture in `docs/arc42/arc42.adoc`. Test spec blocks in `_test.go` files serve as a code-level convention — the parseable `[test-spec]` blocks for traceability live in the `.adoc` files.

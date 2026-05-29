@@ -61,7 +61,7 @@ req42-tracer trace [flags]
 [cols="1,1,3",options="header"]
 |===
 | Flag | Default | Description
-| `--output` | _(stdout)_ | Write HTML report to file instead of stdout
+| `--output` | `reports/graph.html` | Output file path for HTML report (only used with `--format=html`)
 |===
 
 === Output formats
@@ -72,7 +72,7 @@ req42-tracer trace [flags]
 | `text` | Human-readable ASCII table (default)
 | `markdown` | GitHub-compatible markdown table
 | `json` | Machine-readable JSON
-| `html` | Interactive D3.js graph + coverage dashboard (requires `--output`)
+| `html` | Interactive D3.js graph + coverage dashboard (written to `--output` path)
 |===
 
 === Examples
@@ -237,7 +237,7 @@ req42-tracer watch --port=9000 --open
 req42-tracer watch --output=docs/report.html --open
 ----
 
-The server watches all `.adoc` files under `docs/` and `architecture.jsonc`. The browser page refreshes automatically within 1–2 seconds of saving a file.
+The server watches all `.adoc` files under `docs/`. The browser page refreshes automatically within 1–2 seconds of saving a file.
 
 ---
 
