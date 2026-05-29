@@ -136,9 +136,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write  # required for SBOM attestation
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # GoReleaser needs full history for changelog
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -146,24 +149,14 @@ jobs:
           go-version: "1.24"
           cache: true
 
-      - name: Build binaries
-        run: |
-          mkdir -p dist
-          VERSION="${{ github.ref_name }}"
-          LDFLAGS="-s -w -trimpath -X main.version=${VERSION}"
-          GOOS=linux   GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-linux-amd64   ./src/cmd/req42-tracer
-          GOOS=linux   GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-linux-arm64   ./src/cmd/req42-tracer
-          GOOS=darwin  GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-darwin-amd64  ./src/cmd/req42-tracer
-          GOOS=darwin  GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-darwin-arm64  ./src/cmd/req42-tracer
-          GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-windows-amd64.exe ./src/cmd/req42-tracer
+      - name: Install Syft (for SBOM generation)
+        uses: anchore/sbom-action/download-syft@v0
 
-      - name: Create checksums
-        run: |
-          cd dist
-          sha256sum * > SHA256SUMS
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2.3.2
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
         with:
-          files: dist/*
-          generate_release_notes: true
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
