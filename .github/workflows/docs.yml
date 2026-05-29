@@ -24,7 +24,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build docs (docToolchain via Docker)
-        run: DTC_OUTPUT_PATH=build/docs ./dtcw docker generateHTML
+        uses: paul-fleischmann-com/doctoolchain-action@v1
+        with:
+          output-path: build/docs
+          tasks: generateHTML
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
