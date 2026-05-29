@@ -288,3 +288,54 @@ func TestRuleMissingTestSpec(t *testing.T) {
 		t.Error("expected comp.db flagged for missing test spec")
 	}
 }
+
+// [test-spec,id=TS-VAL-015,req="REQ-VALIDATE-001",aspice="SWE.5.BP3"]
+// TestRuleEngine_NilRulesMap verifies Run() is safe when config.Rules is nil.
+func TestRuleEngine_NilRulesMap(t *testing.T) {
+	cfg := &model.Config{Rules: nil, RuleParams: map[string]int{}}
+	engine := NewRuleEngine(cfg, buildValidationGraph())
+	results := engine.Run() // must not panic
+	if len(results) != 0 {
+		t.Errorf("expected 0 results for nil rules map, got %d", len(results))
+	}
+}
+
+// [test-spec,id=TS-VAL-016,req="REQ-VALIDATE-001",aspice="SWE.5.BP3"]
+// TestRuleMaxOrphanPercentage_NilRuleParams verifies default threshold when RuleParams is nil.
+func TestRuleMaxOrphanPercentage_NilRuleParams(t *testing.T) {
+	cfg := &model.Config{
+		Rules:      map[string]string{"max-orphan-percentage": "warning"},
+		RuleParams: nil, // nil map — should use default threshold of 20%
+	}
+	// REQ-002 is orphan → 50% orphan rate, default threshold 20% → should trigger
+	engine := NewRuleEngine(cfg, buildValidationGraph())
+	results := engine.Run()
+	var found bool
+	for _, r := range results {
+		if r.RuleID == "max-orphan-percentage" && len(r.Violations) > 0 {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected max-orphan-percentage violation with nil RuleParams (uses default 20%)")
+	}
+}
+
+// [test-spec,id=TS-VAL-017,req="REQ-VALIDATE-001",aspice="SWE.5.BP3"]
+// TestRuleUnknownBausteinsichtRule verifies undocumented-bausteinsicht-elements produces "unknown rule" warning.
+func TestRuleUnknownBausteinsichtRule(t *testing.T) {
+	cfg := buildConfig(map[string]string{"undocumented-bausteinsicht-elements": "error"})
+	engine := NewRuleEngine(cfg, buildValidationGraph())
+	results := engine.Run()
+	var found bool
+	for _, r := range results {
+		for _, v := range r.Violations {
+			if strings.Contains(v.Message, "unknown rule") {
+				found = true
+			}
+		}
+	}
+	if !found {
+		t.Error("expected 'unknown rule' warning for undocumented-bausteinsicht-elements")
+	}
+}
