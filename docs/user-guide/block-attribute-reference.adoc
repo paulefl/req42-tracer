@@ -131,9 +131,10 @@ Defines a test specification that links tests to requirements and architecture.
 | `aspice` | — | `SWE.5.BP3` | ASPICE best practice this test covers
 |===
 
-=== In-code test annotations
+=== In-code test annotations (convention)
 
-For Go test functions, place the `[test-spec]` block as a comment directly before the function:
+Place `[test-spec]` blocks as comments in your Go test files as a documentation convention.
+This keeps the spec and the test code co-located and makes traceability visible in code review.
 
 [source,go]
 ----
@@ -144,7 +145,7 @@ func TestSessionExpiry(t *testing.T) {
 }
 ----
 
-req42-tracer parses `_test.go` files for these comments and includes them in the traceability graph.
+NOTE: req42-tracer currently parses only `.adoc` files. The `[test-spec]` comments in Go test files serve as a code convention and are not automatically parsed into the traceability graph. To link tests to requirements, declare `[test-spec]` blocks in your `.adoc` documentation files and reference them via `arch=` or `req=`.
 
 ---
 
