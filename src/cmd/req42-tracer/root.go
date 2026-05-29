@@ -21,7 +21,7 @@ It supports ASPICE PAM 4.0 process validation and generates interactive reports.
 	}
 
 	// Global flags
-	cmd.PersistentFlags().String("config", ".req42.yaml", "Configuration file path")
+	cmd.PersistentFlags().String("config", "project/req42-tracer/.req42.yaml", "Configuration file path")
 	cmd.PersistentFlags().String("format", "text", "Output format: text, markdown, json, html")
 	cmd.PersistentFlags().Bool("verbose", false, "Verbose output")
 

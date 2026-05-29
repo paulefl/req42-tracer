@@ -30,7 +30,7 @@ project/req42-tracer/
 ## Bausteinsicht
 - **Tool:** `project/req42-tracer/tools/bausteinsicht/bausteinsicht` (Linux amd64)
 - **Schema:** v1.1.0 — `architecture.jsonc` enthält `$schema`-Referenz
-- **Validieren:** `./project/req42-tracer/tools/bausteinsicht/bausteinsicht validate --model architecture.jsonc`
+- **Validieren:** `./project/req42-tracer/tools/bausteinsicht/bausteinsicht validate --model project/req42-tracer/architecture.jsonc`
 
 ## Implementierungsplan
 13 Schritte vom Skeleton bis zum LSP. Siehe `/home/coder/.claude/plans/kind-stargazing-torvalds.md`.

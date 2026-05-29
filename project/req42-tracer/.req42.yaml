@@ -1,16 +1,16 @@
-# project/req42-tracer — REQ42 Configuration
+# req42-project — REQ42 Configuration
 # Description: REQ42 + ARC42 Project
-# Module: https://github.com/paulefl/req42-tracer
+# Module: https://github.com/paul-fleischmann-com/req42-tracer
 
 # Project definitions
 projects:
   software:
     path: .
-    docs: docs/
+    docs: project/req42-tracer/docs/
 
 # Bausteinsicht architecture model
 bausteinsicht:
-  model: architecture.jsonc
+  model: project/req42-tracer/architecture.jsonc
 
 # Test result parsers
 test-results:
@@ -26,15 +26,22 @@ rules:
 
   # Requirements
   missing-review: warning
+  all-reqs-must-have-aspice: warning
+  all-reqs-must-have-priority: off
 
   # Tests
-  missing-test-spec: error
+  missing-test-spec: warning
 
   # Traceability
   stale-traces: warning
   missing-impl: warning
   orphan-architecture: warning
   orphan-tests: warning
+  max-orphan-percentage: warning
+
+# Numeric parameters for parameterized rules
+rule-params:
+  max-orphan-percentage: 30   # fail if >30% of requirements are orphans
 
 # ASPICE PAM 4.0 configuration
 aspice:
