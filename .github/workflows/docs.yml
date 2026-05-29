@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build docs (docToolchain via Docker)
-        uses: paul-fleischmann-com/doctoolchain-action@v1
+        uses: paul-fleischmann-com/doctoolchain-action@3bb6aa6aa5ab489f7b31bcf0ed74ebe277517070  # v1
         with:
           output-path: build/docs
           tasks: generateHTML
@@ -32,7 +32,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: build/docs/html5
+          path: build/docs/html5  # docToolchain 3.x default output subdir
 
       - name: Deploy to GitHub Pages
         id: deploy

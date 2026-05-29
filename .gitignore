@@ -6,7 +6,6 @@ reports/
 /req42-tracer
 /dist/
 /build/
-build/docs/
 
 # IDE
 .vscode/
