@@ -4,6 +4,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// version is set at build time via -ldflags "-X main.version=<tag>"
+var version = "dev"
+
 func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "req42-tracer",
@@ -11,7 +14,7 @@ func NewRootCmd() *cobra.Command {
 		Long: `req42-tracer is a CLI tool for tracing requirements across AsciiDoc
 documentation, architecture models (Bausteinsicht), and test specifications.
 It supports ASPICE PAM 4.0 process validation and generates interactive reports.`,
-		Version: "0.1.0",
+		Version: version,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()
 		},
