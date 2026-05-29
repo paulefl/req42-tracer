@@ -31,13 +31,19 @@ func buildCheckerGraph() *graph.Analyzer {
 }
 
 func fullConfig() *model.Config {
+	return aspiceConfig("SWE.1", "SWE.2", "SWE.3", "SWE.5")
+}
+
+// aspiceConfig builds a Config with the given ASPICE process IDs — avoids
+// repeating the verbose anonymous-struct literal in every test function.
+func aspiceConfig(processes ...string) *model.Config {
 	return &model.Config{
 		ASPICE: struct {
 			AutoDerive   bool                         `yaml:"auto-derive"`
 			Processes    []string                     `yaml:"processes"`
 			ProcessRules map[string]map[string]string `yaml:"process-rules"`
 		}{
-			Processes: []string{"SWE.1", "SWE.2", "SWE.3", "SWE.5"},
+			Processes: processes,
 		},
 	}
 }
@@ -117,15 +123,7 @@ func TestGetProcessCoverage_UnknownProcess(t *testing.T) {
 // [test-spec,id=TS-ASPICE-007,req="REQ-ASPICE-001",aspice="SWE.5.BP3"]
 // TestCheckCompliance_UnknownProcessSkipped verifies that unknown processes are skipped.
 func TestCheckCompliance_UnknownProcessSkipped(t *testing.T) {
-	config := &model.Config{
-		ASPICE: struct {
-			AutoDerive   bool                         `yaml:"auto-derive"`
-			Processes    []string                     `yaml:"processes"`
-			ProcessRules map[string]map[string]string `yaml:"process-rules"`
-		}{
-			Processes: []string{"UNKNOWN.99"},
-		},
-	}
+	config := aspiceConfig("UNKNOWN.99")
 	checker := NewChecker(buildCheckerGraph(), config)
 	report := checker.CheckCompliance()
 	if report == nil {
@@ -139,15 +137,7 @@ func TestCheckCompliance_UnknownProcessSkipped(t *testing.T) {
 // [test-spec,id=TS-ASPICE-008,req="REQ-ASPICE-001",aspice="SWE.5.BP3"]
 // TestSWE1_BP2_PartialCoverage verifies SWE.1.BP2 is partial when not all reqs have arch links.
 func TestSWE1_BP2_PartialCoverage(t *testing.T) {
-	checker := NewChecker(buildCheckerGraph(), &model.Config{
-		ASPICE: struct {
-			AutoDerive   bool                         `yaml:"auto-derive"`
-			Processes    []string                     `yaml:"processes"`
-			ProcessRules map[string]map[string]string `yaml:"process-rules"`
-		}{
-			Processes: []string{"SWE.1"},
-		},
-	})
+	checker := NewChecker(buildCheckerGraph(), aspiceConfig("SWE.1"))
 	report := checker.CheckCompliance()
 	results := report.Processes["SWE.1"]
 	var bp2 *model.ASPICECheckResult
@@ -168,15 +158,7 @@ func TestSWE1_BP2_PartialCoverage(t *testing.T) {
 // [test-spec,id=TS-ASPICE-009,req="REQ-ASPICE-001",aspice="SWE.5.BP3"]
 // TestSWE1_BP6_TestCoverage verifies SWE.1.BP6 testability check.
 func TestSWE1_BP6_TestCoverage(t *testing.T) {
-	checker := NewChecker(buildCheckerGraph(), &model.Config{
-		ASPICE: struct {
-			AutoDerive   bool                         `yaml:"auto-derive"`
-			Processes    []string                     `yaml:"processes"`
-			ProcessRules map[string]map[string]string `yaml:"process-rules"`
-		}{
-			Processes: []string{"SWE.1"},
-		},
-	})
+	checker := NewChecker(buildCheckerGraph(), aspiceConfig("SWE.1"))
 	report := checker.CheckCompliance()
 	results := report.Processes["SWE.1"]
 	var bp6 *model.ASPICECheckResult
@@ -196,15 +178,7 @@ func TestSWE1_BP6_TestCoverage(t *testing.T) {
 // [test-spec,id=TS-ASPICE-010,req="REQ-ASPICE-001",aspice="SWE.5.BP3"]
 // TestSWE2_BP4_Coverage verifies SWE.2.BP4 arch traceability check.
 func TestSWE2_BP4_Coverage(t *testing.T) {
-	checker := NewChecker(buildCheckerGraph(), &model.Config{
-		ASPICE: struct {
-			AutoDerive   bool                         `yaml:"auto-derive"`
-			Processes    []string                     `yaml:"processes"`
-			ProcessRules map[string]map[string]string `yaml:"process-rules"`
-		}{
-			Processes: []string{"SWE.2"},
-		},
-	})
+	checker := NewChecker(buildCheckerGraph(), aspiceConfig("SWE.2"))
 	report := checker.CheckCompliance()
 	results := report.Processes["SWE.2"]
 	if len(results) == 0 {
@@ -228,15 +202,7 @@ func TestSWE2_BP4_Coverage(t *testing.T) {
 // [test-spec,id=TS-ASPICE-011,req="REQ-ASPICE-001",aspice="SWE.5.BP3"]
 // TestSWE3_BP3_ImplCoverage verifies SWE.3.BP3 implementation traceability check.
 func TestSWE3_BP3_ImplCoverage(t *testing.T) {
-	checker := NewChecker(buildCheckerGraph(), &model.Config{
-		ASPICE: struct {
-			AutoDerive   bool                         `yaml:"auto-derive"`
-			Processes    []string                     `yaml:"processes"`
-			ProcessRules map[string]map[string]string `yaml:"process-rules"`
-		}{
-			Processes: []string{"SWE.3"},
-		},
-	})
+	checker := NewChecker(buildCheckerGraph(), aspiceConfig("SWE.3"))
 	report := checker.CheckCompliance()
 	var bp3 *model.ASPICECheckResult
 	for _, r := range report.Processes["SWE.3"] {
@@ -256,15 +222,7 @@ func TestSWE3_BP3_ImplCoverage(t *testing.T) {
 // [test-spec,id=TS-ASPICE-012,req="REQ-ASPICE-001",aspice="SWE.5.BP3"]
 // TestSWE5_BP3_TestTraceability verifies SWE.5.BP3 test-to-req traceability check.
 func TestSWE5_BP3_TestTraceability(t *testing.T) {
-	checker := NewChecker(buildCheckerGraph(), &model.Config{
-		ASPICE: struct {
-			AutoDerive   bool                         `yaml:"auto-derive"`
-			Processes    []string                     `yaml:"processes"`
-			ProcessRules map[string]map[string]string `yaml:"process-rules"`
-		}{
-			Processes: []string{"SWE.5"},
-		},
-	})
+	checker := NewChecker(buildCheckerGraph(), aspiceConfig("SWE.5"))
 	report := checker.CheckCompliance()
 	var bp3 *model.ASPICECheckResult
 	for _, r := range report.Processes["SWE.5"] {

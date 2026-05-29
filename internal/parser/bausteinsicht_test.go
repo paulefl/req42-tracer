@@ -3,6 +3,7 @@ package parser
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -117,21 +118,28 @@ func TestBausteinsichtParser_WithComments(t *testing.T) {
 }
 
 // [test-spec,id=TS-PARSE-026,req="REQ-PARSE-002",aspice="SWE.5.BP3"]
-// TestRemoveComments verifies that JSONC line and block comments are stripped.
+// TestRemoveComments verifies that JSONC line and block comments are stripped
+// and that URL-style // inside strings is preserved.
 func TestRemoveComments(t *testing.T) {
-	cases := []struct {
+	stripped := []struct {
 		input   string
-		noMatch string // substring that should NOT appear in output
+		noMatch string
 	}{
 		{`{"a": 1} // line comment`, "line comment"},
 		{`{"a": /* block comment */ 1}`, "block comment"},
-		{`{"url": "http://example.com"}`, ""},
 	}
-	for _, tc := range cases {
+	for _, tc := range stripped {
 		got := removeComments(tc.input)
-		if tc.noMatch != "" && containsStr(got, tc.noMatch) {
+		if strings.Contains(got, tc.noMatch) {
 			t.Errorf("removeComments(%q) still contains %q\ngot: %q", tc.input, tc.noMatch, got)
 		}
+	}
+
+	// URLs inside strings must NOT be treated as comments
+	urlInput := `{"url": "http://example.com"}`
+	got := removeComments(urlInput)
+	if !strings.Contains(got, "http://example.com") {
+		t.Errorf("removeComments stripped URL inside string: %q", got)
 	}
 }
 
@@ -156,15 +164,4 @@ func writeBausteinsicht(t *testing.T, content string) string {
 		t.Fatal(err)
 	}
 	return f
-}
-
-func containsStr(s, sub string) bool {
-	return len(s) >= len(sub) && (sub == "" || func() bool {
-		for i := 0; i <= len(s)-len(sub); i++ {
-			if s[i:i+len(sub)] == sub {
-				return true
-			}
-		}
-		return false
-	}())
 }

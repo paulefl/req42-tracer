@@ -168,9 +168,10 @@ func TestCalculateCoverage_EmptyGraph(t *testing.T) {
 func TestCalculateCoverage_ArchCoverage(t *testing.T) {
 	a := NewAnalyzer(buildAnalysisGraph())
 	cov := a.CalculateCoverage()
-	// comp.api has req=REQ-001, comp.system has no req
-	if cov.ArchCoverage == 0 {
-		t.Error("expected non-zero arch coverage")
+	// 2 arch elements total: comp.api (has req=REQ-001) + comp.system (no req) → 50%
+	const want = 50.0
+	if cov.ArchCoverage != want {
+		t.Errorf("ArchCoverage = %.1f, want %.1f", cov.ArchCoverage, want)
 	}
 }
 
