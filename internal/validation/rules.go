@@ -46,16 +46,18 @@ func NewRuleEngine(config *model.Config, analyzer *graph.Analyzer) *RuleEngine {
 // Run evaluates all configured rules and returns violations grouped by rule.
 func (e *RuleEngine) Run() []*RuleResult {
 	ruleRunners := map[string]func(Severity) *RuleResult{
-		"missing-review":                     e.ruleMissingReview,
-		"missing-test-spec":                  e.ruleMissingTestSpec,
-		"missing-impl":                       e.ruleMissingImpl,
-		"orphan-architecture":                e.ruleOrphanArchitecture,
-		"orphan-tests":                       e.ruleOrphanTests,
-		"stale-traces":                       e.ruleStaleTraces,
-		"all-reqs-must-have-aspice":          e.ruleAllReqsMustHaveASPICE,
-		"all-reqs-must-have-priority":        e.ruleAllReqsMustHavePriority,
-		"max-orphan-percentage":              e.ruleMaxOrphanPercentage,
-		"undocumented-bausteinsicht-elements": e.ruleNoop, // structural check, handled externally
+		"missing-review":              e.ruleMissingReview,
+		"missing-test-spec":           e.ruleMissingTestSpec,
+		"missing-impl":                e.ruleMissingImpl,
+		"orphan-architecture":         e.ruleOrphanArchitecture,
+		"orphan-tests":                e.ruleOrphanTests,
+		"stale-traces":                e.ruleStaleTraces,
+		"all-reqs-must-have-aspice":   e.ruleAllReqsMustHaveASPICE,
+		"all-reqs-must-have-priority": e.ruleAllReqsMustHavePriority,
+		"max-orphan-percentage":       e.ruleMaxOrphanPercentage,
+		// undocumented-bausteinsicht-elements is intentionally not registered:
+		// it requires the bausteinsicht binary which is not available at validate-time.
+		// Users who set this rule get an "unknown rule" warning explaining this.
 	}
 
 	var results []*RuleResult
@@ -134,11 +136,6 @@ func parseSeverity(s string) Severity {
 	}
 }
 
-// ruleNoop is a placeholder for rules handled externally.
-func (e *RuleEngine) ruleNoop(sev Severity) *RuleResult {
-	return &RuleResult{RuleID: "noop", Severity: sev}
-}
-
 // ruleMissingReview flags requirements without a reviewed-by attribute.
 func (e *RuleEngine) ruleMissingReview(sev Severity) *RuleResult {
 	g := e.analyzer.GetGraph()
@@ -160,11 +157,13 @@ func (e *RuleEngine) ruleMissingReview(sev Severity) *RuleResult {
 func (e *RuleEngine) ruleMissingTestSpec(sev Severity) *RuleResult {
 	g := e.analyzer.GetGraph()
 	result := &RuleResult{RuleID: "missing-test-spec", Severity: sev}
+	specArchIdx := buildTestSpecArchIndex(g) // O(|TestSpecs|) once
 	for _, arch := range g.ArchElements {
 		if arch.Parent == "" {
 			continue // skip top-level elements
 		}
-		if arch.TestSpec == "" && !hasTestSpecLink(arch.ID, g) {
+		_, hasLink := specArchIdx[arch.ID]
+		if arch.TestSpec == "" && !hasLink {
 			result.Violations = append(result.Violations, Violation{
 				Rule:     "missing-test-spec",
 				Severity: sev,
@@ -259,16 +258,13 @@ func (e *RuleEngine) ruleAllReqsMustHavePriority(sev Severity) *RuleResult {
 	g := e.analyzer.GetGraph()
 	result := &RuleResult{RuleID: "all-reqs-must-have-priority", Severity: sev}
 	for _, req := range g.Requirements {
-		if req.Priority == "" || req.Priority == "medium" {
-			// "medium" is the default, only flag if truly missing (empty)
-			if req.Priority == "" {
-				result.Violations = append(result.Violations, Violation{
-					Rule:     "all-reqs-must-have-priority",
-					Severity: sev,
-					Message:  fmt.Sprintf("requirement %s has no priority= attribute", req.ID),
-					Location: fmt.Sprintf("%s:%d", req.FilePath, req.LineNumber),
-				})
-			}
+		if req.Priority == "" {
+			result.Violations = append(result.Violations, Violation{
+				Rule:     "all-reqs-must-have-priority",
+				Severity: sev,
+				Message:  fmt.Sprintf("requirement %s has no priority= attribute", req.ID),
+				Location: fmt.Sprintf("%s:%d", req.FilePath, req.LineNumber),
+			})
 		}
 	}
 	return result
@@ -306,14 +302,14 @@ func (e *RuleEngine) ruleMaxOrphanPercentage(sev Severity) *RuleResult {
 	return result
 }
 
-// hasTestSpecLink checks if an arch element is referenced by any test spec.
-func hasTestSpecLink(archID string, g *model.TraceabilityGraph) bool {
+// buildTestSpecArchIndex returns a set of arch IDs that have at least one test spec referencing them.
+// O(|TestSpecs| × avg|Arch|) — called once per ruleMissingTestSpec invocation.
+func buildTestSpecArchIndex(g *model.TraceabilityGraph) map[string]struct{} {
+	idx := make(map[string]struct{})
 	for _, spec := range g.TestSpecs {
 		for _, aid := range spec.Arch {
-			if aid == archID {
-				return true
-			}
+			idx[aid] = struct{}{}
 		}
 	}
-	return false
+	return idx
 }
