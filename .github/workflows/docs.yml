@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build docs (docToolchain via Docker)
-        uses: paul-fleischmann-com/doctoolchain-action@06d070249305b140d2b36edc51194f76bdc7c409  # v1
+        uses: paul-fleischmann-com/doctoolchain-action@a6c2403e4f622ef87518eadebb66a05e51eaec50  # v1
         with:
           output-path: build/docs
 
