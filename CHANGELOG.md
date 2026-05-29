@@ -11,6 +11,16 @@ All notable changes to this project will be documented in this file.
   - `github-action-benchmark@v1`: `gh-pages-branch: gh-pages` und `benchmark-data-dir-path: dev/bench` explizit gesetzt
   - Behebt `fatal: couldn't find remote ref gh-pages` bei jedem Master-Push
 
+### CI/CD
+
+- **ci: GoReleaser-Integration für alle GOOS/GOARCH-Kombinationen** (#53)
+  - `.goreleaser.yaml` v2: 7 Targets (linux/darwin/windows × amd64/arm64/386, darwin-386 + windows-arm64 excluded)
+  - `.tar.gz` für Unix, `.zip` für Windows, `SHA256SUMS` via GoReleaser automatisch generiert
+  - SBOM-Generierung via `syft` (in GHA via `anchore/sbom-action/download-syft@v0`)
+  - Changelog gruppiert nach `feat`, `fix`, `refactor`
+  - `release`-Job in `ci.yml`: manuelles Shell-Script + `softprops/action-gh-release` → `goreleaser/goreleaser-action@v6`
+  - `fetch-depth: 0` für vollständigen Git-History-Zugriff, `id-token: write` für SBOM-Attestation
+
 ### Features
 
 - **feat(lsp): Phase 3.3 — Hover Tooltips** (#7, PR #32)

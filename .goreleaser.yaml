@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+
+project_name: req42-tracer
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: req42-tracer
+    main: ./src/cmd/req42-tracer
+    binary: req42-tracer
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+      - "386"
+    ignore:
+      - goos: darwin
+        goarch: "386"
+      - goos: windows
+        goarch: arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+    env:
+      - CGO_ENABLED=0
+
+archives:
+  - id: default
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: SHA256SUMS
+  algorithm: sha256
+
+sboms:
+  - artifacts: archive
+
+changelog:
+  sort: asc
+  groups:
+    - title: Features
+      regexp: "^feat"
+      order: 0
+    - title: Bug Fixes
+      regexp: "^fix"
+      order: 1
+    - title: Refactoring
+      regexp: "^refactor"
+      order: 2
+    - title: Other
+      order: 999
+  filters:
+    exclude:
+      - "^chore"
+      - "^docs"
+      - "^test"
+      - "^Merge pull request"
+      - "^Merge branch"
