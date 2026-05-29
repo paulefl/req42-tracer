@@ -24,10 +24,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build docs (docToolchain via Docker)
-        uses: paul-fleischmann-com/doctoolchain-action@3bb6aa6aa5ab489f7b31bcf0ed74ebe277517070  # v1
+        uses: paul-fleischmann-com/doctoolchain-action@06d070249305b140d2b36edc51194f76bdc7c409  # v1
         with:
           output-path: build/docs
-          tasks: generateHTML
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
