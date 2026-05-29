@@ -1,0 +1,38 @@
+name: Docs
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'project/req42-tracer/docs/**'
+      - 'docToolchainConfig.groovy'
+      - 'dtcw'
+  workflow_dispatch:
+
+jobs:
+  docs:
+    name: Build & Deploy Docs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build docs (docToolchain via Docker)
+        uses: paul-fleischmann-com/doctoolchain-action@a6c2403e4f622ef87518eadebb66a05e51eaec50  # v1
+        with:
+          output-path: build/docs
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/docs/html5  # docToolchain 3.x default output subdir
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4

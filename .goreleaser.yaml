@@ -6,6 +6,12 @@ project_name: req42-tracer
 before:
   hooks:
     - go mod tidy
+    # Requires Docker on the runner. Skip locally: goreleaser release --snapshot --skip before
+    - bash -c "./dtcw docker extra_arguments '-e DTC_OUTPUT_PATH=dist/docs' generateHTML generatePDF"
+
+extra_files:
+  - glob: dist/docs/html5/**/*
+  - glob: dist/docs/pdf/*.pdf
 
 builds:
   - id: req42-tracer
