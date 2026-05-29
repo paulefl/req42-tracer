@@ -6,6 +6,11 @@ project_name: req42-tracer
 before:
   hooks:
     - go mod tidy
+    - bash -c "DTC_OUTPUT_PATH=dist/docs ./dtcw docker generateHTML generatePDF"
+
+extra_files:
+  - glob: dist/docs/html5/**/*
+  - glob: dist/docs/pdf/*.pdf
 
 builds:
   - id: req42-tracer
