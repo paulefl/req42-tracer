@@ -1,5 +1,9 @@
 name: CI
 
+# Workflow-level default: least privilege
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ master ]
@@ -32,7 +36,7 @@ jobs:
         run: go vet ./...
 
       - name: Run tests with coverage
-        run: go test ./... -v -coverprofile=coverage.out
+        run: go test ./... -coverprofile=coverage.out
 
       - name: Coverage summary
         if: runner.os != 'Windows'
@@ -50,9 +54,8 @@ jobs:
     name: Benchmark
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      # For PR comment on regression
-      pull-requests: write
+      contents: write       # needed for gh-pages push (master only)
+      pull-requests: write  # needed for PR comments (PR runs only)
 
     steps:
       - uses: actions/checkout@v4
@@ -87,12 +90,17 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
           comment-on-alert: true
-          alert-threshold: '130%'   # alert if ≥30% slower than baseline
-          fail-on-alert: false       # don't fail CI on regression, just warn
+          alert-threshold: '130%'
+          fail-on-alert: false
 
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # SARIF upload requires security-events write
+      security-events: write
+
     steps:
       - uses: actions/checkout@v4
 
@@ -104,13 +112,20 @@ jobs:
 
       - name: staticcheck
         run: |
-          go install honnef.co/go/tools/cmd/staticcheck@latest
+          go install honnef.co/go/tools/cmd/staticcheck@v0.6.0
           staticcheck ./...
 
-      - name: gosec
+      - name: gosec (SARIF)
         run: |
-          go install github.com/securego/gosec/v2/cmd/gosec@latest
-          gosec -severity medium -confidence medium ./... || true
+          go install github.com/securego/gosec/v2/cmd/gosec@v2.22.4
+          gosec -severity medium -confidence medium -fmt sarif -out gosec.sarif ./... || true
+
+      - name: Upload gosec SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: gosec.sarif
+          category: gosec
 
   release:
     name: Release
@@ -132,11 +147,13 @@ jobs:
       - name: Build binaries
         run: |
           mkdir -p dist
-          GOOS=linux   GOARCH=amd64 go build -o dist/req42-tracer-linux-amd64   ./cmd/req42-tracer
-          GOOS=linux   GOARCH=arm64 go build -o dist/req42-tracer-linux-arm64   ./cmd/req42-tracer
-          GOOS=darwin  GOARCH=amd64 go build -o dist/req42-tracer-darwin-amd64  ./cmd/req42-tracer
-          GOOS=darwin  GOARCH=arm64 go build -o dist/req42-tracer-darwin-arm64  ./cmd/req42-tracer
-          GOOS=windows GOARCH=amd64 go build -o dist/req42-tracer-windows-amd64.exe ./cmd/req42-tracer
+          VERSION="${{ github.ref_name }}"
+          LDFLAGS="-s -w -trimpath -X main.version=${VERSION}"
+          GOOS=linux   GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-linux-amd64   ./cmd/req42-tracer
+          GOOS=linux   GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-linux-arm64   ./cmd/req42-tracer
+          GOOS=darwin  GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-darwin-amd64  ./cmd/req42-tracer
+          GOOS=darwin  GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-darwin-arm64  ./cmd/req42-tracer
+          GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/req42-tracer-windows-amd64.exe ./cmd/req42-tracer
 
       - name: Create checksums
         run: |
@@ -144,7 +161,7 @@ jobs:
           sha256sum * > SHA256SUMS
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2.3.2
         with:
           files: dist/*
           generate_release_notes: true
