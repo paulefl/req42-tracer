@@ -53,6 +53,11 @@ func runValidateCmd(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(os.Stderr, "No architecture found: %v\n", err)
 	}
 
+	// Load Bausteinsicht model if configured
+	if bPath := cfg.Bausteinsicht.Model; bPath != "" {
+		loadBausteinsicht(builder, bPath, verbose)
+	}
+
 	builder.DeriveASPICELevels()
 	if err := builder.BuildLinks(); err != nil {
 		return err

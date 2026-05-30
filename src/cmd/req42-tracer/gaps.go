@@ -61,6 +61,11 @@ func runGapsCmd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Load Bausteinsicht model if configured
+	if bPath := config.Bausteinsicht.Model; bPath != "" {
+		loadBausteinsicht(builder, bPath, verbose)
+	}
+
 	// Derive ASPICE levels
 	builder.DeriveASPICELevels()
 
