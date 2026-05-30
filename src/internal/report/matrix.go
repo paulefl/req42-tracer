@@ -15,11 +15,13 @@ type MatrixCell struct {
 
 // MatrixRow represents a single requirement row in the matrix.
 type MatrixRow struct {
-	RequirementID string
-	Title         string
-	Priority      string
-	Status        string
-	Cells         map[string]MatrixCell // column_id -> MatrixCell
+	RequirementID    string
+	Title            string
+	Priority         string
+	Status           string
+	Impl             string // Implementation reference from [req,impl=...]
+	TestResultStatus string // "pass", "fail", "missing" — derived from linked TestResults
+	Cells            map[string]MatrixCell // column_id -> MatrixCell
 }
 
 // MatrixData represents the complete traceability matrix.
@@ -78,6 +80,9 @@ func BuildMatrixData(g *model.TraceabilityGraph) *MatrixData {
 		columnOrder[id] = len(data.Columns) - 1
 	}
 
+	// Build TestResult lookup: testSpec ID → worst status among linked results
+	testSpecResults := buildTestSpecResultMap(g)
+
 	// Build rows: Requirements
 	for _, req := range g.Requirements {
 		row := MatrixRow{
@@ -85,6 +90,7 @@ func BuildMatrixData(g *model.TraceabilityGraph) *MatrixData {
 			Title:         req.Title,
 			Priority:      req.Priority,
 			Status:        req.Status,
+			Impl:          req.Attributes["impl"],
 			Cells:         make(map[string]MatrixCell),
 		}
 
@@ -111,6 +117,9 @@ func BuildMatrixData(g *model.TraceabilityGraph) *MatrixData {
 				}
 			}
 		}
+
+		// Derive TestResultStatus: find TestSpecs linked to this req, check results
+		row.TestResultStatus = deriveTestResultStatus(req.ID, g, testSpecResults)
 
 		data.Rows = append(data.Rows, row)
 		data.Matrix[req.ID] = row.Cells
@@ -189,6 +198,49 @@ func (m *MatrixData) calculateStatistics() {
 		m.Statistics.CoveragePercentage = (float64(coveredCount) / float64(m.Statistics.TotalRequirements)) * 100
 		m.Statistics.AverageCoveragePerReq = float64(cellsCovered) / float64(totalCells) * 100
 	}
+}
+
+// buildTestSpecResultMap maps testSpec ID → worst result status ("pass"/"fail")
+// based on TestResults linked to each TestSpec.
+func buildTestSpecResultMap(g *model.TraceabilityGraph) map[string]string {
+	m := make(map[string]string)
+	for _, result := range g.TestResults {
+		// TestResults are linked to TestSpecs via graph links
+		for _, link := range g.Links {
+			if link.ToID == result.ID && link.ToType == "test-result" {
+				specID := link.FromID
+				existing := m[specID]
+				switch result.Status {
+				case "failed":
+					m[specID] = "fail"
+				case "passed":
+					if existing != "fail" {
+						m[specID] = "pass"
+					}
+				}
+			}
+		}
+	}
+	return m
+}
+
+// deriveTestResultStatus returns the overall test result status for a requirement.
+// "pass"    — all linked TestSpecs have passing results
+// "fail"    — at least one linked TestSpec has a failing result
+// "missing" — no TestResults found for any linked TestSpec
+func deriveTestResultStatus(reqID string, g *model.TraceabilityGraph, specResults map[string]string) string {
+	status := "missing"
+	for _, link := range g.Links {
+		if link.FromID == reqID && link.ToType == "test-spec" {
+			if r, ok := specResults[link.ToID]; ok {
+				if r == "fail" {
+					return "fail"
+				}
+				status = "pass"
+			}
+		}
+	}
+	return status
 }
 
 // ExportMatrixToCSV generates CSV content from the matrix.
