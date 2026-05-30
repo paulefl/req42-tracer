@@ -16,6 +16,7 @@ type Analyzer struct {
 	once          sync.Once
 	reqToArch     map[string]map[string]struct{} // requirement ID → arch IDs referencing it
 	testedArchIDs map[string]struct{}             // arch IDs with at least one verified-by link
+	testedDsnIDs  map[string]struct{}             // design element IDs with at least one verified-by link
 }
 
 // NewAnalyzer creates a new graph analyzer.
@@ -34,6 +35,7 @@ func (a *Analyzer) buildIndex() {
 	a.once.Do(func() {
 		a.reqToArch = make(map[string]map[string]struct{}, len(a.graph.Requirements))
 		a.testedArchIDs = make(map[string]struct{})
+		a.testedDsnIDs = make(map[string]struct{})
 
 		for archID, arch := range a.graph.ArchElements {
 			for _, reqID := range arch.Req {
@@ -48,6 +50,9 @@ func (a *Analyzer) buildIndex() {
 			if link.LinkType == "verified-by" && link.FromType == "arch" {
 				a.testedArchIDs[link.FromID] = struct{}{}
 			}
+			if link.LinkType == "verified-by" && link.FromType == "design" {
+				a.testedDsnIDs[link.FromID] = struct{}{}
+			}
 		}
 	})
 }
@@ -57,13 +62,15 @@ func (a *Analyzer) AnalyzeGaps() *model.GapAnalysisResult {
 	a.buildIndex()
 
 	gap := &model.GapAnalysisResult{
-		OrphanRequirements:   []*model.Requirement{},
-		OrphanArchElements:   []*model.ArchElement{},
-		OrphanTestSpecs:      []*model.TestSpec{},
-		UntracedTestResults:  []*model.TestResult{},
-		MissingImplementation: []*model.ArchElement{},
-		StaleTraces:           []*model.TraceLink{},
-		UntestedArchElements:  []*model.ArchElement{},
+		OrphanRequirements:     []*model.Requirement{},
+		OrphanArchElements:     []*model.ArchElement{},
+		OrphanTestSpecs:        []*model.TestSpec{},
+		UntracedTestResults:    []*model.TestResult{},
+		MissingImplementation:  []*model.ArchElement{},
+		StaleTraces:            []*model.TraceLink{},
+		UntestedArchElements:   []*model.ArchElement{},
+		OrphanDesignElements:   []*model.DesignElement{},
+		UntestedDesignElements: []*model.DesignElement{},
 	}
 
 	// O(|Requirements|) — O(1) lookup via index
@@ -89,9 +96,19 @@ func (a *Analyzer) AnalyzeGaps() *model.GapAnalysisResult {
 		}
 	}
 
+	// O(|DesignElements|) — SWE.3 gap rules
+	for _, dsn := range a.graph.DesignElements {
+		if dsn.Arch == "" {
+			gap.OrphanDesignElements = append(gap.OrphanDesignElements, dsn)
+		}
+		if _, tested := a.testedDsnIDs[dsn.ID]; !tested {
+			gap.UntestedDesignElements = append(gap.UntestedDesignElements, dsn)
+		}
+	}
+
 	// O(|TestSpecs|)
 	for _, spec := range a.graph.TestSpecs {
-		if len(spec.Req) == 0 && len(spec.Arch) == 0 {
+		if len(spec.Req) == 0 && len(spec.Arch) == 0 && len(spec.Dsn) == 0 {
 			gap.OrphanTestSpecs = append(gap.OrphanTestSpecs, spec)
 		}
 	}
@@ -254,10 +271,23 @@ func (a *Analyzer) ValidateReferences() []string {
 		}
 	}
 
+	for dsnID, dsn := range a.graph.DesignElements {
+		if dsn.Arch != "" {
+			if _, exists := a.graph.ArchElements[dsn.Arch]; !exists {
+				errors = append(errors, fmt.Sprintf("DesignElement %s references unknown architecture %s", dsnID, dsn.Arch))
+			}
+		}
+	}
+
 	for specID, spec := range a.graph.TestSpecs {
 		for _, archID := range spec.Arch {
 			if _, exists := a.graph.ArchElements[archID]; !exists {
 				errors = append(errors, fmt.Sprintf("TestSpec %s references unknown architecture %s", specID, archID))
+			}
+		}
+		for _, dsnID := range spec.Dsn {
+			if _, exists := a.graph.DesignElements[dsnID]; !exists {
+				errors = append(errors, fmt.Sprintf("TestSpec %s references unknown design element %s", specID, dsnID))
 			}
 		}
 		for _, reqID := range spec.Req {

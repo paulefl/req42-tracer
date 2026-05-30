@@ -412,3 +412,66 @@ func writeFile(t *testing.T, path, content string) {
 		t.Fatal(err)
 	}
 }
+
+// [test-spec,id=TS-PARSE-030,req=REQ-PARSE-002,aspice=SWE.4-BP3]
+// TestParseDsnBlock verifies that [dsn] blocks are parsed into DesignElements.
+func TestParseDsnBlock(t *testing.T) {
+	dir := t.TempDir()
+	f := filepath.Join(dir, "design.adoc")
+	content := `[dsn,id=comp.parser.tokenizer,arch=comp.parser,aspice=SWE.3,impl=src/parser/tokenizer.go]
+== Tokenizer Unit
+`
+	if err := os.WriteFile(f, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	p := NewADocParser(f)
+	elems, err := p.ParseDesignElements("proj")
+	if err != nil {
+		t.Fatalf("ParseDesignElements: %v", err)
+	}
+	if len(elems) != 1 {
+		t.Fatalf("expected 1 design element, got %d", len(elems))
+	}
+	e := elems[0]
+	if e.ID != "comp.parser.tokenizer" {
+		t.Errorf("ID = %q", e.ID)
+	}
+	if e.Arch != "comp.parser" {
+		t.Errorf("Arch = %q", e.Arch)
+	}
+	if e.ASPICE != "SWE.3" {
+		t.Errorf("ASPICE = %q", e.ASPICE)
+	}
+	if e.Impl != "src/parser/tokenizer.go" {
+		t.Errorf("Impl = %q", e.Impl)
+	}
+	if e.Title != "Tokenizer Unit" {
+		t.Errorf("Title = %q", e.Title)
+	}
+}
+
+// [test-spec,id=TS-PARSE-031,req=REQ-PARSE-002,aspice=SWE.4-BP3]
+// TestParseTestSpec_DsnAttr verifies that dsn= on [test-spec] is parsed into TestSpec.Dsn.
+func TestParseTestSpec_DsnAttr(t *testing.T) {
+	dir := t.TempDir()
+	f := filepath.Join(dir, "tests.adoc")
+	content := `[test-spec,id=TS-UNIT-001,dsn=comp.parser.tokenizer,aspice=SWE.4]
+== Unit Test: Tokenizer
+`
+	if err := os.WriteFile(f, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	p := NewADocParser(f)
+	specs, err := p.ParseTestSpecs("proj")
+	if err != nil {
+		t.Fatalf("ParseTestSpecs: %v", err)
+	}
+	if len(specs) != 1 {
+		t.Fatalf("expected 1 test-spec, got %d", len(specs))
+	}
+	if len(specs[0].Dsn) != 1 || specs[0].Dsn[0] != "comp.parser.tokenizer" {
+		t.Errorf("Dsn = %v", specs[0].Dsn)
+	}
+}

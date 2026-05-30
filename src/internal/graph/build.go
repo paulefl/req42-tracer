@@ -17,12 +17,13 @@ type Builder struct {
 func NewBuilder() *Builder {
 	return &Builder{
 		graph: &model.TraceabilityGraph{
-			Requirements: make(map[string]*model.Requirement),
-			ArchElements: make(map[string]*model.ArchElement),
-			TestSpecs:    make(map[string]*model.TestSpec),
-			TestCodes:    make(map[string]*model.TestCode),
-			TestResults:  make(map[string]*model.TestResult),
-			Links:        []*model.TraceLink{},
+			Requirements:   make(map[string]*model.Requirement),
+			ArchElements:   make(map[string]*model.ArchElement),
+			DesignElements: make(map[string]*model.DesignElement),
+			TestSpecs:      make(map[string]*model.TestSpec),
+			TestCodes:      make(map[string]*model.TestCode),
+			TestResults:    make(map[string]*model.TestResult),
+			Links:          []*model.TraceLink{},
 		},
 		linkSeen: make(map[string]struct{}),
 	}
@@ -47,6 +48,13 @@ func (b *Builder) MergeGraph(other *model.TraceabilityGraph) error {
 			return fmt.Errorf("duplicate architecture element ID: %s", id)
 		}
 		b.graph.ArchElements[id] = arch
+	}
+
+	for id, dsn := range other.DesignElements {
+		if _, exists := b.graph.DesignElements[id]; exists {
+			return fmt.Errorf("duplicate design element ID: %s", id)
+		}
+		b.graph.DesignElements[id] = dsn
 	}
 
 	for id, spec := range other.TestSpecs {
@@ -101,7 +109,26 @@ func (b *Builder) BuildLinks() error {
 		}
 	}
 
-	// Link architecture to test specs
+	// Link arch to design elements (SWE.2 → SWE.3)
+	for dsnID, dsn := range b.graph.DesignElements {
+		if dsn.Arch == "" {
+			continue
+		}
+		if _, exists := b.graph.ArchElements[dsn.Arch]; !exists {
+			continue
+		}
+		b.addLink(&model.TraceLink{
+			FromID:   dsn.Arch,
+			FromType: "arch",
+			ToID:     dsnID,
+			ToType:   "design",
+			LinkType: "refined-by",
+			Status:   "active",
+			Reason:   "Explicit arch= attribute on dsn",
+		})
+	}
+
+	// Link architecture to test specs (SWE.5)
 	for specID, spec := range b.graph.TestSpecs {
 		for _, archID := range spec.Arch {
 			if _, exists := b.graph.ArchElements[archID]; !exists {
@@ -116,6 +143,24 @@ func (b *Builder) BuildLinks() error {
 				LinkType: "verified-by",
 				Status:   "active",
 				Reason:   "Explicit arch= attribute",
+			})
+		}
+	}
+
+	// Link design elements to test specs (SWE.4)
+	for specID, spec := range b.graph.TestSpecs {
+		for _, dsnID := range spec.Dsn {
+			if _, exists := b.graph.DesignElements[dsnID]; !exists {
+				continue
+			}
+			b.addLink(&model.TraceLink{
+				FromID:   dsnID,
+				FromType: "design",
+				ToID:     specID,
+				ToType:   "test-spec",
+				LinkType: "verified-by",
+				Status:   "active",
+				Reason:   "Explicit dsn= attribute",
 			})
 		}
 	}

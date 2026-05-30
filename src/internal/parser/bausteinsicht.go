@@ -63,12 +63,13 @@ func (p *BausteinsichtParser) Parse(project string) (*model.TraceabilityGraph, e
 	}
 
 	graph := &model.TraceabilityGraph{
-		Requirements: make(map[string]*model.Requirement),
-		ArchElements: make(map[string]*model.ArchElement),
-		TestSpecs:    make(map[string]*model.TestSpec),
-		TestCodes:    make(map[string]*model.TestCode),
-		TestResults:  make(map[string]*model.TestResult),
-		Links:        []*model.TraceLink{},
+		Requirements:   make(map[string]*model.Requirement),
+		ArchElements:   make(map[string]*model.ArchElement),
+		DesignElements: make(map[string]*model.DesignElement),
+		TestSpecs:      make(map[string]*model.TestSpec),
+		TestCodes:      make(map[string]*model.TestCode),
+		TestResults:    make(map[string]*model.TestResult),
+		Links:          []*model.TraceLink{},
 	}
 
 	// Process all projects and their elements
