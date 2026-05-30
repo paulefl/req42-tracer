@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"gopkg.in/yaml.v3"
 )
@@ -85,13 +86,18 @@ func LoadConfig(configPath string) (*Config, error) {
 }
 
 // GetDefaultProject returns the configured default project name.
-// Priority: explicit default-project field → first key in projects map → "software".
+// Priority: explicit default-project field → alphabetically first key in projects map → "software".
 func (c *Config) GetDefaultProject() string {
 	if c.DefaultProject != "" {
 		return c.DefaultProject
 	}
+	keys := make([]string, 0, len(c.Projects))
 	for name := range c.Projects {
-		return name
+		keys = append(keys, name)
+	}
+	sort.Strings(keys)
+	if len(keys) > 0 {
+		return keys[0]
 	}
 	return "software"
 }

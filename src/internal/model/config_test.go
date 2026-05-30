@@ -148,10 +148,10 @@ func TestConfig_GetDefaultProject(t *testing.T) {
 		t.Errorf("explicit default-project: got %q, want firmware", got)
 	}
 
-	// Falls back to first projects key when default-project is empty
-	cfg2 := &Config{Projects: map[string]*ProjectConfig{"hardware": {}}}
-	if got := cfg2.GetDefaultProject(); got != "hardware" {
-		t.Errorf("projects key fallback: got %q, want hardware", got)
+	// Falls back to alphabetically first projects key (deterministic)
+	cfg2 := &Config{Projects: map[string]*ProjectConfig{"hardware": {}, "software": {}, "alpha": {}}}
+	if got := cfg2.GetDefaultProject(); got != "alpha" {
+		t.Errorf("projects key fallback: got %q, want alpha (alphabetically first)", got)
 	}
 
 	// Falls back to "software" when projects map is empty
