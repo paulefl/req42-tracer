@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/paulefl/req42-tracer/src/internal/graph"
 )
 
 const sampleBausteinsicht = `{
@@ -153,6 +155,31 @@ func TestBausteinsichtParser_Project(t *testing.T) {
 		if elem.Project != "myproject" {
 			t.Errorf("element %q has project %q, want myproject", elem.ID, elem.Project)
 		}
+	}
+}
+
+// [test-spec,id=TS-PARSE-028,req=REQ-PARSE-002,aspice=SWE.5-BP3]
+// TestBausteinsichtParser_MergeIntoGraph verifies that parsed arch elements are
+// successfully merged into a graph.Builder (command pipeline integration).
+func TestBausteinsichtParser_MergeIntoGraph(t *testing.T) {
+	f := writeBausteinsicht(t, sampleBausteinsicht)
+	p := NewBausteinsichtParser(f)
+	bGraph, err := p.Parse("software")
+	if err != nil {
+		t.Fatalf("Parse error: %v", err)
+	}
+
+	builder := graph.NewBuilder()
+	if err := builder.MergeGraph(bGraph); err != nil {
+		t.Fatalf("MergeGraph error: %v", err)
+	}
+
+	g := builder.GetGraph()
+	if len(g.ArchElements) == 0 {
+		t.Error("expected arch elements in graph after merge, got none")
+	}
+	if _, ok := g.ArchElements["system"]; !ok {
+		t.Error("expected 'system' element in merged graph")
 	}
 }
 
