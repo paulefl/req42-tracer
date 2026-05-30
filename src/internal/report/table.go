@@ -230,6 +230,14 @@ func (tr *TableReporter) gapReportText(gaps *model.GapAnalysisResult) string {
 		buf.WriteString("\n")
 	}
 
+	if len(gaps.UntracedTestResults) > 0 {
+		buf.WriteString(fmt.Sprintf("UNTRACED TEST RESULTS (%d):\n", len(gaps.UntracedTestResults)))
+		for _, result := range gaps.UntracedTestResults {
+			buf.WriteString(fmt.Sprintf("  ⚠ %s (no linked test-spec)\n", result.TestName))
+		}
+		buf.WriteString("\n")
+	}
+
 	if len(gaps.StaleTraces) > 0 {
 		buf.WriteString(fmt.Sprintf("STALE TRACES (%d):\n", len(gaps.StaleTraces)))
 		for _, link := range gaps.StaleTraces {

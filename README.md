@@ -30,6 +30,62 @@ Combines three approaches for matching test results to specifications:
 2. **Name-based matching** using heuristics (fallback)
 3. **Custom metadata** in test reports (optional)
 
+## Coverage Rules (ASPICE PAM 4.0)
+
+req42-tracer enforces the full ASPICE SWE.1–SWE.6 traceability chain. Each block type maps to one ASPICE process:
+
+```asciidoc
+[req,id=SWR-001,aspice=SWE.1]
+== System shall parse AsciiDoc blocks           ← SWE.1 Software Requirements
+
+[arch,id=comp.parser,req=SWR-001,aspice=SWE.2,impl=src/internal/parser/]
+== Parser Component                              ← SWE.2 Architectural Design
+
+[dsn,id=comp.parser.tokenizer,arch=comp.parser,aspice=SWE.3,impl=src/internal/parser/tokenizer.go]
+== Tokenizer Unit                                ← SWE.3 Detailed Design
+
+[test-spec,id=TS-UNIT-001,dsn=comp.parser.tokenizer,aspice=SWE.4]
+== Unit Test: Tokenizer                          ← SWE.4 Unit Verification
+
+[test-spec,id=TS-INT-001,arch=comp.parser,aspice=SWE.5]
+== Integration Test: Parser Component            ← SWE.5 Integration Verification
+
+[test-spec,id=TS-SWR-001,req=SWR-001,aspice=SWE.6]
+== SW Qualification Test: Parser extracts all req blocks  ← SWE.6 Qualification Test
+```
+
+### Traceability chain
+
+```
+[req,SWE.1] ──req=──▶ [arch,SWE.2] ──arch=──▶ [dsn,SWE.3] ──impl=──▶ src/...
+     │                     │                        │
+     └──req=──▶ [test-spec/SWE.6]                  └──dsn=──▶ [test-spec/SWE.4]
+                [test-spec/SWE.5] ◀──arch=──────────┘
+```
+
+### Coverage rules
+
+| Link | Attribute | ASPICE | Required |
+|---|---|---|---|
+| `[req]` → `[arch]` | `req=` on `[arch]` | SWE.2 BP4 | ✅ |
+| `[arch]` → `[dsn]` | `arch=` on `[dsn]` | SWE.3 BP4 | optional |
+| `[arch]` / `[dsn]` → implementation | `impl=` | SWE.2/SWE.3 BP5 | ✅ |
+| `[dsn]` → Unit Test | `dsn=` on `[test-spec]` + `aspice=SWE.4` | SWE.4 BP4 | ✅ |
+| `[arch]` → Integration Test | `arch=` on `[test-spec]` + `aspice=SWE.5` | SWE.5 BP4 | ✅ |
+| `[req]` → SW Qualification Test | `req=` on `[test-spec]` + `aspice=SWE.6` | SWE.6 BP4 | ✅ |
+| `[test-spec]` → TestResult | JUnit/go-test XML | SWE.4/5/6 BP5 | ✅ |
+
+### Gap messages
+
+| Message | Meaning | Fix |
+|---|---|---|
+| `orphan requirement` | `[req]` has no `[arch]` with `req=` | Add `[arch,req=SWR-XXX]` |
+| `missing impl` | `[arch]`/`[dsn]` has no `impl=` | Add `impl=src/...` |
+| `untested architecture element (SWE.5)` | `[arch]` has no `[test-spec]` with `arch=` | Add Integration Test |
+| `orphan design element (SWE.3)` | `[dsn]` has no `arch=` parent | Add `arch=` to `[dsn]` |
+| `untested detailed design (SWE.4)` | `[dsn]` has no `[test-spec]` with `dsn=` | Add Unit Test |
+| `untraced test result` | `[test-spec]` has no matching TestResult in JUnit/go-test | Check CI output |
+
 ## Quick Start
 
 ```bash
