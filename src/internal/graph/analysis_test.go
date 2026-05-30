@@ -446,3 +446,67 @@ func TestAnalyzeGaps_TestedArchElement(t *testing.T) {
 		t.Errorf("expected no untested arch elements, got %d: %v", len(gaps.UntestedArchElements), gaps.UntestedArchElements)
 	}
 }
+
+// [test-spec,id=TS-GRAPH-041,req=REQ-GRAPH-001,aspice=SWE.4-BP4]
+// TestAnalyzeGaps_OrphanDesignElement verifies that dsn elements without arch= are flagged.
+func TestAnalyzeGaps_OrphanDesignElement(t *testing.T) {
+	g := &model.TraceabilityGraph{
+		Requirements:   make(map[string]*model.Requirement),
+		ArchElements:   make(map[string]*model.ArchElement),
+		DesignElements: map[string]*model.DesignElement{
+			"comp.tokenizer": {ID: "comp.tokenizer", Arch: ""},
+		},
+		TestSpecs:   make(map[string]*model.TestSpec),
+		TestCodes:   make(map[string]*model.TestCode),
+		TestResults: make(map[string]*model.TestResult),
+		Links:       []*model.TraceLink{},
+	}
+	gaps := NewAnalyzer(g).AnalyzeGaps()
+	if len(gaps.OrphanDesignElements) != 1 {
+		t.Errorf("expected 1 orphan dsn, got %d", len(gaps.OrphanDesignElements))
+	}
+}
+
+// [test-spec,id=TS-GRAPH-042,req=REQ-GRAPH-001,aspice=SWE.4-BP4]
+// TestAnalyzeGaps_UntestedDesignElement verifies that dsn elements without a unit test are flagged.
+func TestAnalyzeGaps_UntestedDesignElement(t *testing.T) {
+	g := &model.TraceabilityGraph{
+		Requirements:   make(map[string]*model.Requirement),
+		ArchElements:   make(map[string]*model.ArchElement),
+		DesignElements: map[string]*model.DesignElement{
+			"comp.tokenizer": {ID: "comp.tokenizer", Arch: "comp.parser"},
+		},
+		TestSpecs:   make(map[string]*model.TestSpec),
+		TestCodes:   make(map[string]*model.TestCode),
+		TestResults: make(map[string]*model.TestResult),
+		Links:       []*model.TraceLink{},
+	}
+	gaps := NewAnalyzer(g).AnalyzeGaps()
+	if len(gaps.UntestedDesignElements) != 1 {
+		t.Errorf("expected 1 untested dsn, got %d", len(gaps.UntestedDesignElements))
+	}
+}
+
+// [test-spec,id=TS-GRAPH-043,req=REQ-GRAPH-001,aspice=SWE.4-BP4]
+// TestAnalyzeGaps_TestedDesignElement verifies that covered dsn elements are not flagged.
+func TestAnalyzeGaps_TestedDesignElement(t *testing.T) {
+	g := &model.TraceabilityGraph{
+		Requirements:   make(map[string]*model.Requirement),
+		ArchElements:   make(map[string]*model.ArchElement),
+		DesignElements: map[string]*model.DesignElement{
+			"comp.tokenizer": {ID: "comp.tokenizer", Arch: "comp.parser"},
+		},
+		TestSpecs: map[string]*model.TestSpec{
+			"TS-UNIT-001": {ID: "TS-UNIT-001", Dsn: []string{"comp.tokenizer"}},
+		},
+		TestCodes:   make(map[string]*model.TestCode),
+		TestResults: make(map[string]*model.TestResult),
+		Links: []*model.TraceLink{
+			{FromID: "comp.tokenizer", ToID: "TS-UNIT-001", FromType: "design", ToType: "test-spec", LinkType: "verified-by", Status: "active"},
+		},
+	}
+	gaps := NewAnalyzer(g).AnalyzeGaps()
+	if len(gaps.UntestedDesignElements) != 0 {
+		t.Errorf("expected no untested dsn elements, got %d", len(gaps.UntestedDesignElements))
+	}
+}

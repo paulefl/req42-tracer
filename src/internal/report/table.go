@@ -246,10 +246,27 @@ func (tr *TableReporter) gapReportText(gaps *model.GapAnalysisResult) string {
 		buf.WriteString("\n")
 	}
 
+	if len(gaps.OrphanDesignElements) > 0 {
+		buf.WriteString(fmt.Sprintf("ORPHAN DESIGN ELEMENTS — SWE.3 (%d):\n", len(gaps.OrphanDesignElements)))
+		for _, dsn := range gaps.OrphanDesignElements {
+			buf.WriteString(fmt.Sprintf("  ❌ %s: %s (missing arch= parent)\n", dsn.ID, dsn.Title))
+		}
+		buf.WriteString("\n")
+	}
+
+	if len(gaps.UntestedDesignElements) > 0 {
+		buf.WriteString(fmt.Sprintf("UNTESTED DESIGN ELEMENTS — SWE.4 (%d):\n", len(gaps.UntestedDesignElements)))
+		for _, dsn := range gaps.UntestedDesignElements {
+			buf.WriteString(fmt.Sprintf("  ❌ %s: %s (no unit test-spec with dsn=%s)\n", dsn.ID, dsn.Title, dsn.ID))
+		}
+		buf.WriteString("\n")
+	}
+
 	if len(gaps.OrphanRequirements) == 0 && len(gaps.OrphanArchElements) == 0 &&
 		len(gaps.OrphanTestSpecs) == 0 && len(gaps.MissingImplementation) == 0 &&
 		len(gaps.StaleTraces) == 0 && len(gaps.UntracedTestResults) == 0 &&
-		len(gaps.UntestedArchElements) == 0 {
+		len(gaps.UntestedArchElements) == 0 && len(gaps.OrphanDesignElements) == 0 &&
+		len(gaps.UntestedDesignElements) == 0 {
 		buf.WriteString("✅ No gaps detected!\n")
 	}
 
@@ -286,10 +303,27 @@ func (tr *TableReporter) gapReportMarkdown(gaps *model.GapAnalysisResult) string
 		buf.WriteString("\n")
 	}
 
+	if len(gaps.OrphanDesignElements) > 0 {
+		buf.WriteString(fmt.Sprintf("## Orphan Design Elements — SWE.3 (%d)\n\n", len(gaps.OrphanDesignElements)))
+		for _, dsn := range gaps.OrphanDesignElements {
+			buf.WriteString(fmt.Sprintf("- **%s**: %s — missing `arch=` parent\n", dsn.ID, dsn.Title))
+		}
+		buf.WriteString("\n")
+	}
+
+	if len(gaps.UntestedDesignElements) > 0 {
+		buf.WriteString(fmt.Sprintf("## Untested Design Elements — SWE.4 (%d)\n\n", len(gaps.UntestedDesignElements)))
+		for _, dsn := range gaps.UntestedDesignElements {
+			buf.WriteString(fmt.Sprintf("- **%s**: %s — no unit test-spec with `dsn=%s`\n", dsn.ID, dsn.Title, dsn.ID))
+		}
+		buf.WriteString("\n")
+	}
+
 	if len(gaps.OrphanRequirements) == 0 && len(gaps.OrphanArchElements) == 0 &&
 		len(gaps.OrphanTestSpecs) == 0 && len(gaps.MissingImplementation) == 0 &&
 		len(gaps.StaleTraces) == 0 && len(gaps.UntracedTestResults) == 0 &&
-		len(gaps.UntestedArchElements) == 0 {
+		len(gaps.UntestedArchElements) == 0 && len(gaps.OrphanDesignElements) == 0 &&
+		len(gaps.UntestedDesignElements) == 0 {
 		buf.WriteString("✅ No gaps detected!\n")
 	}
 
@@ -305,7 +339,9 @@ func (tr *TableReporter) gapReportJSON(gaps *model.GapAnalysisResult) string {
 	buf.WriteString(fmt.Sprintf("  \"orphan_test_specs\": %d,\n", len(gaps.OrphanTestSpecs)))
 	buf.WriteString(fmt.Sprintf("  \"missing_implementation\": %d,\n", len(gaps.MissingImplementation)))
 	buf.WriteString(fmt.Sprintf("  \"stale_traces\": %d,\n", len(gaps.StaleTraces)))
-	buf.WriteString(fmt.Sprintf("  \"untested_arch_elements\": %d\n", len(gaps.UntestedArchElements)))
+	buf.WriteString(fmt.Sprintf("  \"untested_arch_elements\": %d,\n", len(gaps.UntestedArchElements)))
+	buf.WriteString(fmt.Sprintf("  \"orphan_design_elements\": %d,\n", len(gaps.OrphanDesignElements)))
+	buf.WriteString(fmt.Sprintf("  \"untested_design_elements\": %d\n", len(gaps.UntestedDesignElements)))
 	buf.WriteString("}\n")
 
 	return buf.String()

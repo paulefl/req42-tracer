@@ -38,17 +38,32 @@ type ArchElement struct {
 	Attributes  map[string]string `json:"attributes"`   // Additional attributes
 }
 
+// DesignElement represents a [dsn] block (SWE.3 Software Detailed Design).
+type DesignElement struct {
+	ID         string            `json:"id"`          // Dot-separated ID (e.g., "comp.parser.tokenizer")
+	Title      string            `json:"title"`       // Element title
+	Text       string            `json:"text"`        // Description
+	Arch       string            `json:"arch"`        // Parent architecture element ID (SWE.2)
+	ASPICE     string            `json:"aspice"`      // ASPICE process (typically SWE.3)
+	Impl       string            `json:"impl"`        // Implementation reference (file path)
+	Project    string            `json:"project"`     // Project key
+	FilePath   string            `json:"file_path"`   // Source .adoc file
+	LineNumber int               `json:"line_number"` // Line in source file
+	Attributes map[string]string `json:"attributes"`  // Additional attributes
+}
+
 // TestSpec represents a [test-spec] block.
 type TestSpec struct {
-	ID          string            `json:"id"`           // Unique identifier (e.g., "spec.api.auth")
-	Title       string            `json:"title"`        // Specification title
-	Text        string            `json:"text"`         // Full specification
-	Req         []string          `json:"req"`          // Associated requirement IDs
-	Arch        []string          `json:"arch"`         // Associated architecture element IDs
-	Project     string            `json:"project"`      // Project key
-	FilePath    string            `json:"file_path"`    // Source .adoc file
-	LineNumber  int               `json:"line_number"`  // Line in source file
-	Attributes  map[string]string `json:"attributes"`   // Additional attributes
+	ID         string            `json:"id"`          // Unique identifier (e.g., "spec.api.auth")
+	Title      string            `json:"title"`       // Specification title
+	Text       string            `json:"text"`        // Full specification
+	Req        []string          `json:"req"`         // Associated requirement IDs (SWE.6)
+	Arch       []string          `json:"arch"`        // Associated architecture element IDs (SWE.5)
+	Dsn        []string          `json:"dsn"`         // Associated design element IDs (SWE.4)
+	Project    string            `json:"project"`     // Project key
+	FilePath   string            `json:"file_path"`   // Source .adoc file
+	LineNumber int               `json:"line_number"` // Line in source file
+	Attributes map[string]string `json:"attributes"`  // Additional attributes
 }
 
 // TestCode represents a [test-code] block or code annotation.
@@ -96,23 +111,26 @@ type TraceLink struct {
 
 // TraceabilityGraph represents the complete dependency graph.
 type TraceabilityGraph struct {
-	Requirements map[string]*Requirement `json:"requirements"`
-	ArchElements map[string]*ArchElement `json:"arch_elements"`
-	TestSpecs    map[string]*TestSpec    `json:"test_specs"`
-	TestCodes    map[string]*TestCode    `json:"test_codes"`
-	TestResults  map[string]*TestResult  `json:"test_results"`
-	Links        []*TraceLink            `json:"links"`
+	Requirements   map[string]*Requirement   `json:"requirements"`
+	ArchElements   map[string]*ArchElement   `json:"arch_elements"`
+	DesignElements map[string]*DesignElement `json:"design_elements"`
+	TestSpecs      map[string]*TestSpec      `json:"test_specs"`
+	TestCodes      map[string]*TestCode      `json:"test_codes"`
+	TestResults    map[string]*TestResult    `json:"test_results"`
+	Links          []*TraceLink              `json:"links"`
 }
 
 // GapAnalysisResult represents findings from gap analysis.
 type GapAnalysisResult struct {
-	OrphanRequirements    []*Requirement // Requirements without architecture or test coverage
-	OrphanArchElements    []*ArchElement // Architecture elements without requirements
-	OrphanTestSpecs       []*TestSpec    // Test specs without linked requirements
-	UntracedTestResults   []*TestResult  // Test results without linked specifications
-	MissingImplementation []*ArchElement // Architecture without impl references
-	StaleTraces           []*TraceLink   // Links to outdated versions
-	UntestedArchElements  []*ArchElement // SWE.2 arch elements without an integration test (arch= on test-spec)
+	OrphanRequirements      []*Requirement   // Requirements without architecture or test coverage
+	OrphanArchElements      []*ArchElement   // Architecture elements without requirements
+	OrphanTestSpecs         []*TestSpec      // Test specs without linked requirements
+	UntracedTestResults     []*TestResult    // Test results without linked specifications
+	MissingImplementation   []*ArchElement   // Architecture without impl references
+	StaleTraces             []*TraceLink     // Links to outdated versions
+	UntestedArchElements    []*ArchElement   // SWE.2 arch elements without an integration test (arch= on test-spec)
+	OrphanDesignElements    []*DesignElement // SWE.3 design elements without an arch= parent
+	UntestedDesignElements  []*DesignElement // SWE.3 design elements without a unit test (dsn= on test-spec)
 }
 
 // CoverageReport represents traceability coverage metrics.

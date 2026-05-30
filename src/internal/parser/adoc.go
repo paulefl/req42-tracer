@@ -254,6 +254,10 @@ func (p *ADocParser) parseTestSpecBlock(blockLine string, lineNum int, project s
 		spec.Arch = parseIDList(arch)
 	}
 
+	if dsn, ok := attrs["dsn"]; ok {
+		spec.Dsn = parseIDList(dsn)
+	}
+
 	// Read next lines for title and text
 	if scanner.Scan() {
 		titleLine := scanner.Text()
@@ -263,6 +267,78 @@ func (p *ADocParser) parseTestSpecBlock(blockLine string, lineNum int, project s
 	}
 
 	return spec, nil
+}
+
+// ParseDesignElements extracts all [dsn] blocks from the file.
+func (p *ADocParser) ParseDesignElements(project string) ([]*model.DesignElement, error) {
+	var elements []*model.DesignElement
+	lineNum := 1
+
+	file, err := os.Open(p.filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, "[dsn,") {
+			fullBlock := line
+			for !strings.Contains(fullBlock, "]") && scanner.Scan() {
+				fullBlock += " " + strings.TrimSpace(scanner.Text())
+				lineNum++
+			}
+			elem, err := p.parseDsnBlock(fullBlock, lineNum, project, scanner)
+			if err == nil && elem != nil {
+				elements = append(elements, elem)
+			}
+		}
+		lineNum++
+	}
+
+	return elements, nil
+}
+
+// parseDsnBlock parses a single [dsn,...] block.
+func (p *ADocParser) parseDsnBlock(blockLine string, lineNum int, project string, scanner *bufio.Scanner) (*model.DesignElement, error) {
+	attrs := extractAttributes(blockLine)
+
+	elem := &model.DesignElement{
+		ID:         attrs["id"],
+		Project:    project,
+		FilePath:   p.filePath,
+		LineNumber: lineNum,
+		Attributes: attrs,
+	}
+
+	if elem.ID == "" {
+		return nil, fmt.Errorf("dsn element missing id at line %d", lineNum)
+	}
+
+	if arch, ok := attrs["arch"]; ok {
+		elem.Arch = arch
+	}
+
+	if aspice, ok := attrs["aspice"]; ok {
+		elem.ASPICE = aspice
+	}
+
+	if impl, ok := attrs["impl"]; ok {
+		elem.Impl = impl
+	}
+
+	if scanner.Scan() {
+		titleLine := scanner.Text()
+		trimmed := strings.TrimSpace(titleLine)
+		if strings.HasPrefix(trimmed, "===") {
+			elem.Title = strings.TrimSpace(strings.TrimPrefix(trimmed, "==="))
+		} else if strings.HasPrefix(trimmed, "==") {
+			elem.Title = strings.TrimSpace(strings.TrimPrefix(trimmed, "=="))
+		}
+	}
+
+	return elem, nil
 }
 
 // extractAttributes parses block attributes from a line like [type,attr1=val1,attr2=val2]
@@ -319,12 +395,13 @@ func parseIDList(s string) []string {
 // ParseAllFromDir parses all .adoc files in a directory.
 func ParseAllFromDir(dirPath, project string) (*model.TraceabilityGraph, error) {
 	graph := &model.TraceabilityGraph{
-		Requirements: make(map[string]*model.Requirement),
-		ArchElements: make(map[string]*model.ArchElement),
-		TestSpecs:    make(map[string]*model.TestSpec),
-		TestCodes:    make(map[string]*model.TestCode),
-		TestResults:  make(map[string]*model.TestResult),
-		Links:        []*model.TraceLink{},
+		Requirements:   make(map[string]*model.Requirement),
+		ArchElements:   make(map[string]*model.ArchElement),
+		DesignElements: make(map[string]*model.DesignElement),
+		TestSpecs:      make(map[string]*model.TestSpec),
+		TestCodes:      make(map[string]*model.TestCode),
+		TestResults:    make(map[string]*model.TestResult),
+		Links:          []*model.TraceLink{},
 	}
 
 	// Walk directory for .adoc files
@@ -352,6 +429,14 @@ func ParseAllFromDir(dirPath, project string) (*model.TraceabilityGraph, error) 
 		if err == nil {
 			for _, arch := range archs {
 				graph.ArchElements[arch.ID] = arch
+			}
+		}
+
+		// Parse design elements (SWE.3)
+		dsns, err := parser.ParseDesignElements(project)
+		if err == nil {
+			for _, dsn := range dsns {
+				graph.DesignElements[dsn.ID] = dsn
 			}
 		}
 
