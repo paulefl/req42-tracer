@@ -15,6 +15,7 @@ func diagGraph() *model.TraceabilityGraph {
 		ArchElements: map[string]*model.ArchElement{
 			"comp.lsp": {ID: "comp.lsp", Title: "LSP Component"},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs: map[string]*model.TestSpec{
 			"TS-LSP-001": {ID: "TS-LSP-001", Title: "Initialize handshake"},
 		},

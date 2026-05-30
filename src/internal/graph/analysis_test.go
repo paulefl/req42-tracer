@@ -17,6 +17,7 @@ func buildAnalysisGraph() *model.TraceabilityGraph {
 			"comp.api":    {ID: "comp.api", Parent: "comp.system", Req: []string{"REQ-001"}},
 			"comp.system": {ID: "comp.system", Parent: ""},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs: map[string]*model.TestSpec{
 			"TS-001": {ID: "TS-001", Req: []string{"REQ-001"}, Arch: []string{"comp.api"}},
 		},
@@ -149,6 +150,7 @@ func TestCalculateCoverage_EmptyGraph(t *testing.T) {
 	g := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement),
 		ArchElements: make(map[string]*model.ArchElement),
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:    make(map[string]*model.TestSpec),
 		TestCodes:    make(map[string]*model.TestCode),
 		TestResults:  make(map[string]*model.TestResult),
@@ -244,6 +246,7 @@ func TestValidateReferences_BrokenReq(t *testing.T) {
 		ArchElements: map[string]*model.ArchElement{
 			"comp.api": {ID: "comp.api", Req: []string{"REQ-NONEXISTENT"}},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:   make(map[string]*model.TestSpec),
 		TestCodes:   make(map[string]*model.TestCode),
 		TestResults: make(map[string]*model.TestResult),
@@ -262,6 +265,7 @@ func TestValidateReferences_BrokenTestSpecArch(t *testing.T) {
 	g := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement),
 		ArchElements: make(map[string]*model.ArchElement),
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs: map[string]*model.TestSpec{
 			"TS-001": {ID: "TS-001", Arch: []string{"comp.nonexistent"}},
 		},
@@ -282,6 +286,7 @@ func TestValidateReferences_BrokenTestSpecReq(t *testing.T) {
 	g := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement),
 		ArchElements: make(map[string]*model.ArchElement),
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs: map[string]*model.TestSpec{
 			"TS-001": {ID: "TS-001", Req: []string{"REQ-NONEXISTENT"}},
 		},
@@ -302,6 +307,7 @@ func TestValidateReferences_BrokenTestCodeSpec(t *testing.T) {
 	g := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement),
 		ArchElements: make(map[string]*model.ArchElement),
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:    make(map[string]*model.TestSpec),
 		TestCodes: map[string]*model.TestCode{
 			"TC-001": {ID: "TC-001", TestSpec: "TS-NONEXISTENT"},
@@ -332,6 +338,7 @@ func TestCalculateCoverage_PassRate(t *testing.T) {
 	g := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement),
 		ArchElements: make(map[string]*model.ArchElement),
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:    make(map[string]*model.TestSpec),
 		TestCodes:    make(map[string]*model.TestCode),
 		TestResults: map[string]*model.TestResult{
@@ -379,6 +386,7 @@ func TestMergeGraph_LinkSeenPopulated(t *testing.T) {
 	g := &model.TraceabilityGraph{
 		Requirements: map[string]*model.Requirement{"REQ-001": {ID: "REQ-001"}},
 		ArchElements: map[string]*model.ArchElement{"comp.api": {ID: "comp.api", Req: []string{"REQ-001"}}},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:    make(map[string]*model.TestSpec),
 		TestCodes:    make(map[string]*model.TestCode),
 		TestResults:  make(map[string]*model.TestResult),
@@ -405,6 +413,7 @@ func TestAnalyzeGaps_UntestedArchElement(t *testing.T) {
 			"comp.system": {ID: "comp.system", Parent: "", Title: "System Component"},
 			"comp.sub":    {ID: "comp.sub", Parent: "comp.system", Title: "Sub Component"},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:   make(map[string]*model.TestSpec),
 		TestCodes:   make(map[string]*model.TestCode),
 		TestResults: make(map[string]*model.TestResult),
@@ -430,6 +439,7 @@ func TestAnalyzeGaps_TestedArchElement(t *testing.T) {
 		ArchElements: map[string]*model.ArchElement{
 			"comp.system": {ID: "comp.system", Parent: "", Title: "System Component"},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs: map[string]*model.TestSpec{
 			"TS-INT-001": {ID: "TS-INT-001", Arch: []string{"comp.system"}},
 		},

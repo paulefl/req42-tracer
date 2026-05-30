@@ -19,6 +19,7 @@ func buildValidationGraph() *graph.Analyzer {
 			"comp.api":    {ID: "comp.api", Parent: "comp.system", Req: []string{"REQ-001"}, Impl: "api.go", FilePath: "arc42.adoc", LineNumber: 10},
 			"comp.db":     {ID: "comp.db", Parent: "comp.system", Req: []string{}, Impl: "", FilePath: "arc42.adoc", LineNumber: 20},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs: map[string]*model.TestSpec{
 			"TS-001": {ID: "TS-001", Req: []string{"REQ-001"}, Arch: []string{"comp.api"}, FilePath: "test.adoc", LineNumber: 5},
 		},

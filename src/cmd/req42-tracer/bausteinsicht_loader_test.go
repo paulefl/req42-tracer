@@ -98,6 +98,7 @@ func TestLoadBausteinsicht_SkipsDuplicateIDs(t *testing.T) {
 		ArchElements: map[string]*model.ArchElement{
 			"comp": {ID: "comp", Title: "existing", Project: "software"},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:   make(map[string]*model.TestSpec),
 		TestCodes:   make(map[string]*model.TestCode),
 		TestResults: make(map[string]*model.TestResult),

@@ -17,6 +17,7 @@ func TestBuildMatrixData(t *testing.T) {
 			"arch-001": {ID: "arch-001", Title: "Arch 1"},
 			"arch-002": {ID: "arch-002", Title: "Arch 2"},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs: map[string]*model.TestSpec{
 			"spec-001": {ID: "spec-001", Title: "Spec 1"},
 		},
@@ -58,6 +59,7 @@ func TestFilterMatrix(t *testing.T) {
 		ArchElements: map[string]*model.ArchElement{
 			"arch-001": {ID: "arch-001", Title: "Arch 1"},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:   make(map[string]*model.TestSpec),
 		TestResults: make(map[string]*model.TestResult),
 		TestCodes:   make(map[string]*model.TestCode),
@@ -88,6 +90,7 @@ func TestExportMatrixCSV(t *testing.T) {
 		ArchElements: map[string]*model.ArchElement{
 			"arch-001": {ID: "arch-001", Title: "Arch"},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:   make(map[string]*model.TestSpec),
 		TestResults: make(map[string]*model.TestResult),
 		TestCodes:   make(map[string]*model.TestCode),

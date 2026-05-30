@@ -6,11 +6,14 @@
         "hooks": [
           {
             "type": "command",
-            "statusMessage": "Prüfe gh-Account für PR-Erstellung...",
-            "command": "cmd=$(jq -r '.tool_input.command // \"\"'); echo \"$cmd\" | grep -qE '(^|&&|\\|\\||[;|])\\s*gh\\s+pr\\s+create' || exit 0; active=$(gh auth status 2>&1 | awk '/Active account: true/{print prev} {prev=$0}' | grep -oP 'account \\K\\S+' || echo 'unknown'); [ \"$active\" = 'dev-paul-fleischmann' ] && exit 0; printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"gh pr create erfordert dev-paul-fleischmann als aktiven Account (aktuell: %s). Erst: gh auth switch --user dev-paul-fleischmann\"}}' \"$active\""
+            "command": "cmd=$(jq -r '.tool_input.command // \"\"'); echo \"$cmd\" | grep -qE '(^|&&|\\|\\||[;|])\\s*gh\\s+pr\\s+create' || exit 0; active=$(gh auth status 2>&1 | awk '/Active account: true/{print prev} {prev=$0}' | grep -oP 'account \\K\\S+' || echo 'unknown'); [ \"$active\" = 'dev-paul-fleischmann' ] && exit 0; printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"gh pr create erfordert dev-paul-fleischmann als aktiven Account (aktuell: %s). Erst: gh auth switch --user dev-paul-fleischmann\"}}' \"$active\"",
+            "statusMessage": "Prüfe gh-Account für PR-Erstellung..."
           }
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "claude-code-harness@claude-code-harness-marketplace": true
   }
 }

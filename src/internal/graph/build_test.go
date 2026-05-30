@@ -14,6 +14,7 @@ func newTestGraph() *model.TraceabilityGraph {
 		ArchElements: map[string]*model.ArchElement{
 			"comp.api": {ID: "comp.api", Parent: "comp.system", Req: []string{"REQ-001"}},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs: map[string]*model.TestSpec{
 			"TS-001": {ID: "TS-001", Req: []string{"REQ-001"}, Arch: []string{"comp.api"}},
 		},
@@ -79,6 +80,7 @@ func TestMergeGraph_DuplicateArch(t *testing.T) {
 	g1 := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement),
 		ArchElements: map[string]*model.ArchElement{"comp.x": {ID: "comp.x"}},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:    make(map[string]*model.TestSpec),
 		TestCodes:    make(map[string]*model.TestCode),
 		TestResults:  make(map[string]*model.TestResult),
@@ -87,6 +89,7 @@ func TestMergeGraph_DuplicateArch(t *testing.T) {
 	g2 := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement),
 		ArchElements: map[string]*model.ArchElement{"comp.x": {ID: "comp.x"}},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:    make(map[string]*model.TestSpec),
 		TestCodes:    make(map[string]*model.TestCode),
 		TestResults:  make(map[string]*model.TestResult),
@@ -105,6 +108,7 @@ func TestMergeGraph_DuplicateTestSpec(t *testing.T) {
 	g1 := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement),
 		ArchElements: make(map[string]*model.ArchElement),
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:    map[string]*model.TestSpec{"TS-X": {ID: "TS-X"}},
 		TestCodes:    make(map[string]*model.TestCode),
 		TestResults:  make(map[string]*model.TestResult),
@@ -113,6 +117,7 @@ func TestMergeGraph_DuplicateTestSpec(t *testing.T) {
 	g2 := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement),
 		ArchElements: make(map[string]*model.ArchElement),
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:    map[string]*model.TestSpec{"TS-X": {ID: "TS-X"}},
 		TestCodes:    make(map[string]*model.TestCode),
 		TestResults:  make(map[string]*model.TestResult),
@@ -199,6 +204,7 @@ func TestBuildLinks_TestCodeToSpec(t *testing.T) {
 	g := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement),
 		ArchElements: make(map[string]*model.ArchElement),
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:    map[string]*model.TestSpec{"TS-001": {ID: "TS-001"}},
 		TestCodes:    map[string]*model.TestCode{"TC-001": {ID: "TC-001", TestSpec: "TS-001"}},
 		TestResults:  make(map[string]*model.TestResult),
@@ -224,6 +230,7 @@ func TestBuildLinks_TestResultNameMatch(t *testing.T) {
 	g := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement),
 		ArchElements: make(map[string]*model.ArchElement),
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:    make(map[string]*model.TestSpec),
 		TestCodes:    map[string]*model.TestCode{"TC-001": {ID: "TC-001", Function: "TestFoo"}},
 		TestResults:  map[string]*model.TestResult{"TR-001": {ID: "TR-001", TestName: "TestFoo"}},
@@ -252,6 +259,7 @@ func TestDeriveASPICELevels(t *testing.T) {
 			"comp.system": {ID: "comp.system", Parent: ""},
 			"comp.api":    {ID: "comp.api", Parent: "comp.system"},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:   make(map[string]*model.TestSpec),
 		TestCodes:   make(map[string]*model.TestCode),
 		TestResults: make(map[string]*model.TestResult),
@@ -277,6 +285,7 @@ func TestDeriveASPICELevels_ExplicitNotOverridden(t *testing.T) {
 		ArchElements: map[string]*model.ArchElement{
 			"comp.api": {ID: "comp.api", Parent: "comp.system", ASPICE: "SYS.2"},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:   make(map[string]*model.TestSpec),
 		TestCodes:   make(map[string]*model.TestCode),
 		TestResults: make(map[string]*model.TestResult),
@@ -319,6 +328,7 @@ func TestMergeGraph_MergesLinks(t *testing.T) {
 	g := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement),
 		ArchElements: make(map[string]*model.ArchElement),
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:    make(map[string]*model.TestSpec),
 		TestCodes:    make(map[string]*model.TestCode),
 		TestResults:  make(map[string]*model.TestResult),

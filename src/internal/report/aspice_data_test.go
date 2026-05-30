@@ -47,6 +47,7 @@ func makeTestGraph() *model.TraceabilityGraph {
 		ArchElements: map[string]*model.ArchElement{
 			"comp.api": {ID: "comp.api", Title: "API", ASPICE: "SWE.2", Req: []string{"REQ-001"}, Parent: "system"},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs: map[string]*model.TestSpec{
 			"spec.api": {ID: "spec.api", Title: "API Spec", Req: []string{"REQ-001"}},
 		},
@@ -188,6 +189,7 @@ func TestBuildASPICEDashboardData_EmptyGraph(t *testing.T) {
 	g := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement),
 		ArchElements: make(map[string]*model.ArchElement),
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:    make(map[string]*model.TestSpec),
 		TestResults:  make(map[string]*model.TestResult),
 		TestCodes:    make(map[string]*model.TestCode),

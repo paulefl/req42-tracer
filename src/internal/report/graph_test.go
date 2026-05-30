@@ -26,6 +26,7 @@ func TestExportGraphData(t *testing.T) {
 				Req:    []string{"REQ-001"},
 			},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs: map[string]*model.TestSpec{
 			"spec.api": {
 				ID:    "spec.api",
