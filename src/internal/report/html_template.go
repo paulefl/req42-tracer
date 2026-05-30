@@ -273,6 +273,23 @@ const HTMLTemplate = `<!DOCTYPE html>
             color: #856404;
         }
 
+        .impl-cell code {
+            font-size: 11px;
+            background: #f0f0f0;
+            padding: 1px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+
+        .missing-impl {
+            color: #aaa;
+        }
+
+        .coverage-badge {
+            font-size: 16px;
+            text-align: center;
+        }
+
         .matrix-stats {
             padding: 20px;
             background: #f8f9fa;
@@ -858,7 +875,14 @@ const HTMLTemplate = `<!DOCTYPE html>
                 .append('circle')
                 .attr('class', 'node')
                 .attr('r', 12)
-                .attr('fill', d => colorMap[d.type] || '#999')
+                .attr('fill', d => {
+                    // TestSpec nodes colored by result status
+                    if (d.type === 'test-spec' && d.metadata && d.metadata.result_status) {
+                        if (d.metadata.result_status === 'pass') return '#28a745';
+                        if (d.metadata.result_status === 'fail') return '#dc3545';
+                    }
+                    return colorMap[d.type] || '#999';
+                })
                 .call(drag(simulation))
                 .on('mouseover', showTooltip)
                 .on('mouseout', hideTooltip)
@@ -1016,8 +1040,17 @@ const HTMLTemplate = `<!DOCTYPE html>
             function showTooltip(event, d) {
                 const tooltip = document.getElementById('tooltip');
                 let metaHTML = '';
-                Object.entries(d.metadata || {}).forEach(([k, v]) => {
-                    metaHTML += '<strong>' + escHtml(k) + ':</strong> ' + escHtml(v) + '<br>';
+                const meta = d.metadata || {};
+                // Show impl= for requirement and arch nodes
+                if (meta.impl) metaHTML += '<strong>impl:</strong> <code>' + escHtml(meta.impl) + '</code><br>';
+                // Show result status for test-spec nodes
+                if (d.type === 'test-spec' && meta.result_status) {
+                    const badge = meta.result_status === 'pass' ? '🟢 pass' : (meta.result_status === 'fail' ? '🔴 fail' : '🟡 missing');
+                    metaHTML += '<strong>result:</strong> ' + badge + '<br>';
+                }
+                Object.entries(meta).forEach(([k, v]) => {
+                    if (k === 'impl' || k === 'result_status') return; // already shown above
+                    if (v) metaHTML += '<strong>' + escHtml(k) + ':</strong> ' + escHtml(String(v)) + '<br>';
                 });
 
                 tooltip.innerHTML =
@@ -1284,6 +1317,8 @@ const HTMLTemplate = `<!DOCTYPE html>
             html += '<th style="cursor:pointer" onclick="sortMatrix(\'req\')">Requirement' + sortArrow('req') + '</th>';
             html += '<th style="cursor:pointer" onclick="sortMatrix(\'priority\')">Priority' + sortArrow('priority') + '</th>';
             html += '<th style="cursor:pointer" onclick="sortMatrix(\'status\')">Status' + sortArrow('status') + '</th>';
+            html += '<th title="Implementation package (impl= attribute)">Impl</th>';
+            html += '<th title="Overall coverage: Arch + TestSpec + TestResult">Coverage</th>';
             matrixData.columns.forEach(col => {
                 html += '<th style="cursor:pointer" title="' + escHtml(col.Title) + '" onclick="sortMatrix(\'' + escHtml(col.ID) + '\')">' + escHtml(col.ID) + sortArrow(col.ID) + '</th>';
             });
@@ -1294,6 +1329,16 @@ const HTMLTemplate = `<!DOCTYPE html>
                 html += '<td class="req-id" title="' + escHtml(row.Title) + '">' + escHtml(row.RequirementID) + '</td>';
                 html += '<td>' + escHtml(row.Priority) + '</td>';
                 html += '<td>' + escHtml(row.Status) + '</td>';
+
+                // impl= column
+                const implVal = row.Impl || '';
+                html += '<td class="impl-cell" title="' + escHtml(implVal) + '">' + (implVal ? '<code>' + escHtml(implVal) + '</code>' : '<span class="missing-impl">—</span>') + '</td>';
+
+                // Coverage badge: 🟢 pass / 🟡 missing / 🔴 fail
+                const trStatus = row.TestResultStatus || 'missing';
+                const badge = trStatus === 'pass' ? '🟢' : (trStatus === 'fail' ? '🔴' : '🟡');
+                const badgeTitle = trStatus === 'pass' ? 'All tests passing' : (trStatus === 'fail' ? 'Test failure detected' : 'No test results found');
+                html += '<td class="coverage-badge tr-' + trStatus + '" title="' + badgeTitle + '">' + badge + '</td>';
 
                 matrixData.columns.forEach(col => {
                     const cell = row.Cells[col.ID];

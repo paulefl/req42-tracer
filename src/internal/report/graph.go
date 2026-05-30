@@ -73,16 +73,36 @@ func ExportGraphData(g *model.TraceabilityGraph) *GraphData {
 		nodeMap[arch.ID] = true
 	}
 
-	// Add test specification nodes (group 2)
+	// Build TestSpec → worst result status map for node coloring
+	specResultStatus := make(map[string]string)
+	for _, result := range g.TestResults {
+		for _, link := range g.Links {
+			if link.ToID == result.ID && link.ToType == "test-result" {
+				existing := specResultStatus[link.FromID]
+				switch result.Status {
+				case "failed":
+					specResultStatus[link.FromID] = "fail"
+				case "passed":
+					if existing != "fail" {
+						specResultStatus[link.FromID] = "pass"
+					}
+				}
+			}
+		}
+	}
+
+	// Add test specification nodes (group 2) — colored by test result status
 	for _, spec := range g.TestSpecs {
+		resultStatus := specResultStatus[spec.ID] // "pass", "fail", or "" (missing)
 		node := Node{
 			ID:    spec.ID,
 			Label: fmt.Sprintf("%s: %s", spec.ID, spec.Title),
 			Type:  "test-spec",
 			Group: 2,
 			Metadata: map[string]interface{}{
-				"req":  spec.Req,
-				"arch": spec.Arch,
+				"req":           spec.Req,
+				"arch":          spec.Arch,
+				"result_status": resultStatus,
 			},
 		}
 		data.Nodes = append(data.Nodes, node)
