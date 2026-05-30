@@ -108,15 +108,51 @@ NOTE: Commas are also attribute separators in AsciiDoc block syntax. To referenc
 
 ---
 
-== [test-spec] — Test Specification
+== [dsn] — Detailed Design Element
 
-Defines a test specification that links tests to requirements and architecture.
+Defines a software detailed design unit (ASPICE SWE.3). Links to an architecture component and is verified by unit tests.
 
 === Syntax
 
 [source,asciidoc]
 ----
-[test-spec,id=<ID>,req=<REQ-ID>,arch=<ARCH-ID>,aspice=<process>]
+[dsn,id=<ID>,arch=<ARCH-ID>,aspice=SWE.3,impl=<path>]
+== Design Element Title
+----
+
+=== Attributes
+
+[cols="1,1,1,4",options="header"]
+|===
+| Attribute | Required | Example | Description
+| `id` | ✅ | `comp.auth.session` | Unique element ID. Typically extends parent arch ID
+| `arch` | ✅ | `comp.auth` | Parent `[arch]` element ID (SWE.2)
+| `aspice` | — | `SWE.3` | ASPICE process level (default: `SWE.3`)
+| `impl` | ✅ | `internal/auth/session.go` | Implementation file path
+|===
+
+=== Example
+
+[source,asciidoc]
+----
+[dsn,id=comp.auth.session,arch=comp.auth,aspice=SWE.3,
+ impl=internal/auth/session.go]
+== Session Manager
+
+Manages session tokens and expiry logic.
+----
+
+---
+
+== [test-spec] — Test Specification
+
+Defines a test specification. Links to requirements (SWE.6), architecture (SWE.5), or design elements (SWE.4).
+
+=== Syntax
+
+[source,asciidoc]
+----
+[test-spec,id=<ID>,req=<REQ-ID>,arch=<ARCH-ID>,dsn=<DSN-ID>,aspice=<process>]
 == Test Specification Title
 ----
 
@@ -126,10 +162,13 @@ Defines a test specification that links tests to requirements and architecture.
 |===
 | Attribute | Required | Example | Description
 | `id` | ✅ | `TS-AUTH-001` | Unique spec ID. Convention: `TS-<AREA>-<NNN>`
-| `req` | — | `REQ-AUTH-001` | Referenced requirement IDs (comma-separated)
-| `arch` | — | `comp.auth` | Referenced architecture element IDs (comma-separated)
-| `aspice` | — | `SWE.5.BP3` | ASPICE best practice this test covers
+| `req` | — | `REQ-AUTH-001` | Requirement IDs (SWE.6 — SW Qualification Test)
+| `arch` | — | `comp.auth` | Architecture element IDs (SWE.5 — Integration Test)
+| `dsn` | — | `comp.auth.session` | Design element IDs (SWE.4 — Unit Test)
+| `aspice` | — | `SWE.4` | ASPICE process this test covers
 |===
+
+NOTE: Use exactly one of `req=`, `arch=`, or `dsn=` to identify the test level. A test-spec with none of these is flagged as orphan by `req42-tracer gaps`.
 
 === In-code test annotations (convention)
 
@@ -149,22 +188,82 @@ NOTE: req42-tracer currently parses only `.adoc` files. The `[test-spec]` commen
 
 ---
 
-== Traceability chain
+== Traceability Rules (ASPICE PAM 4.0)
 
-A complete trace from requirement to test looks like this:
+req42-tracer enforces the full SWE.1–SWE.6 traceability chain:
+
+[source]
+----
+[req,SWE.1] ──req=──▶ [arch,SWE.2] ──arch=──▶ [dsn,SWE.3] ──impl=──▶ src/...
+     │                     │                        │
+     └──req=──▶ [test-spec/SWE.6]                  └──dsn=──▶ [test-spec/SWE.4]
+                [test-spec/SWE.5] ◀──arch=──────────┘
+----
+
+=== Coverage Rules
+
+[cols="2,1,1,2,3",options="header"]
+|===
+| Link | Attribute | ASPICE | Required | Example
+| `[req]` → `[arch]` | `req=` on `[arch]` | SWE.2 BP4 | ✅ | `[arch,req=SWR-001]`
+| `[arch]` → `[dsn]` | `arch=` on `[dsn]` | SWE.3 BP4 | optional | `[dsn,arch=comp.parser]`
+| `[arch]`/`[dsn]` → impl | `impl=` | SWE.2/SWE.3 BP5 | ✅ | `impl=src/internal/parser/`
+| `[dsn]` → Unit Test | `dsn=` + `aspice=SWE.4` | SWE.4 BP4 | ✅ | `[test-spec,dsn=comp.parser.tokenizer,aspice=SWE.4]`
+| `[arch]` → Integration Test | `arch=` + `aspice=SWE.5` | SWE.5 BP4 | ✅ | `[test-spec,arch=comp.parser,aspice=SWE.5]`
+| `[req]` → SW Qualification Test | `req=` + `aspice=SWE.6` | SWE.6 BP4 | ✅ | `[test-spec,req=SWR-001,aspice=SWE.6]`
+| `[test-spec]` → TestResult | JUnit/go-test | SWE.4/5/6 BP5 | ✅ | CI artifact
+|===
+
+=== Attribute Placement
+
+[cols="1,2,2",options="header"]
+|===
+| Attribute | Belongs to | Not to
+| `req=` | `[arch]`, `[test-spec/SWE.6]` | ~~`[dsn]`~~
+| `arch=` | `[dsn]`, `[test-spec/SWE.5]` | ~~`[req]`~~
+| `dsn=` | `[test-spec/SWE.4]` | ~~`[req]`~~, ~~`[arch]`~~
+| `impl=` | `[arch]`, `[dsn]` | ~~`[req]`~~
+| `aspice=` | all block types | —
+| `derives=` | `[req]` | —
+|===
+
+=== Complete Example (full chain)
 
 [source,asciidoc]
 ----
-                [req,id=REQ-AUTH-001]          ← requirement
-                        ↓ req=
-                [arch,id=comp.auth]            ← architecture
-                        ↓ arch=
-          [test-spec,id=TS-AUTH-001]           ← specification
-                        ↓ (name-match)
-              func TestSessionLogin            ← test code
-                        ↓ (JUnit/go-test)
-                  TestSessionLogin PASS        ← test result
+[req,id=SWR-001,aspice=SWE.1]
+== System shall parse AsciiDoc blocks
+
+[arch,id=comp.parser,req=SWR-001,aspice=SWE.2,impl=src/internal/parser/]
+== Parser Component
+
+[dsn,id=comp.parser.tokenizer,arch=comp.parser,aspice=SWE.3,impl=src/internal/parser/tokenizer.go]
+== Tokenizer Unit
+
+[test-spec,id=TS-UNIT-001,dsn=comp.parser.tokenizer,aspice=SWE.4]
+== Unit Test: Tokenizer
+run: go test ./src/internal/parser/... -run TestTokenize
+
+[test-spec,id=TS-INT-001,arch=comp.parser,aspice=SWE.5]
+== Integration Test: Parser + Graph
+run: go test ./src/internal/... -run TestParserGraphIntegration
+
+[test-spec,id=TS-SWR-001,req=SWR-001,aspice=SWE.6]
+== SW Qualification Test: Parser extracts all req blocks
+run: go test ./src/internal/parser/... -run TestParseAllFromDir
 ----
+
+=== Gap Report Messages
+
+| Message | Meaning | Fix |
+|---|---|---|
+| `orphan requirement` | `[req]` has no `[arch]` with `req=` | Add `[arch,req=SWR-XXX]` |
+| `missing impl` | `[arch]`/`[dsn]` has no `impl=` | Add `impl=src/...` |
+| `untested requirement (SWE.6)` | `[req]` has no `[test-spec]` with `req=` | Add SW Qualification Test |
+| `untested architecture element (SWE.5)` | `[arch]` has no `[test-spec]` with `arch=` | Add Integration Test |
+| `orphan design element (SWE.3)` | `[dsn]` has no `arch=` parent | Add `arch=` to `[dsn]` |
+| `untested detailed design (SWE.4)` | `[dsn]` has no `[test-spec]` with `dsn=` | Add Unit Test |
+| `missing test result` | `[test-spec]` has no matching TestResult | Check CI output |
 
 `req42-tracer trace` traverses this chain and reports coverage at each level.
 
