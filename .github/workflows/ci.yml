@@ -42,12 +42,28 @@ jobs:
         if: runner.os != 'Windows'
         run: go tool cover -func=coverage.out
 
+      - name: Export test results (JUnit XML + go-test JSON)
+        if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.24'
+        run: |
+          mkdir -p reports
+          go install github.com/jstemmer/go-junit-report/v2@latest
+          go test ./... -v 2>&1 | go-junit-report -set-exit-code > reports/junit.xml || true
+          go test ./... -v -json > reports/test-results.json 2>/dev/null || true
+
       - name: Upload coverage
         if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.24'
         uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: coverage.out
+          retention-days: 30
+
+      - name: Upload test reports
+        if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.24'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: reports/
           retention-days: 30
 
   benchmark:
@@ -177,6 +193,45 @@ jobs:
         with:
           sarif_file: gosec.sarif
           category: gosec
+
+  dogfood:
+    name: Dogfooding (req42-tracer on own docs)
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache: true
+
+      - name: Download test reports
+        uses: actions/download-artifact@v4
+        with:
+          name: test-reports
+          path: reports/
+        continue-on-error: true  # first run has no artifacts yet
+
+      - name: Build req42-tracer
+        run: go build -o ./req42-tracer ./src/cmd/req42-tracer/
+
+      - name: Trace (req42-tracer on own docs)
+        run: ./req42-tracer trace --verbose
+
+      - name: Gaps (max-orphan-percentage check)
+        run: ./req42-tracer gaps --verbose
+
+      - name: Generate HTML report
+        run: ./req42-tracer trace --output reports/dogfood-report.html
+
+      - name: Upload dogfood report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dogfood-report
+          path: reports/dogfood-report.html
+          retention-days: 30
 
   release:
     name: Release
