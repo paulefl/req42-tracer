@@ -18,6 +18,7 @@ func testGraph() *model.TraceabilityGraph {
 			"comp.graph":  {ID: "comp.graph", Title: "Graph Component"},
 			"comp.lsp":    {ID: "comp.lsp", Title: "LSP Component"},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs: map[string]*model.TestSpec{
 			"TS-LSP-001":   {ID: "TS-LSP-001", Title: "Initialize handshake"},
 			"TS-PARSE-001": {ID: "TS-PARSE-001", Title: "Parse req block"},

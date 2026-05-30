@@ -27,6 +27,7 @@ func hoverGraph() *model.TraceabilityGraph {
 				Impl:  "internal/lsp",
 			},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs: map[string]*model.TestSpec{
 			"TS-LSP-001": {
 				ID:    "TS-LSP-001",

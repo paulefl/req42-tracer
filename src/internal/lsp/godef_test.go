@@ -23,6 +23,7 @@ func godefGraph() *model.TraceabilityGraph {
 				LineNumber: 110,
 			},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs: map[string]*model.TestSpec{
 			"TS-LSP-001": {
 				ID:         "TS-LSP-001",

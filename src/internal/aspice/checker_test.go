@@ -17,6 +17,7 @@ func buildCheckerGraph() *graph.Analyzer {
 			"comp.api":    {ID: "comp.api", Parent: "comp.system", Req: []string{"REQ-001"}, Impl: "internal/api.go"},
 			"comp.system": {ID: "comp.system", Req: []string{"REQ-002"}},
 		},
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs: map[string]*model.TestSpec{
 			"TS-001": {ID: "TS-001", Req: []string{"REQ-001"}},
 		},
@@ -245,6 +246,7 @@ func TestCheckCompliance_EmptyGraph(t *testing.T) {
 	g := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement),
 		ArchElements: make(map[string]*model.ArchElement),
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:    make(map[string]*model.TestSpec),
 		TestCodes:    make(map[string]*model.TestCode),
 		TestResults:  make(map[string]*model.TestResult),

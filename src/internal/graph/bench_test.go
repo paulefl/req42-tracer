@@ -12,6 +12,7 @@ func buildLargeGraph(n int) *model.TraceabilityGraph {
 	g := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement, n),
 		ArchElements: make(map[string]*model.ArchElement, n+1),
+		DesignElements: make(map[string]*model.DesignElement),
 		TestSpecs:    make(map[string]*model.TestSpec, n/2),
 		TestCodes:    make(map[string]*model.TestCode),
 		TestResults:  make(map[string]*model.TestResult, n/2),
