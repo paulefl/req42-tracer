@@ -6,10 +6,11 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/paulefl/req42-tracer/src/internal/graph"
 	"github.com/paulefl/req42-tracer/src/internal/model"
 	"github.com/paulefl/req42-tracer/src/internal/parser"
-	"github.com/paulefl/req42-tracer/src/internal/graph"
 	"github.com/paulefl/req42-tracer/src/internal/report"
+	"github.com/paulefl/req42-tracer/src/internal/testresult"
 )
 
 func newTraceCmd() *cobra.Command {
@@ -75,6 +76,11 @@ func runTraceCmd(cmd *cobra.Command, args []string) error {
 
 	// Get final graph
 	g := builder.GetGraph()
+
+	// Load test results from CI artifacts (JUnit XML, go-test JSON)
+	if err := testresult.LoadAll(g, config); err != nil && verbose {
+		fmt.Fprintf(os.Stderr, "Warning: could not load test results: %v\n", err)
+	}
 
 	// Generate report
 	analyzer := graph.NewAnalyzer(g)

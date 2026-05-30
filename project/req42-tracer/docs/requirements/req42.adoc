@@ -12,9 +12,14 @@ Each requirement is tagged with a unique ID, version, priority, status, and ASPI
 
 === CLI & Project Initialization
 
-[req,id=REQ-INIT-001,version=1,priority=high,aspice=SWE.1,
+[req,id=REQ-INIT-001,version=1,priority=high,aspice=SWE.1,impl=src/cmd/req42-tracer,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall initialize new REQ42+ARC42 projects
+
+[test-spec,id=TS-INIT-001,req=REQ-INIT-001,aspice=SWE.4-BP3]
+====
+Test: req42-tracer init creates project structure with all template files
+====
 
 The system shall provide `req42-tracer init` command that creates a new project with:
 - Interactive prompts for project name, module path, description, and optional directory
@@ -30,9 +35,14 @@ Acceptance Criteria:
 
 === AsciiDoc Parser
 
-[req,id=REQ-PARSE-001,version=1,priority=high,aspice=SWE.1,
+[req,id=REQ-PARSE-001,version=1,priority=high,aspice=SWE.1,impl=src/internal/parser,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall parse AsciiDoc [req] blocks with metadata
+
+[test-spec,id=TS-PARSE-001,req=REQ-PARSE-001,aspice=SWE.4-BP3]
+====
+Test: ParseAllFromDir extracts all [req] blocks with correct metadata from AsciiDoc
+====
 
 The system shall extract all [req,...] blocks from AsciiDoc files with the following attributes:
 - id (required): Unique requirement identifier (e.g., SWE-001)
@@ -52,9 +62,14 @@ Acceptance Criteria:
 - All optional attributes are preserved in the Requirement struct
 - Missing 'id' attribute causes the requirement to be skipped with an error log
 
-[req,id=REQ-PARSE-002,version=1,priority=high,aspice=SWE.1,
+[req,id=REQ-PARSE-002,version=1,priority=high,aspice=SWE.1,impl=src/internal/parser,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall parse AsciiDoc [arch] blocks with hierarchy support
+
+[test-spec,id=TS-PARSE-002,req=REQ-PARSE-002,aspice=SWE.4-BP3]
+====
+Test: ParseAllFromDir extracts all [arch] blocks with parent-child hierarchy
+====
 
 The system shall extract all [arch,...] blocks from AsciiDoc files with the following attributes:
 - id (required): Unique architecture element identifier (e.g., comp.api)
@@ -72,9 +87,14 @@ Acceptance Criteria:
 - ASPICE levels are auto-derived when not manually specified
 - Architecture elements can reference requirements via 'req' attribute
 
-[req,id=REQ-PARSE-003,version=1,priority=high,aspice=SWE.1,
+[req,id=REQ-PARSE-003,version=1,priority=high,aspice=SWE.1,impl=src/internal/parser,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall load Bausteinsicht architecture models with JSONC
+
+[test-spec,id=TS-PARSE-003,req=REQ-PARSE-003,aspice=SWE.4-BP3]
+====
+Test: BausteinsichtParser loads architecture.jsonc and flattens to dot-notation IDs
+====
 
 The system shall load and parse Bausteinsicht JSONC models (architecture.jsonc) with:
 - Nested element hierarchy (arbitrary depth)
@@ -92,9 +112,14 @@ Acceptance Criteria:
 
 === Traceability Graph & Analysis
 
-[req,id=REQ-GRAPH-001,version=1,priority=high,aspice=SWE.2,
+[req,id=REQ-GRAPH-001,version=1,priority=high,aspice=SWE.2,impl=src/internal/graph,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall construct and analyze traceability graph
+
+[test-spec,id=TS-GRAPH-001,req=REQ-GRAPH-001,aspice=SWE.5-BP4]
+====
+Test: Builder constructs bidirectional traceability graph from requirements and architecture
+====
 
 The system shall build a traceability graph with:
 - Nodes: Requirements, Architecture elements, Test specifications, Test results
@@ -112,9 +137,14 @@ Acceptance Criteria:
 
 === ASPICE Compliance Checking
 
-[req,id=REQ-ASPICE-001,version=1,priority=high,aspice=SWE.2,
+[req,id=REQ-ASPICE-001,version=1,priority=high,aspice=SWE.2,impl=src/internal/aspice,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall validate ASPICE PAM 4.0 compliance
+
+[test-spec,id=TS-ASPICE-001,req=REQ-ASPICE-001,aspice=SWE.5-BP4]
+====
+Test: Checker.CheckCompliance calculates correct coverage percentages per ASPICE process
+====
 
 The system shall provide `req42-tracer aspice` command that:
 - Validates configured ASPICE processes (SWE.1–SWE.6, SYS.1–SYS.3)
@@ -131,9 +161,14 @@ Acceptance Criteria:
 
 === Report Generation
 
-[req,id=REQ-REPORT-001,version=1,priority=high,aspice=SWE.2,
+[req,id=REQ-REPORT-001,version=1,priority=high,aspice=SWE.2,impl=src/internal/report,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall generate traceability reports in multiple formats
+
+[test-spec,id=TS-REPORT-001,req=REQ-REPORT-001,aspice=SWE.5-BP4]
+====
+Test: TableReporter outputs valid text/markdown/JSON formats with all trace data
+====
 
 The system shall provide `req42-tracer trace` command with output formats:
 - **text**: ASCII table with requirement→architecture→test columns
@@ -148,9 +183,14 @@ Acceptance Criteria:
 - Text format is human-readable with aligned columns
 - Gap analysis (orphans, missing implementations) is included in text output
 
-[req,id=REQ-REPORT-002,version=1,priority=high,aspice=SWE.2,
+[req,id=REQ-REPORT-002,version=1,priority=high,aspice=SWE.2,impl=src/internal/report,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall provide gap analysis reporting
+
+[test-spec,id=TS-REPORT-002,req=REQ-REPORT-002,aspice=SWE.5-BP4]
+====
+Test: Analyzer.AnalyzeGaps identifies orphan requirements and missing implementations
+====
 
 The system shall provide `req42-tracer gaps` command that identifies:
 - **orphans**: Architecture elements without requirement mappings
@@ -167,9 +207,14 @@ Acceptance Criteria:
 
 === Validation & Configuration
 
-[req,id=REQ-VALIDATE-001,version=1,priority=high,aspice=SWE.1,
+[req,id=REQ-VALIDATE-001,version=1,priority=high,aspice=SWE.1,impl=src/internal/validation,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall validate project structure and references
+
+[test-spec,id=TS-VALIDATE-001,req=REQ-VALIDATE-001,aspice=SWE.5-BP4]
+====
+Test: validate command reports syntax errors with file:line location
+====
 
 The system shall provide `req42-tracer validate` command that:
 - Checks for syntax errors in AsciiDoc blocks
@@ -184,9 +229,14 @@ Acceptance Criteria:
 - Circular dependencies are detected and reported
 - Validation succeeds when project is clean
 
-[req,id=REQ-CONFIG-001,version=1,priority=high,aspice=SWE.1,
+[req,id=REQ-CONFIG-001,version=1,priority=high,aspice=SWE.1,impl=src/internal/model,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall load and validate .req42.yaml configuration
+
+[test-spec,id=TS-CONFIG-001,req=REQ-CONFIG-001,aspice=SWE.4-BP3]
+====
+Test: LoadConfig parses .req42.yaml correctly and applies defaults for missing keys
+====
 
 The system shall support project configuration via .req42.yaml containing:
 - Project definitions (path, docs directory per project)
@@ -204,9 +254,14 @@ Acceptance Criteria:
 
 == Non-Functional Requirements
 
-[req,id=REQ-PERF-001,version=1,priority=high,aspice=SWE.3,
+[req,id=REQ-PERF-001,version=1,priority=high,aspice=SWE.3,impl=src/internal/graph,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall complete trace analysis in <2 seconds for typical projects
+
+[test-spec,id=TS-PERF-001,req=REQ-PERF-001,aspice=SWE.5-BP4]
+====
+Test: Benchmark confirms trace analysis completes in <2s for 100+ requirements
+====
 
 The traceability analysis (parsing + graph construction + reporting) shall complete in under 2 seconds for projects with:
 - 100+ requirements
@@ -220,9 +275,14 @@ Acceptance Criteria:
 - No unnecessary file reads or allocations
 - Graph construction is linear time complexity
 
-[req,id=REQ-COMPAT-001,version=1,priority=high,aspice=SWE.3,
+[req,id=REQ-COMPAT-001,version=1,priority=high,aspice=SWE.3,impl=src/cmd/req42-tracer,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall be implemented in Go 1.24 or later
+
+[test-spec,id=TS-COMPAT-001,req=REQ-COMPAT-001,aspice=SWE.5-BP4]
+====
+Test: go build succeeds and go.mod specifies go 1.24+
+====
 
 The implementation language is Go 1.24+ for security, performance, and cross-platform compatibility.
 No Python, Node.js, or runtime dependencies are permitted.
@@ -233,9 +293,14 @@ Acceptance Criteria:
 - No external runtime dependencies required
 - Vendored dependencies are tracked in go.mod
 
-[req,id=REQ-COMPAT-002,version=1,priority=high,aspice=SWE.3,
+[req,id=REQ-COMPAT-002,version=1,priority=high,aspice=SWE.3,impl=src/cmd/req42-tracer,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall support Linux, macOS, and Windows platforms
+
+[test-spec,id=TS-COMPAT-002,req=REQ-COMPAT-002,aspice=SWE.5-BP4]
+====
+Test: CI matrix confirms build and test pass on linux, macos, windows
+====
 
 The CLI shall build and run correctly on:
 - Linux (amd64, arm64)
@@ -250,9 +315,14 @@ Acceptance Criteria:
 - Release binaries include all three platforms
 - No platform-specific path separators in code (use filepath package)
 
-[req,id=REQ-TESTING-001,version=1,priority=high,aspice=SWE.2,
+[req,id=REQ-TESTING-001,version=1,priority=high,aspice=SWE.2,impl=src/internal/testresult,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall achieve 80%+ code coverage on critical paths
+
+[test-spec,id=TS-TESTING-001,req=REQ-TESTING-001,aspice=SWE.5-BP4]
+====
+Test: go test -cover confirms ≥80% coverage on parser/ and graph/ packages
+====
 
 Code coverage targets:
 - parser/: ≥80% (adoc.go, bausteinsicht.go)
@@ -269,9 +339,14 @@ Acceptance Criteria:
 
 == Derived Requirements
 
-[req,id=REQ-WATCH-001,version=1,priority=medium,aspice=SWE.3,derives=REQ-REPORT-001,
+[req,id=REQ-WATCH-001,version=1,priority=medium,aspice=SWE.3,impl=src/cmd/req42-tracer,derives=REQ-REPORT-001,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall provide watch mode with file monitoring
+
+[test-spec,id=TS-WATCH-001,req=REQ-WATCH-001,aspice=SWE.4-BP3]
+====
+Test: watch command detects file changes and re-runs analysis within 1s
+====
 
 Derived from REQ-REPORT-001. The system shall provide `req42-tracer watch` command that:
 - Monitors .adoc, .jsonc, and configuration files for changes
@@ -285,9 +360,14 @@ Acceptance Criteria:
 - --open flag launches browser automatically
 - Watch mode exits cleanly on Ctrl+C
 
-[req,id=REQ-LSP-001,version=1,priority=medium,aspice=SWE.3,
+[req,id=REQ-LSP-001,version=1,priority=medium,aspice=SWE.3,impl=src/internal/lsp,
  status=draft,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall provide LSP server for IDE integration
+
+[test-spec,id=TS-LSP-001,req=REQ-LSP-001,aspice=SWE.4-BP3]
+====
+Test: LSP server responds to initialize and textDocument/completion requests
+====
 
 The system shall provide `req42-tracer lsp` command that starts a Language Server Protocol (LSP) server on stdio supporting:
 - Autocomplete: `req=` → suggests all known requirement IDs

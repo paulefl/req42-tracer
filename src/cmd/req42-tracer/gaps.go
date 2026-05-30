@@ -5,10 +5,11 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/paulefl/req42-tracer/src/internal/graph"
 	"github.com/paulefl/req42-tracer/src/internal/model"
 	"github.com/paulefl/req42-tracer/src/internal/parser"
-	"github.com/paulefl/req42-tracer/src/internal/graph"
 	"github.com/paulefl/req42-tracer/src/internal/report"
+	"github.com/paulefl/req42-tracer/src/internal/testresult"
 )
 
 func newGapsCmd() *cobra.Command {
@@ -28,8 +29,7 @@ func runGapsCmd(cmd *cobra.Command, args []string) error {
 	format, _ := cmd.Flags().GetString("format")
 	verbose, _ := cmd.Flags().GetBool("verbose")
 
-	// Load configuration (for future use with advanced options)
-	_, err := model.LoadConfig(configPath)
+	config, err := model.LoadConfig(configPath)
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
@@ -71,6 +71,11 @@ func runGapsCmd(cmd *cobra.Command, args []string) error {
 
 	// Get final graph
 	g := builder.GetGraph()
+
+	// Load test results from CI artifacts
+	if err := testresult.LoadAll(g, config); err != nil && verbose {
+		fmt.Fprintf(os.Stderr, "Warning: could not load test results: %v\n", err)
+	}
 
 	// Analyze gaps
 	analyzer := graph.NewAnalyzer(g)
