@@ -105,6 +105,19 @@ func (s *Server) reloadGraph() {
 		}
 	}
 
+	// Parse Go test files for [test-spec] annotations if configured
+	if s.config != nil {
+		if goSrc := s.config.GoSrcDir; goSrc != "" {
+			if goGraph, err := parser.ParseGoTestFiles(goSrc, project); err == nil {
+				if err := builder.MergeGraph(goGraph); err != nil {
+					s.log.Printf("reloadGraph: go test code merge: %v", err)
+				}
+			} else {
+				s.log.Printf("reloadGraph: go test files: %v", err)
+			}
+		}
+	}
+
 	if loaded == 0 && !bausteinsichtLoaded {
 		s.log.Printf("reloadGraph: no docs found — start req42-tracer lsp from the project root")
 	}
