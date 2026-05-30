@@ -12,7 +12,7 @@ Each requirement is tagged with a unique ID, version, priority, status, and ASPI
 
 === CLI & Project Initialization
 
-[req,id=REQ-INIT-001,version=1,priority=high,aspice=SWE.1,impl=src/cmd/req42-tracer,
+[req,id=REQ-INIT-001,version=1,priority=high,aspice=SWE.1,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall initialize new REQ42+ARC42 projects
 
@@ -35,7 +35,7 @@ Acceptance Criteria:
 
 === AsciiDoc Parser
 
-[req,id=REQ-PARSE-001,version=1,priority=high,aspice=SWE.1,impl=src/internal/parser,
+[req,id=REQ-PARSE-001,version=1,priority=high,aspice=SWE.1,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall parse AsciiDoc [req] blocks with metadata
 
@@ -62,7 +62,7 @@ Acceptance Criteria:
 - All optional attributes are preserved in the Requirement struct
 - Missing 'id' attribute causes the requirement to be skipped with an error log
 
-[req,id=REQ-PARSE-002,version=1,priority=high,aspice=SWE.1,impl=src/internal/parser,
+[req,id=REQ-PARSE-002,version=1,priority=high,aspice=SWE.1,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall parse AsciiDoc [arch] blocks with hierarchy support
 
@@ -87,7 +87,7 @@ Acceptance Criteria:
 - ASPICE levels are auto-derived when not manually specified
 - Architecture elements can reference requirements via 'req' attribute
 
-[req,id=REQ-PARSE-003,version=1,priority=high,aspice=SWE.1,impl=src/internal/parser,
+[req,id=REQ-PARSE-003,version=1,priority=high,aspice=SWE.1,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall load Bausteinsicht architecture models with JSONC
 
@@ -112,7 +112,7 @@ Acceptance Criteria:
 
 === Traceability Graph & Analysis
 
-[req,id=REQ-GRAPH-001,version=1,priority=high,aspice=SWE.2,impl=src/internal/graph,
+[req,id=REQ-GRAPH-001,version=1,priority=high,aspice=SWE.2,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall construct and analyze traceability graph
 
@@ -137,7 +137,7 @@ Acceptance Criteria:
 
 === ASPICE Compliance Checking
 
-[req,id=REQ-ASPICE-001,version=1,priority=high,aspice=SWE.2,impl=src/internal/aspice,
+[req,id=REQ-ASPICE-001,version=1,priority=high,aspice=SWE.2,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall validate ASPICE PAM 4.0 compliance
 
@@ -161,7 +161,7 @@ Acceptance Criteria:
 
 === Report Generation
 
-[req,id=REQ-REPORT-001,version=1,priority=high,aspice=SWE.2,impl=src/internal/report,
+[req,id=REQ-REPORT-001,version=1,priority=high,aspice=SWE.2,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall generate traceability reports in multiple formats
 
@@ -183,7 +183,7 @@ Acceptance Criteria:
 - Text format is human-readable with aligned columns
 - Gap analysis (orphans, missing implementations) is included in text output
 
-[req,id=REQ-REPORT-002,version=1,priority=high,aspice=SWE.2,impl=src/internal/report,
+[req,id=REQ-REPORT-002,version=1,priority=high,aspice=SWE.2,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall provide gap analysis reporting
 
@@ -207,7 +207,7 @@ Acceptance Criteria:
 
 === Validation & Configuration
 
-[req,id=REQ-VALIDATE-001,version=1,priority=high,aspice=SWE.1,impl=src/internal/validation,
+[req,id=REQ-VALIDATE-001,version=1,priority=high,aspice=SWE.1,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall validate project structure and references
 
@@ -229,7 +229,7 @@ Acceptance Criteria:
 - Circular dependencies are detected and reported
 - Validation succeeds when project is clean
 
-[req,id=REQ-CONFIG-001,version=1,priority=high,aspice=SWE.1,impl=src/internal/model,
+[req,id=REQ-CONFIG-001,version=1,priority=high,aspice=SWE.1,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall load and validate .req42.yaml configuration
 
@@ -254,7 +254,7 @@ Acceptance Criteria:
 
 == Non-Functional Requirements
 
-[req,id=REQ-PERF-001,version=1,priority=high,aspice=SWE.3,impl=src/internal/graph,
+[req,id=REQ-PERF-001,version=1,priority=high,aspice=SWE.3,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall complete trace analysis in <2 seconds for typical projects
 
@@ -275,7 +275,7 @@ Acceptance Criteria:
 - No unnecessary file reads or allocations
 - Graph construction is linear time complexity
 
-[req,id=REQ-COMPAT-001,version=1,priority=high,aspice=SWE.3,impl=src/cmd/req42-tracer,
+[req,id=REQ-COMPAT-001,version=1,priority=high,aspice=SWE.3,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall be implemented in Go 1.24 or later
 
@@ -293,7 +293,7 @@ Acceptance Criteria:
 - No external runtime dependencies required
 - Vendored dependencies are tracked in go.mod
 
-[req,id=REQ-COMPAT-002,version=1,priority=high,aspice=SWE.3,impl=src/cmd/req42-tracer,
+[req,id=REQ-COMPAT-002,version=1,priority=high,aspice=SWE.3,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall support Linux, macOS, and Windows platforms
 
@@ -315,7 +315,7 @@ Acceptance Criteria:
 - Release binaries include all three platforms
 - No platform-specific path separators in code (use filepath package)
 
-[req,id=REQ-TESTING-001,version=1,priority=high,aspice=SWE.2,impl=src/internal/testresult,
+[req,id=REQ-TESTING-001,version=1,priority=high,aspice=SWE.2,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall achieve 80%+ code coverage on critical paths
 
@@ -339,7 +339,7 @@ Acceptance Criteria:
 
 == Derived Requirements
 
-[req,id=REQ-WATCH-001,version=1,priority=medium,aspice=SWE.3,impl=src/cmd/req42-tracer,derives=REQ-REPORT-001,
+[req,id=REQ-WATCH-001,version=1,priority=medium,aspice=SWE.3,derives=REQ-REPORT-001,
  status=approved,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall provide watch mode with file monitoring
 
@@ -360,7 +360,7 @@ Acceptance Criteria:
 - --open flag launches browser automatically
 - Watch mode exits cleanly on Ctrl+C
 
-[req,id=REQ-LSP-001,version=1,priority=medium,aspice=SWE.3,impl=src/internal/lsp,
+[req,id=REQ-LSP-001,version=1,priority=medium,aspice=SWE.3,
  status=draft,reviewed-by=paulefl,reviewed-date=2026-05-07]
 == System shall provide LSP server for IDE integration
 

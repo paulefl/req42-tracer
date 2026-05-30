@@ -3,6 +3,7 @@ package report
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/paulefl/req42-tracer/src/internal/model"
 )
@@ -90,7 +91,7 @@ func BuildMatrixData(g *model.TraceabilityGraph) *MatrixData {
 			Title:         req.Title,
 			Priority:      req.Priority,
 			Status:        req.Status,
-			Impl:          req.Attributes["impl"],
+			Impl:          aggregateImplFromArch(req.ID, g),
 			Cells:         make(map[string]MatrixCell),
 		}
 
@@ -198,6 +199,22 @@ func (m *MatrixData) calculateStatistics() {
 		m.Statistics.CoveragePercentage = (float64(coveredCount) / float64(m.Statistics.TotalRequirements)) * 100
 		m.Statistics.AverageCoveragePerReq = float64(cellsCovered) / float64(totalCells) * 100
 	}
+}
+
+// aggregateImplFromArch collects impl= values from all arch elements linked to a requirement.
+// This is correct per ASPICE SWE.3 BP5: impl= belongs to [arch], not to [req].
+func aggregateImplFromArch(reqID string, g *model.TraceabilityGraph) string {
+	seen := make(map[string]bool)
+	var paths []string
+	for _, link := range g.Links {
+		if link.FromID == reqID && link.ToType == "arch" {
+			if arch, ok := g.ArchElements[link.ToID]; ok && arch.Impl != "" && !seen[arch.Impl] {
+				seen[arch.Impl] = true
+				paths = append(paths, arch.Impl)
+			}
+		}
+	}
+	return strings.Join(paths, ", ")
 }
 
 // buildTestSpecResultMap maps testSpec ID → worst result status ("pass"/"fail")
