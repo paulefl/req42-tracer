@@ -46,12 +46,12 @@ func buildGraph(config *model.Config, reqDir, arcDir, project string, verbose bo
 	// Parse Go test files for [test-spec] annotations → explicit TestCode entries
 	if goSrc := config.GoSrcDir; goSrc != "" {
 		if goGraph, err := parser.ParseGoTestFiles(goSrc, project); err == nil {
-			if err := builder.MergeGraph(goGraph); err != nil && verbose {
-				fmt.Fprintf(os.Stderr, "Warning: Go test code merge: %v\n", err)
+			if mergeErr := builder.MergeGraph(goGraph); mergeErr != nil {
+				fmt.Fprintf(os.Stderr, "Warning: Go test code merge: %v\n", mergeErr)
 			} else if verbose {
 				fmt.Fprintf(os.Stderr, "Parsed Go test annotations from %s\n", goSrc)
 			}
-		} else if verbose {
+		} else {
 			fmt.Fprintf(os.Stderr, "Warning: could not parse Go test files: %v\n", err)
 		}
 	}

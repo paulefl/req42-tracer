@@ -59,7 +59,7 @@ func parseGoTestFile(filePath, project string) ([]*model.TestCode, error) {
 		line := strings.TrimSpace(scanner.Text())
 
 		// Detect [test-spec] comment: // [test-spec,id=...,...]
-		if strings.HasPrefix(line, "// [test-spec,") || strings.HasPrefix(line, "// [test-spec,") {
+		if strings.HasPrefix(line, "// [test-spec,") {
 			inner := line[3:] // strip "// "
 			attrs := extractAttributes(inner)
 			if id, ok := attrs["id"]; ok && id != "" {
