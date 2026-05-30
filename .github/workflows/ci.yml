@@ -95,6 +95,55 @@ jobs:
           alert-threshold: '130%'
           fail-on-alert: false
 
+  deadcode:
+    name: Dead Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache: true
+
+      - name: Install deadcode
+        run: go install golang.org/x/tools/cmd/deadcode@latest
+
+      - name: Check dead code
+        working-directory: src
+        run: |
+          deadcode -test ./... 2>/dev/null \
+            | sed 's|.*/src/||' \
+            | sort > current-dead.txt
+
+          # Step summary
+          echo "### Dead Code Report" >> "$GITHUB_STEP_SUMMARY"
+          COUNT=$(wc -l < current-dead.txt | tr -d ' ')
+          echo "**$COUNT** unreachable function(s) (baseline: $(wc -l < .deadcode-baseline | tr -d ' '))" >> "$GITHUB_STEP_SUMMARY"
+          if [ -s current-dead.txt ]; then
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            cat current-dead.txt >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          # Regressions: in current output but NOT in baseline → fail
+          comm -23 <(sort current-dead.txt) <(sort .deadcode-baseline) > regressions.txt
+          if [ -s regressions.txt ]; then
+            echo "::error::New dead code introduced — not in .deadcode-baseline:"
+            while IFS= read -r line; do
+              echo "::error::$line"
+            done < regressions.txt
+            exit 1
+          fi
+
+          # Improvements: in baseline but no longer dead → remind to shrink baseline
+          comm -23 <(sort .deadcode-baseline) <(sort current-dead.txt) > fixed.txt
+          if [ -s fixed.txt ]; then
+            echo "::notice::Dead code fixed — remove these lines from src/.deadcode-baseline:"
+            cat fixed.txt
+          fi
+
   lint:
     name: Lint
     runs-on: ubuntu-latest

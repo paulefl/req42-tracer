@@ -1,0 +1,4 @@
+internal/aspice/processes.go:91:28: unreachable func: ProcessRegistry.GetBestPractice
+internal/aspice/processes.go:96:28: unreachable func: ProcessRegistry.ListProcesses
+internal/report/html.go:446:25: unreachable func: HTMLReporter.GenerateLatexReport
+internal/testresult/loader.go:37:6: unreachable func: LoadAll
