@@ -17,7 +17,6 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/paulefl/req42-tracer/src/internal/graph"
 	"github.com/paulefl/req42-tracer/src/internal/model"
-	"github.com/paulefl/req42-tracer/src/internal/parser"
 	"github.com/paulefl/req42-tracer/src/internal/report"
 	"github.com/spf13/cobra"
 )
@@ -186,29 +185,12 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 }
 
 func watchGenerateReport(config *model.Config, outputPath, reqDir, arcDir, project string, verbose bool) error {
-	builder := graph.NewBuilder()
-
-	if g, err := parser.ParseAllFromDir(reqDir, project); err == nil {
-		if err := builder.MergeGraph(g); err != nil {
-			return fmt.Errorf("requirements merge: %w", err)
-		}
-	}
-	if g, err := parser.ParseAllFromDir(arcDir, project); err == nil {
-		if err := builder.MergeGraph(g); err != nil {
-			return fmt.Errorf("architecture merge: %w", err)
-		}
-	}
-
-	if bPath := config.Bausteinsicht.Model; bPath != "" {
-		loadBausteinsicht(builder, bPath, project, verbose)
-	}
-
-	builder.DeriveASPICELevels()
-	if err := builder.BuildLinks(); err != nil {
+	g, err := buildGraph(config, reqDir, arcDir, project, verbose)
+	if err != nil {
 		return err
 	}
 
-	analyzer := graph.NewAnalyzer(builder.GetGraph())
+	analyzer := graph.NewAnalyzer(g)
 	htmlReporter := report.NewHTMLReporter(analyzer, config, outputPath)
 
 	if err := htmlReporter.GenerateReport(); err != nil {
