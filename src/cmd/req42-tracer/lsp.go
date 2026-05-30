@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/paulefl/req42-tracer/src/internal/lsp"
+	"github.com/paulefl/req42-tracer/src/internal/model"
 	"github.com/spf13/cobra"
 )
 
@@ -20,8 +21,10 @@ in .adoc files.`,
 	}
 }
 
-func runLspCmd(_ *cobra.Command, _ []string) error {
-	if err := lsp.NewServer().Run(); err != nil {
+func runLspCmd(cmd *cobra.Command, _ []string) error {
+	configPath, _ := cmd.Flags().GetString("config")
+	config, _ := model.LoadConfig(configPath) // non-fatal: LSP works without config
+	if err := lsp.NewServer(config).Run(); err != nil {
 		return fmt.Errorf("lsp server error: %w", err)
 	}
 	return nil

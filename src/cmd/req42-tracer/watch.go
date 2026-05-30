@@ -197,6 +197,10 @@ func watchGenerateReport(config *model.Config, outputPath, reqDir, arcDir string
 		}
 	}
 
+	if bPath := config.Bausteinsicht.Model; bPath != "" {
+		loadBausteinsicht(builder, bPath, false)
+	}
+
 	builder.DeriveASPICELevels()
 	if err := builder.BuildLinks(); err != nil {
 		return err

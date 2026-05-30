@@ -17,21 +17,23 @@ import (
 
 // Server is a minimal LSP server over stdio using JSON-RPC 2.0.
 type Server struct {
-	in    *bufio.Reader
-	out   io.Writer
-	log   *log.Logger
-	docs  map[string][]string    // uri → lines
-	graph *model.TraceabilityGraph
+	in     *bufio.Reader
+	out    io.Writer
+	log    *log.Logger
+	docs   map[string][]string // uri → lines
+	graph  *model.TraceabilityGraph
+	config *model.Config // optional; enables Bausteinsicht loading
 }
 
 // NewServer creates a server that reads from stdin and writes to stdout.
 // Diagnostic messages go to stderr.
-func NewServer() *Server {
+func NewServer(config *model.Config) *Server {
 	return &Server{
-		in:   bufio.NewReader(os.Stdin),
-		out:  os.Stdout,
-		log:  log.New(os.Stderr, "[lsp] ", log.LstdFlags),
-		docs: make(map[string][]string),
+		in:     bufio.NewReader(os.Stdin),
+		out:    os.Stdout,
+		log:    log.New(os.Stderr, "[lsp] ", log.LstdFlags),
+		docs:   make(map[string][]string),
+		config: config,
 	}
 }
 
@@ -79,6 +81,27 @@ func (s *Server) reloadGraph() {
 	if loaded == 0 {
 		s.log.Printf("reloadGraph: no docs found — start req42-tracer lsp from the project root")
 	}
+
+	// Load Bausteinsicht model if configured
+	if s.config != nil {
+		if bPath := s.config.Bausteinsicht.Model; bPath != "" {
+			bParser := parser.NewBausteinsichtParser(bPath)
+			if bGraph, err := bParser.Parse("software"); err == nil {
+				current := builder.GetGraph()
+				for id := range bGraph.ArchElements {
+					if _, exists := current.ArchElements[id]; exists {
+						delete(bGraph.ArchElements, id)
+					}
+				}
+				if err := builder.MergeGraph(bGraph); err != nil {
+					s.log.Printf("reloadGraph: bausteinsicht merge: %v", err)
+				}
+			} else {
+				s.log.Printf("reloadGraph: bausteinsicht load: %v", err)
+			}
+		}
+	}
+
 	s.graph = builder.GetGraph()
 	s.log.Printf("graph loaded: %d reqs, %d arch, %d specs",
 		len(s.graph.Requirements), len(s.graph.ArchElements), len(s.graph.TestSpecs))
