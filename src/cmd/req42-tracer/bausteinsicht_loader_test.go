@@ -64,7 +64,7 @@ func captureStderr(t *testing.T, fn func()) string {
 func TestLoadBausteinsicht_WarnOnMissingFile(t *testing.T) {
 	builder := graph.NewBuilder()
 	stderr := captureStderr(t, func() {
-		loadBausteinsicht(builder, "/nonexistent/architecture.jsonc", false)
+		loadBausteinsicht(builder, "/nonexistent/architecture.jsonc", "software", false)
 	})
 	if !strings.Contains(stderr, "Warning") {
 		t.Errorf("expected warning on stderr for missing file, got: %q", stderr)
@@ -77,7 +77,7 @@ func TestLoadBausteinsicht_WarnOnMissingFile(t *testing.T) {
 func TestLoadBausteinsicht_MergesElements(t *testing.T) {
 	f := writeTempJSONC(t, sampleBausteinsichtCmd)
 	builder := graph.NewBuilder()
-	loadBausteinsicht(builder, f, false)
+	loadBausteinsicht(builder, f, "software", false)
 
 	g := builder.GetGraph()
 	if len(g.ArchElements) == 0 {
@@ -107,7 +107,7 @@ func TestLoadBausteinsicht_SkipsDuplicateIDs(t *testing.T) {
 	}
 
 	stderr := captureStderr(t, func() {
-		loadBausteinsicht(builder, f, false)
+		loadBausteinsicht(builder, f, "software", false)
 	})
 
 	// Should warn about skipped duplicate, not fatal

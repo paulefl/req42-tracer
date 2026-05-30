@@ -57,8 +57,9 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Derive watch/parse directories from config instead of hardcoding
+	project := config.GetDefaultProject()
 	docsPath := "docs"
-	if p, ok := config.Projects["software"]; ok && p.Docs != "" {
+	if p, ok := config.Projects[project]; ok && p.Docs != "" {
 		docsPath = p.Docs
 	}
 	reqDir := filepath.Join(docsPath, "requirements")
@@ -186,20 +187,21 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 
 func watchGenerateReport(config *model.Config, outputPath, reqDir, arcDir string, verbose bool) error {
 	builder := graph.NewBuilder()
+	project := config.GetDefaultProject()
 
-	if g, err := parser.ParseAllFromDir(reqDir, "software"); err == nil {
+	if g, err := parser.ParseAllFromDir(reqDir, project); err == nil {
 		if err := builder.MergeGraph(g); err != nil {
 			return fmt.Errorf("requirements merge: %w", err)
 		}
 	}
-	if g, err := parser.ParseAllFromDir(arcDir, "software"); err == nil {
+	if g, err := parser.ParseAllFromDir(arcDir, project); err == nil {
 		if err := builder.MergeGraph(g); err != nil {
 			return fmt.Errorf("architecture merge: %w", err)
 		}
 	}
 
 	if bPath := config.Bausteinsicht.Model; bPath != "" {
-		loadBausteinsicht(builder, bPath, verbose)
+		loadBausteinsicht(builder, bPath, project, verbose)
 	}
 
 	builder.DeriveASPICELevels()

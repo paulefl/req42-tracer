@@ -12,9 +12,9 @@ import (
 // Parse errors are always reported (not gated on --verbose).
 // JSONC elements whose IDs conflict with already-loaded arch elements are skipped
 // with a warning instead of aborting the command.
-func loadBausteinsicht(builder *graph.Builder, bPath string, verbose bool) {
+func loadBausteinsicht(builder *graph.Builder, bPath, project string, verbose bool) {
 	bParser := parser.NewBausteinsichtParser(bPath)
-	bGraph, err := bParser.Parse("software")
+	bGraph, err := bParser.Parse(project)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: could not load Bausteinsicht model: %v\n", err)
 		return

@@ -9,8 +9,9 @@ import (
 
 // Config represents the .req42.yaml configuration file.
 type Config struct {
-	Projects map[string]*ProjectConfig `yaml:"projects"`
-	Bausteinsicht struct {
+	Projects       map[string]*ProjectConfig `yaml:"projects"`
+	DefaultProject string                    `yaml:"default-project"` // optional; derived from first projects key if empty
+	Bausteinsicht  struct {
 		Model string `yaml:"model"`
 	} `yaml:"bausteinsicht"`
 	TestResults []struct {
@@ -81,6 +82,18 @@ func LoadConfig(configPath string) (*Config, error) {
 	}
 
 	return config, nil
+}
+
+// GetDefaultProject returns the configured default project name.
+// Priority: explicit default-project field → first key in projects map → "software".
+func (c *Config) GetDefaultProject() string {
+	if c.DefaultProject != "" {
+		return c.DefaultProject
+	}
+	for name := range c.Projects {
+		return name
+	}
+	return "software"
 }
 
 // SetDefault sets a default value for a rule if not already set.
