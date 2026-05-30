@@ -126,7 +126,7 @@ Defines a software detailed design unit (ASPICE SWE.3). Links to an architecture
 |===
 | Attribute | Required | Example | Description
 | `id` | ✅ | `comp.auth.session` | Unique element ID. Typically extends parent arch ID
-| `arch` | ✅ | `comp.auth` | Parent `[arch]` element ID (SWE.2)
+| `arch` | — | `comp.auth` | Parent `[arch]` element ID (SWE.2). Omitting causes an orphan-dsn gap.
 | `aspice` | — | `SWE.3` | ASPICE process level (default: `SWE.3`)
 | `impl` | ✅ | `internal/auth/session.go` | Implementation file path
 |===
@@ -168,7 +168,7 @@ Defines a test specification. Links to requirements (SWE.6), architecture (SWE.5
 | `aspice` | — | `SWE.4` | ASPICE process this test covers
 |===
 
-NOTE: Use exactly one of `req=`, `arch=`, or `dsn=` to identify the test level. A test-spec with none of these is flagged as orphan by `req42-tracer gaps`.
+NOTE: By convention, use one of `req=`, `arch=`, or `dsn=` to identify the test level. A test-spec with none of these is flagged as orphan by `req42-tracer gaps`. Multiple attributes are accepted by the parser (e.g., a test-spec may link both `req=` and `arch=`).
 
 === In-code test annotations (convention)
 
@@ -259,11 +259,10 @@ run: go test ./src/internal/parser/... -run TestParseAllFromDir
 |---|---|---|
 | `orphan requirement` | `[req]` has no `[arch]` with `req=` | Add `[arch,req=SWR-XXX]` |
 | `missing impl` | `[arch]`/`[dsn]` has no `impl=` | Add `impl=src/...` |
-| `untested requirement (SWE.6)` | `[req]` has no `[test-spec]` with `req=` | Add SW Qualification Test |
 | `untested architecture element (SWE.5)` | `[arch]` has no `[test-spec]` with `arch=` | Add Integration Test |
 | `orphan design element (SWE.3)` | `[dsn]` has no `arch=` parent | Add `arch=` to `[dsn]` |
 | `untested detailed design (SWE.4)` | `[dsn]` has no `[test-spec]` with `dsn=` | Add Unit Test |
-| `missing test result` | `[test-spec]` has no matching TestResult | Check CI output |
+| `untraced test result` | `[test-spec]` has no matching TestResult in JUnit/go-test | Check CI output |
 
 `req42-tracer trace` traverses this chain and reports coverage at each level.
 

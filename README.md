@@ -81,11 +81,10 @@ req42-tracer enforces the full ASPICE SWE.1–SWE.6 traceability chain. Each blo
 |---|---|---|
 | `orphan requirement` | `[req]` has no `[arch]` with `req=` | Add `[arch,req=SWR-XXX]` |
 | `missing impl` | `[arch]`/`[dsn]` has no `impl=` | Add `impl=src/...` |
-| `untested requirement (SWE.6)` | `[req]` has no `[test-spec]` with `req=` | Add SW Qualification Test |
 | `untested architecture element (SWE.5)` | `[arch]` has no `[test-spec]` with `arch=` | Add Integration Test |
 | `orphan design element (SWE.3)` | `[dsn]` has no `arch=` parent | Add `arch=` to `[dsn]` |
 | `untested detailed design (SWE.4)` | `[dsn]` has no `[test-spec]` with `dsn=` | Add Unit Test |
-| `missing test result` | `[test-spec]` has no matching TestResult | Check CI output |
+| `untraced test result` | `[test-spec]` has no matching TestResult in JUnit/go-test | Check CI output |
 
 ## Quick Start
 
