@@ -18,20 +18,24 @@ func buildGraph(config *model.Config, reqDir, arcDir, project string, verbose bo
 
 	if req, err := parser.ParseAllFromDir(reqDir, project); err == nil {
 		if err := builder.MergeGraph(req); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("requirements merge from %s: %w", reqDir, err)
 		}
 		if verbose {
 			fmt.Fprintf(os.Stderr, "Parsed requirements from %s\n", reqDir)
 		}
+	} else if verbose {
+		fmt.Fprintf(os.Stderr, "Warning: no requirements found in %s: %v\n", reqDir, err)
 	}
 
 	if arch, err := parser.ParseAllFromDir(arcDir, project); err == nil {
 		if err := builder.MergeGraph(arch); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("architecture merge from %s: %w", arcDir, err)
 		}
 		if verbose {
 			fmt.Fprintf(os.Stderr, "Parsed architecture from %s\n", arcDir)
 		}
+	} else if verbose {
+		fmt.Fprintf(os.Stderr, "Warning: no architecture found in %s: %v\n", arcDir, err)
 	}
 
 	if bPath := config.Bausteinsicht.Model; bPath != "" {
