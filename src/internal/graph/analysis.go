@@ -57,12 +57,13 @@ func (a *Analyzer) AnalyzeGaps() *model.GapAnalysisResult {
 	a.buildIndex()
 
 	gap := &model.GapAnalysisResult{
-		OrphanRequirements:    []*model.Requirement{},
-		OrphanArchElements:    []*model.ArchElement{},
-		OrphanTestSpecs:       []*model.TestSpec{},
-		UntracedTestResults:   []*model.TestResult{},
+		OrphanRequirements:   []*model.Requirement{},
+		OrphanArchElements:   []*model.ArchElement{},
+		OrphanTestSpecs:      []*model.TestSpec{},
+		UntracedTestResults:  []*model.TestResult{},
 		MissingImplementation: []*model.ArchElement{},
 		StaleTraces:           []*model.TraceLink{},
+		UntestedArchElements:  []*model.ArchElement{},
 	}
 
 	// O(|Requirements|) — O(1) lookup via index
@@ -79,6 +80,12 @@ func (a *Analyzer) AnalyzeGaps() *model.GapAnalysisResult {
 		}
 		if arch.Impl == "" && arch.Parent != "" {
 			gap.MissingImplementation = append(gap.MissingImplementation, arch)
+		}
+		// SWE.5: top-level arch elements (SWE.2) need at least one integration test (arch= on test-spec)
+		if arch.Parent == "" {
+			if _, tested := a.testedArchIDs[arch.ID]; !tested {
+				gap.UntestedArchElements = append(gap.UntestedArchElements, arch)
+			}
 		}
 	}
 

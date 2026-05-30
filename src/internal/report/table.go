@@ -238,8 +238,18 @@ func (tr *TableReporter) gapReportText(gaps *model.GapAnalysisResult) string {
 		buf.WriteString("\n")
 	}
 
+	if len(gaps.UntestedArchElements) > 0 {
+		buf.WriteString(fmt.Sprintf("UNTESTED ARCHITECTURE ELEMENTS — SWE.5 (%d):\n", len(gaps.UntestedArchElements)))
+		for _, arch := range gaps.UntestedArchElements {
+			buf.WriteString(fmt.Sprintf("  ❌ %s: %s (no integration test-spec with arch=%s)\n", arch.ID, arch.Title, arch.ID))
+		}
+		buf.WriteString("\n")
+	}
+
 	if len(gaps.OrphanRequirements) == 0 && len(gaps.OrphanArchElements) == 0 &&
-		len(gaps.OrphanTestSpecs) == 0 && len(gaps.MissingImplementation) == 0 {
+		len(gaps.OrphanTestSpecs) == 0 && len(gaps.MissingImplementation) == 0 &&
+		len(gaps.StaleTraces) == 0 && len(gaps.UntracedTestResults) == 0 &&
+		len(gaps.UntestedArchElements) == 0 {
 		buf.WriteString("✅ No gaps detected!\n")
 	}
 
@@ -268,6 +278,21 @@ func (tr *TableReporter) gapReportMarkdown(gaps *model.GapAnalysisResult) string
 		buf.WriteString("\n")
 	}
 
+	if len(gaps.UntestedArchElements) > 0 {
+		buf.WriteString(fmt.Sprintf("## Untested Architecture Elements — SWE.5 (%d)\n\n", len(gaps.UntestedArchElements)))
+		for _, arch := range gaps.UntestedArchElements {
+			buf.WriteString(fmt.Sprintf("- **%s**: %s — no integration test-spec with `arch=%s`\n", arch.ID, arch.Title, arch.ID))
+		}
+		buf.WriteString("\n")
+	}
+
+	if len(gaps.OrphanRequirements) == 0 && len(gaps.OrphanArchElements) == 0 &&
+		len(gaps.OrphanTestSpecs) == 0 && len(gaps.MissingImplementation) == 0 &&
+		len(gaps.StaleTraces) == 0 && len(gaps.UntracedTestResults) == 0 &&
+		len(gaps.UntestedArchElements) == 0 {
+		buf.WriteString("✅ No gaps detected!\n")
+	}
+
 	return buf.String()
 }
 
@@ -279,7 +304,8 @@ func (tr *TableReporter) gapReportJSON(gaps *model.GapAnalysisResult) string {
 	buf.WriteString(fmt.Sprintf("  \"orphan_arch_elements\": %d,\n", len(gaps.OrphanArchElements)))
 	buf.WriteString(fmt.Sprintf("  \"orphan_test_specs\": %d,\n", len(gaps.OrphanTestSpecs)))
 	buf.WriteString(fmt.Sprintf("  \"missing_implementation\": %d,\n", len(gaps.MissingImplementation)))
-	buf.WriteString(fmt.Sprintf("  \"stale_traces\": %d\n", len(gaps.StaleTraces)))
+	buf.WriteString(fmt.Sprintf("  \"stale_traces\": %d,\n", len(gaps.StaleTraces)))
+	buf.WriteString(fmt.Sprintf("  \"untested_arch_elements\": %d\n", len(gaps.UntestedArchElements)))
 	buf.WriteString("}\n")
 
 	return buf.String()

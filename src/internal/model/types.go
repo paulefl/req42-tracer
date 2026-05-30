@@ -106,12 +106,13 @@ type TraceabilityGraph struct {
 
 // GapAnalysisResult represents findings from gap analysis.
 type GapAnalysisResult struct {
-	OrphanRequirements   []*Requirement // Requirements without architecture or test coverage
-	OrphanArchElements   []*ArchElement // Architecture elements without requirements
-	OrphanTestSpecs      []*TestSpec    // Test specs without linked requirements
-	UntracedTestResults  []*TestResult  // Test results without linked specifications
+	OrphanRequirements    []*Requirement // Requirements without architecture or test coverage
+	OrphanArchElements    []*ArchElement // Architecture elements without requirements
+	OrphanTestSpecs       []*TestSpec    // Test specs without linked requirements
+	UntracedTestResults   []*TestResult  // Test results without linked specifications
 	MissingImplementation []*ArchElement // Architecture without impl references
-	StaleTraces          []*TraceLink   // Links to outdated versions
+	StaleTraces           []*TraceLink   // Links to outdated versions
+	UntestedArchElements  []*ArchElement // SWE.2 arch elements without an integration test (arch= on test-spec)
 }
 
 // CoverageReport represents traceability coverage metrics.
