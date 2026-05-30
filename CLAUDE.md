@@ -82,7 +82,32 @@ gh auth switch --user paulefl
 Ein pre-commit Hook in `.git/hooks/pre-commit` blockiert Commits mit falscher Identität.
 `git config user.name` muss `dev-paul-fleischmann` sein — sonst bricht der Commit ab.
 
+Ein `commit-msg` Hook in `.git/hooks/commit-msg` erzwingt Issue-Referenz im Format:
+```
+Closes #<NNN>: <beschreibung>
+Fixes #<NNN>: <beschreibung>
+Refs #<NNN>: <beschreibung>
+```
+Merge-Commits, fixup! und squash! sind ausgenommen.
+
 PR erstellen: `gh pr create --assignee dev-paul-fleischmann --reviewer paulefl`
+
+## Commit-Konventionen
+
+Jeder Commit der eine Issue-Arbeit repräsentiert **muss** eine Issue-Referenz enthalten:
+
+```
+Closes #91: ci add deadcode job
+Fixes #75: wire testresult.LoadAll into trace command
+Refs #93: partial progress on BausteinsichtParser
+```
+
+| Keyword | Effekt beim PR-Merge |
+|---|---|
+| `Closes #N` / `Fixes #N` / `Resolves #N` | Issue wird automatisch geschlossen |
+| `Refs #N` | Issue bleibt offen, Commit erscheint als Referenz |
+
+Merge-Commits, fixup! und squash! brauchen keine Referenz.
 
 ## Test Conventions
 Siehe [`TESTS.md`](project/req42-tracer/TESTS.md) für die vollständigen Test-Konventionen.
