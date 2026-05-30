@@ -36,8 +36,9 @@ func runValidateCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	builder := graph.NewBuilder()
+	project := cfg.GetDefaultProject()
 
-	if req, err := parser.ParseAllFromDir("project/req42-tracer/docs/requirements", "software"); err == nil {
+	if req, err := parser.ParseAllFromDir("project/req42-tracer/docs/requirements", project); err == nil {
 		if err := builder.MergeGraph(req); err != nil {
 			return err
 		}
@@ -45,7 +46,7 @@ func runValidateCmd(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(os.Stderr, "No requirements found: %v\n", err)
 	}
 
-	if arch, err := parser.ParseAllFromDir("project/req42-tracer/docs/arc42", "software"); err == nil {
+	if arch, err := parser.ParseAllFromDir("project/req42-tracer/docs/arc42", project); err == nil {
 		if err := builder.MergeGraph(arch); err != nil {
 			return err
 		}
@@ -55,7 +56,7 @@ func runValidateCmd(cmd *cobra.Command, args []string) error {
 
 	// Load Bausteinsicht model if configured
 	if bPath := cfg.Bausteinsicht.Model; bPath != "" {
-		loadBausteinsicht(builder, bPath, verbose)
+		loadBausteinsicht(builder, bPath, project, verbose)
 	}
 
 	builder.DeriveASPICELevels()

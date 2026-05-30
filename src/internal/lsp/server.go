@@ -66,9 +66,13 @@ func (s *Server) Run() error {
 // reloadGraph rebuilds the traceability graph from the project's doc dirs.
 func (s *Server) reloadGraph() {
 	builder := graph.NewBuilder()
+	project := "software"
+	if s.config != nil {
+		project = s.config.GetDefaultProject()
+	}
 	loaded := 0
 	for _, dir := range []string{"docs/requirements", "docs/arc42"} {
-		g, err := parser.ParseAllFromDir(dir, "software")
+		g, err := parser.ParseAllFromDir(dir, project)
 		if err != nil {
 			s.log.Printf("reloadGraph: skipping %q: %v", dir, err)
 			continue
@@ -83,7 +87,7 @@ func (s *Server) reloadGraph() {
 	if s.config != nil {
 		if bPath := s.config.Bausteinsicht.Model; bPath != "" {
 			bParser := parser.NewBausteinsichtParser(bPath)
-			if bGraph, err := bParser.Parse("software"); err == nil {
+			if bGraph, err := bParser.Parse(project); err == nil {
 				current := builder.GetGraph()
 				for id := range bGraph.ArchElements {
 					if _, exists := current.ArchElements[id]; exists {

@@ -3,14 +3,16 @@ package model
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"gopkg.in/yaml.v3"
 )
 
 // Config represents the .req42.yaml configuration file.
 type Config struct {
-	Projects map[string]*ProjectConfig `yaml:"projects"`
-	Bausteinsicht struct {
+	Projects       map[string]*ProjectConfig `yaml:"projects"`
+	DefaultProject string                    `yaml:"default-project"` // optional; derived from first projects key if empty
+	Bausteinsicht  struct {
 		Model string `yaml:"model"`
 	} `yaml:"bausteinsicht"`
 	TestResults []struct {
@@ -81,6 +83,23 @@ func LoadConfig(configPath string) (*Config, error) {
 	}
 
 	return config, nil
+}
+
+// GetDefaultProject returns the configured default project name.
+// Priority: explicit default-project field → alphabetically first key in projects map → "software".
+func (c *Config) GetDefaultProject() string {
+	if c.DefaultProject != "" {
+		return c.DefaultProject
+	}
+	keys := make([]string, 0, len(c.Projects))
+	for name := range c.Projects {
+		keys = append(keys, name)
+	}
+	sort.Strings(keys)
+	if len(keys) > 0 {
+		return keys[0]
+	}
+	return "software"
 }
 
 // SetDefault sets a default value for a rule if not already set.

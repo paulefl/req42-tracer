@@ -57,15 +57,16 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Derive watch/parse directories from config instead of hardcoding
+	project := config.GetDefaultProject()
 	docsPath := "docs"
-	if p, ok := config.Projects["software"]; ok && p.Docs != "" {
+	if p, ok := config.Projects[project]; ok && p.Docs != "" {
 		docsPath = p.Docs
 	}
 	reqDir := filepath.Join(docsPath, "requirements")
 	arcDir := filepath.Join(docsPath, "arc42")
 
 	fmt.Fprintln(os.Stderr, "Generating initial report...")
-	if err := watchGenerateReport(config, outputPath, reqDir, arcDir, verbose); err != nil {
+	if err := watchGenerateReport(config, outputPath, reqDir, arcDir, project, verbose); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: initial generation failed: %v\n", err)
 	} else {
 		fmt.Fprintf(os.Stderr, "Report generated: %s\n", outputPath)
@@ -108,7 +109,7 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 				fmt.Fprintf(os.Stderr, "Warning: config reload failed: %v\n", cfgErr)
 				cfg = config
 			}
-			if err := watchGenerateReport(cfg, outputPath, reqDir, arcDir, verbose); err != nil {
+			if err := watchGenerateReport(cfg, outputPath, reqDir, arcDir, cfg.GetDefaultProject(), verbose); err != nil {
 				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			} else {
 				generation.Add(1)
@@ -184,22 +185,22 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func watchGenerateReport(config *model.Config, outputPath, reqDir, arcDir string, verbose bool) error {
+func watchGenerateReport(config *model.Config, outputPath, reqDir, arcDir, project string, verbose bool) error {
 	builder := graph.NewBuilder()
 
-	if g, err := parser.ParseAllFromDir(reqDir, "software"); err == nil {
+	if g, err := parser.ParseAllFromDir(reqDir, project); err == nil {
 		if err := builder.MergeGraph(g); err != nil {
 			return fmt.Errorf("requirements merge: %w", err)
 		}
 	}
-	if g, err := parser.ParseAllFromDir(arcDir, "software"); err == nil {
+	if g, err := parser.ParseAllFromDir(arcDir, project); err == nil {
 		if err := builder.MergeGraph(g); err != nil {
 			return fmt.Errorf("architecture merge: %w", err)
 		}
 	}
 
 	if bPath := config.Bausteinsicht.Model; bPath != "" {
-		loadBausteinsicht(builder, bPath, verbose)
+		loadBausteinsicht(builder, bPath, project, verbose)
 	}
 
 	builder.DeriveASPICELevels()

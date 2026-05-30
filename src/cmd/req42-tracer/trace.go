@@ -45,9 +45,10 @@ func runTraceCmd(cmd *cobra.Command, args []string) error {
 
 	// Build traceability graph
 	builder := graph.NewBuilder()
+	project := config.GetDefaultProject()
 
 	// Parse requirements from project/req42-tracer/docs/requirements/
-	if req, err := parser.ParseAllFromDir("project/req42-tracer/docs/requirements", "software"); err == nil {
+	if req, err := parser.ParseAllFromDir("project/req42-tracer/docs/requirements", project); err == nil {
 		if err := builder.MergeGraph(req); err != nil {
 			return err
 		}
@@ -57,7 +58,7 @@ func runTraceCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Parse architecture from project/req42-tracer/docs/arc42/
-	if arch, err := parser.ParseAllFromDir("project/req42-tracer/docs/arc42", "software"); err == nil {
+	if arch, err := parser.ParseAllFromDir("project/req42-tracer/docs/arc42", project); err == nil {
 		if err := builder.MergeGraph(arch); err != nil {
 			return err
 		}
@@ -68,7 +69,7 @@ func runTraceCmd(cmd *cobra.Command, args []string) error {
 
 	// Load Bausteinsicht model if configured
 	if bPath := config.Bausteinsicht.Model; bPath != "" {
-		loadBausteinsicht(builder, bPath, verbose)
+		loadBausteinsicht(builder, bPath, project, verbose)
 	}
 
 	// Derive ASPICE levels

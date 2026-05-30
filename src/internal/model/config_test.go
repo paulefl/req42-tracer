@@ -139,6 +139,28 @@ func TestLoadConfig_DefaultMaps(t *testing.T) {
 	}
 }
 
+// [test-spec,id=TS-MODEL-008,req=REQ-CONFIG-001,aspice=SWE.5-BP3]
+// TestConfig_GetDefaultProject verifies priority: explicit field > projects map key > fallback.
+func TestConfig_GetDefaultProject(t *testing.T) {
+	// Explicit default-project field takes priority
+	cfg := &Config{DefaultProject: "firmware", Projects: map[string]*ProjectConfig{"software": {}}}
+	if got := cfg.GetDefaultProject(); got != "firmware" {
+		t.Errorf("explicit default-project: got %q, want firmware", got)
+	}
+
+	// Falls back to alphabetically first projects key (deterministic)
+	cfg2 := &Config{Projects: map[string]*ProjectConfig{"hardware": {}, "software": {}, "alpha": {}}}
+	if got := cfg2.GetDefaultProject(); got != "alpha" {
+		t.Errorf("projects key fallback: got %q, want alpha (alphabetically first)", got)
+	}
+
+	// Falls back to "software" when projects map is empty
+	cfg3 := &Config{Projects: map[string]*ProjectConfig{}}
+	if got := cfg3.GetDefaultProject(); got != "software" {
+		t.Errorf("empty projects fallback: got %q, want software", got)
+	}
+}
+
 func writeTempConfig(t *testing.T, content string) string {
 	t.Helper()
 	dir := t.TempDir()
