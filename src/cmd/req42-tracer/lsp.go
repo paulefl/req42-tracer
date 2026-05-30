@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/paulefl/req42-tracer/src/internal/lsp"
 	"github.com/paulefl/req42-tracer/src/internal/model"
@@ -23,7 +24,10 @@ in .adoc files.`,
 
 func runLspCmd(cmd *cobra.Command, _ []string) error {
 	configPath, _ := cmd.Flags().GetString("config")
-	config, _ := model.LoadConfig(configPath) // non-fatal: LSP works without config
+	config, err := model.LoadConfig(configPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "[lsp] Warning: could not load config %s: %v\n", configPath, err)
+	}
 	if err := lsp.NewServer(config).Run(); err != nil {
 		return fmt.Errorf("lsp server error: %w", err)
 	}

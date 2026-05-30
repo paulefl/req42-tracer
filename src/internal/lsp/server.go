@@ -78,11 +78,8 @@ func (s *Server) reloadGraph() {
 		}
 		loaded++
 	}
-	if loaded == 0 {
-		s.log.Printf("reloadGraph: no docs found — start req42-tracer lsp from the project root")
-	}
-
 	// Load Bausteinsicht model if configured
+	bausteinsichtLoaded := false
 	if s.config != nil {
 		if bPath := s.config.Bausteinsicht.Model; bPath != "" {
 			bParser := parser.NewBausteinsichtParser(bPath)
@@ -95,11 +92,17 @@ func (s *Server) reloadGraph() {
 				}
 				if err := builder.MergeGraph(bGraph); err != nil {
 					s.log.Printf("reloadGraph: bausteinsicht merge: %v", err)
+				} else {
+					bausteinsichtLoaded = true
 				}
 			} else {
 				s.log.Printf("reloadGraph: bausteinsicht load: %v", err)
 			}
 		}
+	}
+
+	if loaded == 0 && !bausteinsichtLoaded {
+		s.log.Printf("reloadGraph: no docs found — start req42-tracer lsp from the project root")
 	}
 
 	s.graph = builder.GetGraph()

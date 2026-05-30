@@ -44,6 +44,7 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 	openBrowser, _ := cmd.Flags().GetBool("open")
 	port, _ := cmd.Flags().GetInt("port")
 	outputPath, _ := cmd.Flags().GetString("output")
+	verbose, _ := cmd.Flags().GetBool("verbose")
 
 	config, err := model.LoadConfig(configPath)
 	if err != nil {
@@ -64,7 +65,7 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 	arcDir := filepath.Join(docsPath, "arc42")
 
 	fmt.Fprintln(os.Stderr, "Generating initial report...")
-	if err := watchGenerateReport(config, outputPath, reqDir, arcDir); err != nil {
+	if err := watchGenerateReport(config, outputPath, reqDir, arcDir, verbose); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: initial generation failed: %v\n", err)
 	} else {
 		fmt.Fprintf(os.Stderr, "Report generated: %s\n", outputPath)
@@ -107,7 +108,7 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 				fmt.Fprintf(os.Stderr, "Warning: config reload failed: %v\n", cfgErr)
 				cfg = config
 			}
-			if err := watchGenerateReport(cfg, outputPath, reqDir, arcDir); err != nil {
+			if err := watchGenerateReport(cfg, outputPath, reqDir, arcDir, verbose); err != nil {
 				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			} else {
 				generation.Add(1)
@@ -183,7 +184,7 @@ func runWatchCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func watchGenerateReport(config *model.Config, outputPath, reqDir, arcDir string) error {
+func watchGenerateReport(config *model.Config, outputPath, reqDir, arcDir string, verbose bool) error {
 	builder := graph.NewBuilder()
 
 	if g, err := parser.ParseAllFromDir(reqDir, "software"); err == nil {
@@ -198,7 +199,7 @@ func watchGenerateReport(config *model.Config, outputPath, reqDir, arcDir string
 	}
 
 	if bPath := config.Bausteinsicht.Model; bPath != "" {
-		loadBausteinsicht(builder, bPath, false)
+		loadBausteinsicht(builder, bPath, verbose)
 	}
 
 	builder.DeriveASPICELevels()
