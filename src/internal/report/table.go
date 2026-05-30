@@ -248,6 +248,7 @@ func (tr *TableReporter) gapReportText(gaps *model.GapAnalysisResult) string {
 
 	if len(gaps.OrphanRequirements) == 0 && len(gaps.OrphanArchElements) == 0 &&
 		len(gaps.OrphanTestSpecs) == 0 && len(gaps.MissingImplementation) == 0 &&
+		len(gaps.StaleTraces) == 0 && len(gaps.UntracedTestResults) == 0 &&
 		len(gaps.UntestedArchElements) == 0 {
 		buf.WriteString("✅ No gaps detected!\n")
 	}
@@ -283,6 +284,13 @@ func (tr *TableReporter) gapReportMarkdown(gaps *model.GapAnalysisResult) string
 			buf.WriteString(fmt.Sprintf("- **%s**: %s — no integration test-spec with `arch=%s`\n", arch.ID, arch.Title, arch.ID))
 		}
 		buf.WriteString("\n")
+	}
+
+	if len(gaps.OrphanRequirements) == 0 && len(gaps.OrphanArchElements) == 0 &&
+		len(gaps.OrphanTestSpecs) == 0 && len(gaps.MissingImplementation) == 0 &&
+		len(gaps.StaleTraces) == 0 && len(gaps.UntracedTestResults) == 0 &&
+		len(gaps.UntestedArchElements) == 0 {
+		buf.WriteString("✅ No gaps detected!\n")
 	}
 
 	return buf.String()
