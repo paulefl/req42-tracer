@@ -12,6 +12,7 @@ import (
 type Config struct {
 	Projects       map[string]*ProjectConfig `yaml:"projects"`
 	DefaultProject string                    `yaml:"default-project"` // optional; derived from first projects key if empty
+	GoSrcDir       string                    `yaml:"go-src-dir"`      // optional; root dir scanned for *_test.go annotations
 	Bausteinsicht  struct {
 		Model string `yaml:"model"`
 	} `yaml:"bausteinsicht"`

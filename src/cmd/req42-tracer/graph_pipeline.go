@@ -9,9 +9,10 @@ import (
 	"github.com/paulefl/req42-tracer/src/internal/parser"
 )
 
-// buildGraph parses requirements, architecture and the optional Bausteinsicht model,
-// then derives ASPICE levels and builds trace links.
+// buildGraph parses requirements, architecture, Bausteinsicht model, and Go test
+// annotations, then derives ASPICE levels and builds trace links.
 // reqDir and arcDir are the directories containing AsciiDoc sources.
+// goSrcDir is the root directory scanned for *_test.go files (empty = skip).
 // Returns the built traceability graph ready for analysis or reporting.
 func buildGraph(config *model.Config, reqDir, arcDir, project string, verbose bool) (*model.TraceabilityGraph, error) {
 	builder := graph.NewBuilder()
@@ -40,6 +41,19 @@ func buildGraph(config *model.Config, reqDir, arcDir, project string, verbose bo
 
 	if bPath := config.Bausteinsicht.Model; bPath != "" {
 		loadBausteinsicht(builder, bPath, project, verbose)
+	}
+
+	// Parse Go test files for [test-spec] annotations → explicit TestCode entries
+	if goSrc := config.GoSrcDir; goSrc != "" {
+		if goGraph, err := parser.ParseGoTestFiles(goSrc, project); err == nil {
+			if err := builder.MergeGraph(goGraph); err != nil && verbose {
+				fmt.Fprintf(os.Stderr, "Warning: Go test code merge: %v\n", err)
+			} else if verbose {
+				fmt.Fprintf(os.Stderr, "Parsed Go test annotations from %s\n", goSrc)
+			}
+		} else if verbose {
+			fmt.Fprintf(os.Stderr, "Warning: could not parse Go test files: %v\n", err)
+		}
 	}
 
 	builder.DeriveASPICELevels()

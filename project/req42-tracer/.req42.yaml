@@ -8,6 +8,9 @@ projects:
     path: .
     docs: project/req42-tracer/docs/
 
+# Go source directory for [test-spec] annotation parsing in *_test.go files
+go-src-dir: src
+
 # Bausteinsicht architecture model
 bausteinsicht:
   model: project/req42-tracer/architecture.jsonc
