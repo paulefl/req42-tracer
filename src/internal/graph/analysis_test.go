@@ -394,3 +394,55 @@ func TestMergeGraph_LinkSeenPopulated(t *testing.T) {
 		t.Errorf("MergeGraph+BuildLinks added duplicate link: before=%d, after=%d", linkCountBefore, linkCountAfter)
 	}
 }
+
+// [test-spec,id=TS-GRAPH-039,req=REQ-GRAPH-001,aspice=SWE.5-BP4]
+// TestAnalyzeGaps_UntestedArchElement verifies that top-level arch elements without
+// an integration test-spec (arch= linkage) are flagged as SWE.5 gaps.
+func TestAnalyzeGaps_UntestedArchElement(t *testing.T) {
+	g := &model.TraceabilityGraph{
+		Requirements: make(map[string]*model.Requirement),
+		ArchElements: map[string]*model.ArchElement{
+			"comp.system": {ID: "comp.system", Parent: "", Title: "System Component"},
+			"comp.sub":    {ID: "comp.sub", Parent: "comp.system", Title: "Sub Component"},
+		},
+		TestSpecs:   make(map[string]*model.TestSpec),
+		TestCodes:   make(map[string]*model.TestCode),
+		TestResults: make(map[string]*model.TestResult),
+		Links:       []*model.TraceLink{},
+	}
+	a := NewAnalyzer(g)
+	gaps := a.AnalyzeGaps()
+
+	if len(gaps.UntestedArchElements) != 1 {
+		t.Fatalf("expected 1 untested arch element, got %d", len(gaps.UntestedArchElements))
+	}
+	if gaps.UntestedArchElements[0].ID != "comp.system" {
+		t.Errorf("expected comp.system flagged, got %s", gaps.UntestedArchElements[0].ID)
+	}
+}
+
+// [test-spec,id=TS-GRAPH-040,req=REQ-GRAPH-001,aspice=SWE.5-BP4]
+// TestAnalyzeGaps_TestedArchElement verifies that arch elements WITH an integration
+// test-spec (verified-by link) are NOT flagged as SWE.5 gaps.
+func TestAnalyzeGaps_TestedArchElement(t *testing.T) {
+	g := &model.TraceabilityGraph{
+		Requirements: make(map[string]*model.Requirement),
+		ArchElements: map[string]*model.ArchElement{
+			"comp.system": {ID: "comp.system", Parent: "", Title: "System Component"},
+		},
+		TestSpecs: map[string]*model.TestSpec{
+			"TS-INT-001": {ID: "TS-INT-001", Arch: []string{"comp.system"}},
+		},
+		TestCodes:   make(map[string]*model.TestCode),
+		TestResults: make(map[string]*model.TestResult),
+		Links: []*model.TraceLink{
+			{FromID: "comp.system", ToID: "TS-INT-001", FromType: "arch", ToType: "test-spec", LinkType: "verified-by", Status: "active"},
+		},
+	}
+	a := NewAnalyzer(g)
+	gaps := a.AnalyzeGaps()
+
+	if len(gaps.UntestedArchElements) != 0 {
+		t.Errorf("expected no untested arch elements, got %d: %v", len(gaps.UntestedArchElements), gaps.UntestedArchElements)
+	}
+}
