@@ -156,8 +156,12 @@ jobs:
           # Improvements: in baseline but no longer dead → remind to shrink baseline
           comm -23 <(sort .deadcode-baseline) <(sort current-dead.txt) > fixed.txt
           if [ -s fixed.txt ]; then
-            echo "::notice::Dead code fixed — remove these lines from src/.deadcode-baseline:"
-            cat fixed.txt
+            echo "::notice::Dead code fixed — update src/.deadcode-baseline (remove entries below)"
+            # Prefix each line to avoid GHA auto-annotating file:line:col patterns as errors
+            while IFS= read -r line; do
+              echo "::notice::  ✓ removed: $line"
+            done < fixed.txt
+            echo "::notice::Run: cd src && deadcode -test ./... 2>/dev/null | sed 's|.*/src/||' | sort > .deadcode-baseline"
           fi
 
   lint:
