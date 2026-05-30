@@ -55,17 +55,7 @@ func runValidateCmd(cmd *cobra.Command, args []string) error {
 
 	// Load Bausteinsicht model if configured
 	if bPath := cfg.Bausteinsicht.Model; bPath != "" {
-		bParser := parser.NewBausteinsichtParser(bPath)
-		if bGraph, err := bParser.Parse("software"); err == nil {
-			if err := builder.MergeGraph(bGraph); err != nil {
-				return err
-			}
-			if verbose {
-				fmt.Fprintf(os.Stderr, "Parsed Bausteinsicht model from %s\n", bPath)
-			}
-		} else if verbose {
-			fmt.Fprintf(os.Stderr, "Warning: could not load Bausteinsicht model: %v\n", err)
-		}
+		loadBausteinsicht(builder, bPath, verbose)
 	}
 
 	builder.DeriveASPICELevels()
