@@ -8,7 +8,6 @@ import (
 
 	"github.com/paulefl/req42-tracer/src/internal/graph"
 	"github.com/paulefl/req42-tracer/src/internal/model"
-	"github.com/paulefl/req42-tracer/src/internal/parser"
 	"github.com/paulefl/req42-tracer/src/internal/validation"
 )
 
@@ -35,47 +34,21 @@ func runValidateCmd(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(os.Stderr, "Loaded config from %s\n", configPath)
 	}
 
-	builder := graph.NewBuilder()
-	project := cfg.GetDefaultProject()
-
-	if req, err := parser.ParseAllFromDir("project/req42-tracer/docs/requirements", project); err == nil {
-		if err := builder.MergeGraph(req); err != nil {
-			return err
-		}
-	} else if verbose {
-		fmt.Fprintf(os.Stderr, "No requirements found: %v\n", err)
-	}
-
-	if arch, err := parser.ParseAllFromDir("project/req42-tracer/docs/arc42", project); err == nil {
-		if err := builder.MergeGraph(arch); err != nil {
-			return err
-		}
-	} else if verbose {
-		fmt.Fprintf(os.Stderr, "No architecture found: %v\n", err)
-	}
-
-	// Load Bausteinsicht model if configured
-	if bPath := cfg.Bausteinsicht.Model; bPath != "" {
-		loadBausteinsicht(builder, bPath, project, verbose)
-	}
-
-	builder.DeriveASPICELevels()
-	if err := builder.BuildLinks(); err != nil {
+	g, err := buildGraph(cfg,
+		"project/req42-tracer/docs/requirements",
+		"project/req42-tracer/docs/arc42",
+		cfg.GetDefaultProject(), verbose)
+	if err != nil {
 		return err
 	}
 
-	g := builder.GetGraph()
 	analyzer := graph.NewAnalyzer(g)
-
-	// Built-in reference validation
 	refErrors := analyzer.ValidateReferences()
 
-	// Custom rules from config
 	engine := validation.NewRuleEngine(cfg, analyzer)
 	ruleResults := engine.Run()
 	numErrors, numWarnings := validation.TotalViolations(ruleResults)
 
-	// --- Output ---
 	if len(refErrors) > 0 {
 		fmt.Println("❌ Reference errors:")
 		for _, e := range refErrors {

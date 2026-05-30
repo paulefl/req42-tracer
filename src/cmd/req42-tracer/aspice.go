@@ -8,7 +8,6 @@ import (
 	"github.com/paulefl/req42-tracer/src/internal/aspice"
 	"github.com/paulefl/req42-tracer/src/internal/graph"
 	"github.com/paulefl/req42-tracer/src/internal/model"
-	"github.com/paulefl/req42-tracer/src/internal/parser"
 	"github.com/paulefl/req42-tracer/src/internal/testresult"
 )
 
@@ -28,71 +27,34 @@ func runAspiceCmd(cmd *cobra.Command, args []string) error {
 	configPath, _ := cmd.Flags().GetString("config")
 	verbose, _ := cmd.Flags().GetBool("verbose")
 
-	// Load configuration
 	config, err := model.LoadConfig(configPath)
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
-
 	if verbose {
 		fmt.Fprintf(os.Stderr, "Loaded config from %s\n", configPath)
 	}
 
-	// Build traceability graph
-	builder := graph.NewBuilder()
-	project := config.GetDefaultProject()
-
-	// Parse requirements
-	if req, err := parser.ParseAllFromDir("project/req42-tracer/docs/requirements", project); err == nil {
-		if err := builder.MergeGraph(req); err != nil {
-			return err
-		}
-		if verbose {
-			fmt.Fprintf(os.Stderr, "Parsed requirements\n")
-		}
-	}
-
-	// Parse architecture
-	if arch, err := parser.ParseAllFromDir("project/req42-tracer/docs/arc42", project); err == nil {
-		if err := builder.MergeGraph(arch); err != nil {
-			return err
-		}
-		if verbose {
-			fmt.Fprintf(os.Stderr, "Parsed architecture\n")
-		}
-	}
-
-	// Load Bausteinsicht model if configured
-	if bPath := config.Bausteinsicht.Model; bPath != "" {
-		loadBausteinsicht(builder, bPath, project, verbose)
-	}
-
-	// Derive ASPICE levels
-	builder.DeriveASPICELevels()
-
-	// Build trace links
-	if err := builder.BuildLinks(); err != nil {
+	g, err := buildGraph(config,
+		"project/req42-tracer/docs/requirements",
+		"project/req42-tracer/docs/arc42",
+		config.GetDefaultProject(), verbose)
+	if err != nil {
 		return err
 	}
 
-	// Get final graph
-	g := builder.GetGraph()
-
-	// Load test results from CI artifacts
 	if err := testresult.LoadAll(g, config); err != nil && verbose {
 		fmt.Fprintf(os.Stderr, "Warning: could not load test results: %v\n", err)
 	}
 
-	// Validate ASPICE compliance
 	analyzer := graph.NewAnalyzer(g)
 	checker := aspice.NewChecker(analyzer, config)
-	report := checker.CheckCompliance()
+	rpt := checker.CheckCompliance()
 
-	// Display report
 	fmt.Println("ASPICE PAM 4.0 Compliance Report")
-	fmt.Printf("Overall Coverage: %.1f%%\n\n", report.Overall)
+	fmt.Printf("Overall Coverage: %.1f%%\n\n", rpt.Overall)
 
-	for processID, results := range report.Processes {
+	for processID, results := range rpt.Processes {
 		totalCoverage := 0.0
 		for _, result := range results {
 			totalCoverage += result.Coverage
