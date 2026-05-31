@@ -37,7 +37,7 @@ type MatrixData struct {
 type MatrixColumn struct {
 	ID    string `json:"id"`
 	Title string `json:"title"`
-	Type  string `json:"type"` // "arch", "test-spec"
+	Type  string `json:"type"` // "arch", "dsn", "test-spec"
 }
 
 // MatrixStats contains coverage statistics.
@@ -71,6 +71,16 @@ func BuildMatrixData(g *model.TraceabilityGraph) *MatrixData {
 		columnOrder[id] = len(data.Columns) - 1
 	}
 
+	// Add design element columns (SWE.3/SWE.4)
+	for id, dsn := range g.DesignElements {
+		data.Columns = append(data.Columns, MatrixColumn{
+			ID:    id,
+			Title: fmt.Sprintf("%s: %s", id, dsn.Title),
+			Type:  "dsn",
+		})
+		columnOrder[id] = len(data.Columns) - 1
+	}
+
 	// Add test spec columns
 	for id, spec := range g.TestSpecs {
 		data.Columns = append(data.Columns, MatrixColumn{
@@ -79,6 +89,14 @@ func BuildMatrixData(g *model.TraceabilityGraph) *MatrixData {
 			Type:  "test-spec",
 		})
 		columnOrder[id] = len(data.Columns) - 1
+	}
+
+	// Build arch→DSN lookup for coverage derivation
+	archToDSN := make(map[string][]string) // archID → []dsnID
+	for dsnID, dsn := range g.DesignElements {
+		if dsn.Arch != "" {
+			archToDSN[dsn.Arch] = append(archToDSN[dsn.Arch], dsnID)
+		}
 	}
 
 	// Build TestResult lookup: testSpec ID → worst status among linked results
@@ -115,6 +133,17 @@ func BuildMatrixData(g *model.TraceabilityGraph) *MatrixData {
 					cell.Status = status
 					cell.Evidence = fmt.Sprintf("%s (%s)", link.LinkType, link.Reason)
 					row.Cells[link.ToID] = cell
+				}
+
+				// Propagate coverage to DSN children of covered arch elements
+				if link.ToType == "arch" && status == "covered" {
+					for _, dsnID := range archToDSN[link.ToID] {
+						if cell, exists := row.Cells[dsnID]; exists && cell.Status == "missing" {
+							cell.Status = "covered"
+							cell.Evidence = fmt.Sprintf("via %s (SWE.3)", link.ToID)
+							row.Cells[dsnID] = cell
+						}
+					}
 				}
 			}
 		}

@@ -113,6 +113,85 @@ func TestExportMatrixCSV(t *testing.T) {
 	t.Log("✅ CSV export test passed")
 }
 
+// [test-spec,id=TS-RPT-034,req="REQ-REPORT-001",aspice="SWE.5.BP3"]
+// TestBuildMatrixData_DSNColumns verifies that DesignElement columns appear and get covered via arch chain.
+func TestBuildMatrixData_DSNColumns(t *testing.T) {
+	graph := &model.TraceabilityGraph{
+		Requirements: map[string]*model.Requirement{
+			"REQ-001": {ID: "REQ-001", Title: "Req", Priority: "high", Status: "approved"},
+		},
+		ArchElements: map[string]*model.ArchElement{
+			"arch-001": {ID: "arch-001", Title: "Arch"},
+		},
+		DesignElements: map[string]*model.DesignElement{
+			"DSN-001": {ID: "DSN-001", Title: "Design", Arch: "arch-001"},
+		},
+		TestSpecs:   make(map[string]*model.TestSpec),
+		TestResults: make(map[string]*model.TestResult),
+		TestCodes:   make(map[string]*model.TestCode),
+		Links: []*model.TraceLink{
+			{FromID: "REQ-001", FromType: "requirement", ToID: "arch-001", ToType: "arch", LinkType: "satisfies", Status: "active"},
+		},
+	}
+
+	data := BuildMatrixData(graph)
+
+	// Should have arch + dsn columns
+	colTypes := make(map[string]bool)
+	for _, col := range data.Columns {
+		colTypes[col.Type] = true
+	}
+	if !colTypes["dsn"] {
+		t.Error("Expected dsn column type, not found")
+	}
+
+	// DSN-001 cell for REQ-001 should be covered (via arch-001)
+	row := data.Rows[0]
+	cell, ok := row.Cells["DSN-001"]
+	if !ok {
+		t.Fatal("DSN-001 cell not found in row")
+	}
+	if cell.Status != "covered" {
+		t.Errorf("DSN-001 cell status = %q, want covered", cell.Status)
+	}
+}
+
+// [test-spec,id=TS-RPT-035,req="REQ-REPORT-001",aspice="SWE.5.BP3"]
+// TestExportGraphData_TestResultDetails verifies error and stdout fields in TestResult metadata.
+func TestExportGraphData_TestResultDetails(t *testing.T) {
+	graph := &model.TraceabilityGraph{
+		Requirements:   make(map[string]*model.Requirement),
+		ArchElements:   make(map[string]*model.ArchElement),
+		DesignElements: make(map[string]*model.DesignElement),
+		TestSpecs:      make(map[string]*model.TestSpec),
+		TestCodes:      make(map[string]*model.TestCode),
+		TestResults: map[string]*model.TestResult{
+			"res-001": {
+				ID:       "res-001",
+				TestName: "TestFoo",
+				Status:   "failed",
+				Error:    "assertion failed: want 1 got 2",
+				Stdout:   "=== RUN TestFoo\n--- FAIL: TestFoo",
+				Duration: 0.42,
+				Platform: "linux",
+			},
+		},
+		Links: []*model.TraceLink{},
+	}
+
+	data := ExportGraphData(graph)
+	if len(data.Nodes) != 1 {
+		t.Fatalf("Expected 1 node, got %d", len(data.Nodes))
+	}
+	meta := data.Nodes[0].Metadata
+	if meta["error"] != "assertion failed: want 1 got 2" {
+		t.Errorf("error metadata = %v, want assertion message", meta["error"])
+	}
+	if meta["stdout"] == "" {
+		t.Error("stdout metadata should not be empty")
+	}
+}
+
 func Contains(s, substr string) bool {
 	for i := 0; i <= len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {
