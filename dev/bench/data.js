@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1780244565765,
+  "lastUpdate": 1780245497038,
   "repoUrl": "https://github.com/paul-fleischmann-com/req42-tracer",
   "entries": {
     "Benchmark": [
@@ -7294,6 +7294,390 @@ window.BENCHMARK_DATA = {
             "value": 73,
             "unit": "allocs/op",
             "extra": "273 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "61076834+paulefl@users.noreply.github.com",
+            "name": "paulefl",
+            "username": "paulefl"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a08537e6b6908c2fdebd292d5eb1257bbc3be9f7",
+          "message": "chore: Code-Qualität — Dead Code, Test-Annotationen, Coverage-Gate, CLI-Tests (#167)\n\n* Closes #156: Dead Code entfernen — GetBestPractice, ListProcesses, GenerateLatexReport + leere Baseline\n\n* Closes #150: fehlende [test-spec]-Annotationen in 22 Testfunktionen ergänzt (TS-WATCH-010..014, TS-CMD-012..013, TS-RPT-036..045, TS-GOCODE-010..012, TS-LSP-013..014)\n\n* Closes #151: Coverage-Threshold-Gate in CI — Build schlägt fehl bei Unterschreitung (parser≥80%, graph≥80%, aspice≥75%, report≥70%, testresult≥70%, lsp≥70%)\n\n* Closes #152: CLI-Commands testen — cmd/ Coverage von 7.3% auf 54.1% (TS-CMD-020..030)\n\n10 neue Integrationstests für trace, gaps, aspice, validate, init, HTML-Output, Markdown-Format.\nNutzen repoRoot() via runtime.Caller + os.Chdir für Dogfooding gegen echtes Projekt.\n\n---------\n\nCo-authored-by: dev-paul-fleischmann <dev@paul-fleischmann.com>",
+          "timestamp": "2026-05-31T18:36:55+02:00",
+          "tree_id": "a488e54240215025b97274ad95a7062e780f4627",
+          "url": "https://github.com/paul-fleischmann-com/req42-tracer/commit/a08537e6b6908c2fdebd292d5eb1257bbc3be9f7"
+        },
+        "date": 1780245496125,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkBuildLinks/n=100 (github.com/paulefl/req42-tracer/src/internal/graph)",
+            "value": 40405,
+            "unit": "ns/op\t   73936 B/op\t     597 allocs/op",
+            "extra": "88842 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBuildLinks/n=100 (github.com/paulefl/req42-tracer/src/internal/graph) - ns/op",
+            "value": 40405,
+            "unit": "ns/op",
+            "extra": "88842 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBuildLinks/n=100 (github.com/paulefl/req42-tracer/src/internal/graph) - B/op",
+            "value": 73936,
+            "unit": "B/op",
+            "extra": "88842 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBuildLinks/n=100 (github.com/paulefl/req42-tracer/src/internal/graph) - allocs/op",
+            "value": 597,
+            "unit": "allocs/op",
+            "extra": "88842 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBuildLinks/n=500 (github.com/paulefl/req42-tracer/src/internal/graph)",
+            "value": 257158,
+            "unit": "ns/op\t  456449 B/op\t    2824 allocs/op",
+            "extra": "13911 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBuildLinks/n=500 (github.com/paulefl/req42-tracer/src/internal/graph) - ns/op",
+            "value": 257158,
+            "unit": "ns/op",
+            "extra": "13911 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBuildLinks/n=500 (github.com/paulefl/req42-tracer/src/internal/graph) - B/op",
+            "value": 456449,
+            "unit": "B/op",
+            "extra": "13911 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBuildLinks/n=500 (github.com/paulefl/req42-tracer/src/internal/graph) - allocs/op",
+            "value": 2824,
+            "unit": "allocs/op",
+            "extra": "13911 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBuildLinks/n=1000 (github.com/paulefl/req42-tracer/src/internal/graph)",
+            "value": 621207,
+            "unit": "ns/op\t  913283 B/op\t    5595 allocs/op",
+            "extra": "5715 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBuildLinks/n=1000 (github.com/paulefl/req42-tracer/src/internal/graph) - ns/op",
+            "value": 621207,
+            "unit": "ns/op",
+            "extra": "5715 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBuildLinks/n=1000 (github.com/paulefl/req42-tracer/src/internal/graph) - B/op",
+            "value": 913283,
+            "unit": "B/op",
+            "extra": "5715 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBuildLinks/n=1000 (github.com/paulefl/req42-tracer/src/internal/graph) - allocs/op",
+            "value": 5595,
+            "unit": "allocs/op",
+            "extra": "5715 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAnalyzeGaps/n=100 (github.com/paulefl/req42-tracer/src/internal/graph)",
+            "value": 2134,
+            "unit": "ns/op\t     232 B/op\t       2 allocs/op",
+            "extra": "1614282 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAnalyzeGaps/n=100 (github.com/paulefl/req42-tracer/src/internal/graph) - ns/op",
+            "value": 2134,
+            "unit": "ns/op",
+            "extra": "1614282 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAnalyzeGaps/n=100 (github.com/paulefl/req42-tracer/src/internal/graph) - B/op",
+            "value": 232,
+            "unit": "B/op",
+            "extra": "1614282 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAnalyzeGaps/n=100 (github.com/paulefl/req42-tracer/src/internal/graph) - allocs/op",
+            "value": 2,
+            "unit": "allocs/op",
+            "extra": "1614282 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAnalyzeGaps/n=500 (github.com/paulefl/req42-tracer/src/internal/graph)",
+            "value": 11662,
+            "unit": "ns/op\t     232 B/op\t       2 allocs/op",
+            "extra": "302377 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAnalyzeGaps/n=500 (github.com/paulefl/req42-tracer/src/internal/graph) - ns/op",
+            "value": 11662,
+            "unit": "ns/op",
+            "extra": "302377 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAnalyzeGaps/n=500 (github.com/paulefl/req42-tracer/src/internal/graph) - B/op",
+            "value": 232,
+            "unit": "B/op",
+            "extra": "302377 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAnalyzeGaps/n=500 (github.com/paulefl/req42-tracer/src/internal/graph) - allocs/op",
+            "value": 2,
+            "unit": "allocs/op",
+            "extra": "302377 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAnalyzeGaps/n=1000 (github.com/paulefl/req42-tracer/src/internal/graph)",
+            "value": 25166,
+            "unit": "ns/op\t     234 B/op\t       2 allocs/op",
+            "extra": "142640 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAnalyzeGaps/n=1000 (github.com/paulefl/req42-tracer/src/internal/graph) - ns/op",
+            "value": 25166,
+            "unit": "ns/op",
+            "extra": "142640 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAnalyzeGaps/n=1000 (github.com/paulefl/req42-tracer/src/internal/graph) - B/op",
+            "value": 234,
+            "unit": "B/op",
+            "extra": "142640 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAnalyzeGaps/n=1000 (github.com/paulefl/req42-tracer/src/internal/graph) - allocs/op",
+            "value": 2,
+            "unit": "allocs/op",
+            "extra": "142640 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCalculateCoverage/n=100 (github.com/paulefl/req42-tracer/src/internal/graph)",
+            "value": 6589,
+            "unit": "ns/op\t      96 B/op\t       1 allocs/op",
+            "extra": "553564 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCalculateCoverage/n=100 (github.com/paulefl/req42-tracer/src/internal/graph) - ns/op",
+            "value": 6589,
+            "unit": "ns/op",
+            "extra": "553564 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCalculateCoverage/n=100 (github.com/paulefl/req42-tracer/src/internal/graph) - B/op",
+            "value": 96,
+            "unit": "B/op",
+            "extra": "553564 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCalculateCoverage/n=100 (github.com/paulefl/req42-tracer/src/internal/graph) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "553564 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCalculateCoverage/n=500 (github.com/paulefl/req42-tracer/src/internal/graph)",
+            "value": 35480,
+            "unit": "ns/op\t      97 B/op\t       1 allocs/op",
+            "extra": "98727 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCalculateCoverage/n=500 (github.com/paulefl/req42-tracer/src/internal/graph) - ns/op",
+            "value": 35480,
+            "unit": "ns/op",
+            "extra": "98727 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCalculateCoverage/n=500 (github.com/paulefl/req42-tracer/src/internal/graph) - B/op",
+            "value": 97,
+            "unit": "B/op",
+            "extra": "98727 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCalculateCoverage/n=500 (github.com/paulefl/req42-tracer/src/internal/graph) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "98727 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCalculateCoverage/n=1000 (github.com/paulefl/req42-tracer/src/internal/graph)",
+            "value": 77059,
+            "unit": "ns/op\t     103 B/op\t       1 allocs/op",
+            "extra": "46664 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCalculateCoverage/n=1000 (github.com/paulefl/req42-tracer/src/internal/graph) - ns/op",
+            "value": 77059,
+            "unit": "ns/op",
+            "extra": "46664 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCalculateCoverage/n=1000 (github.com/paulefl/req42-tracer/src/internal/graph) - B/op",
+            "value": 103,
+            "unit": "B/op",
+            "extra": "46664 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCalculateCoverage/n=1000 (github.com/paulefl/req42-tracer/src/internal/graph) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "46664 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateReferences/n=100 (github.com/paulefl/req42-tracer/src/internal/graph)",
+            "value": 2373,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1528376 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateReferences/n=100 (github.com/paulefl/req42-tracer/src/internal/graph) - ns/op",
+            "value": 2373,
+            "unit": "ns/op",
+            "extra": "1528376 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateReferences/n=100 (github.com/paulefl/req42-tracer/src/internal/graph) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1528376 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateReferences/n=100 (github.com/paulefl/req42-tracer/src/internal/graph) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1528376 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateReferences/n=500 (github.com/paulefl/req42-tracer/src/internal/graph)",
+            "value": 13710,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "263431 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateReferences/n=500 (github.com/paulefl/req42-tracer/src/internal/graph) - ns/op",
+            "value": 13710,
+            "unit": "ns/op",
+            "extra": "263431 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateReferences/n=500 (github.com/paulefl/req42-tracer/src/internal/graph) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "263431 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateReferences/n=500 (github.com/paulefl/req42-tracer/src/internal/graph) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "263431 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateReferences/n=1000 (github.com/paulefl/req42-tracer/src/internal/graph)",
+            "value": 29277,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "123732 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateReferences/n=1000 (github.com/paulefl/req42-tracer/src/internal/graph) - ns/op",
+            "value": 29277,
+            "unit": "ns/op",
+            "extra": "123732 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateReferences/n=1000 (github.com/paulefl/req42-tracer/src/internal/graph) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "123732 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateReferences/n=1000 (github.com/paulefl/req42-tracer/src/internal/graph) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "123732 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCompliance/n=100 (github.com/paulefl/req42-tracer/src/internal/aspice)",
+            "value": 69991,
+            "unit": "ns/op\t    5321 B/op\t      67 allocs/op",
+            "extra": "51314 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCompliance/n=100 (github.com/paulefl/req42-tracer/src/internal/aspice) - ns/op",
+            "value": 69991,
+            "unit": "ns/op",
+            "extra": "51314 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCompliance/n=100 (github.com/paulefl/req42-tracer/src/internal/aspice) - B/op",
+            "value": 5321,
+            "unit": "B/op",
+            "extra": "51314 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCompliance/n=100 (github.com/paulefl/req42-tracer/src/internal/aspice) - allocs/op",
+            "value": 67,
+            "unit": "allocs/op",
+            "extra": "51314 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCompliance/n=500 (github.com/paulefl/req42-tracer/src/internal/aspice)",
+            "value": 1521991,
+            "unit": "ns/op\t   12514 B/op\t      72 allocs/op",
+            "extra": "2365 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCompliance/n=500 (github.com/paulefl/req42-tracer/src/internal/aspice) - ns/op",
+            "value": 1521991,
+            "unit": "ns/op",
+            "extra": "2365 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCompliance/n=500 (github.com/paulefl/req42-tracer/src/internal/aspice) - B/op",
+            "value": 12514,
+            "unit": "B/op",
+            "extra": "2365 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCompliance/n=500 (github.com/paulefl/req42-tracer/src/internal/aspice) - allocs/op",
+            "value": 72,
+            "unit": "allocs/op",
+            "extra": "2365 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCompliance/n=1000 (github.com/paulefl/req42-tracer/src/internal/aspice)",
+            "value": 5970553,
+            "unit": "ns/op\t   20708 B/op\t      73 allocs/op",
+            "extra": "579 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCompliance/n=1000 (github.com/paulefl/req42-tracer/src/internal/aspice) - ns/op",
+            "value": 5970553,
+            "unit": "ns/op",
+            "extra": "579 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCompliance/n=1000 (github.com/paulefl/req42-tracer/src/internal/aspice) - B/op",
+            "value": 20708,
+            "unit": "B/op",
+            "extra": "579 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCompliance/n=1000 (github.com/paulefl/req42-tracer/src/internal/aspice) - allocs/op",
+            "value": 73,
+            "unit": "allocs/op",
+            "extra": "579 times\n4 procs"
           }
         ]
       }
