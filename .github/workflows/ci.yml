@@ -192,6 +192,17 @@ jobs:
             echo "::notice::Run: cd src && deadcode -test ./... 2>/dev/null | sed 's|.*/src/||' | sort > .deadcode-baseline"
           fi
 
+  validate-arch:
+    name: Validate Bausteinsicht
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate architecture.jsonc
+        run: |
+          ./project/req42-tracer/tools/bausteinsicht/bausteinsicht \
+            validate --model project/req42-tracer/architecture.jsonc
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
