@@ -7,17 +7,17 @@ Requirements Tracing Tool for ASPICE PAM 4.0 — User Guide v0.1.0
 
 == Contents
 
-link:getting-started.adoc[Getting Started]::
+link:getting-started.html[Getting Started]::
   Installation, project initialization, and your first traceability matrix in 5 minutes.
 
-link:command-reference.adoc[Command Reference]::
+link:command-reference.html[Command Reference]::
   All commands (`init`, `trace`, `gaps`, `aspice`, `validate`, `watch`, `lsp`) with flags and examples.
 
-link:configuration-reference.adoc[Configuration Reference]::
+link:configuration-reference.html[Configuration Reference]::
   Complete `.req42.yaml` reference — projects, rules, rule-params, ASPICE, reports.
 
-link:block-attribute-reference.adoc[Block Attribute Reference]::
+link:block-attribute-reference.html[Block Attribute Reference]::
   All AsciiDoc block types: `[req]`, `[arch]`, `[test-spec]` — attributes, examples, naming conventions.
 
-link:workflow-guide.adoc[Workflow Guide]::
+link:workflow-guide.html[Workflow Guide]::
   ASPICE-compliant development workflow, CI/CD integration, and best practices.
