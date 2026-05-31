@@ -61,7 +61,8 @@ func makeTestGraph() *model.TraceabilityGraph {
 	}
 }
 
-// TS-RPT-001: BuildASPICEDashboardData mit minimalen Graph-Daten
+// [test-spec,id=TS-RPT-036,req="REQ-ASPICE-001",aspice="SWE.5.BP3"]
+// TestBuildASPICEDashboardData_Basic verifies ASPICE dashboard data is built from a traceability graph.
 func TestBuildASPICEDashboardData_Basic(t *testing.T) {
 	g := makeTestGraph()
 	analyzer := graph.NewAnalyzer(g)
@@ -105,7 +106,8 @@ func TestBuildASPICEDashboardData_Basic(t *testing.T) {
 	}
 }
 
-// TS-RPT-001: BPs sind nach ID sortiert
+// [test-spec,id=TS-RPT-037,req="REQ-ASPICE-001",aspice="SWE.5.BP3"]
+// TestBuildASPICEDashboardData_BPsSorted verifies BPs are sorted by ID within each process.
 func TestBuildASPICEDashboardData_BPsSorted(t *testing.T) {
 	g := makeTestGraph()
 	analyzer := graph.NewAnalyzer(g)
@@ -125,7 +127,8 @@ func TestBuildASPICEDashboardData_BPsSorted(t *testing.T) {
 	}
 }
 
-// TS-RPT-001: Gaps sind nie nil (immer leeres Slice)
+// [test-spec,id=TS-RPT-038,req="REQ-ASPICE-001",aspice="SWE.5.BP3"]
+// TestBuildASPICEDashboardData_GapsNeverNil verifies Gaps slices are never nil.
 func TestBuildASPICEDashboardData_GapsNeverNil(t *testing.T) {
 	g := makeTestGraph()
 	analyzer := graph.NewAnalyzer(g)
@@ -142,7 +145,8 @@ func TestBuildASPICEDashboardData_GapsNeverNil(t *testing.T) {
 	}
 }
 
-// TS-RPT-002: Leere Prozessliste fällt auf Defaults zurück
+// [test-spec,id=TS-RPT-039,req="REQ-ASPICE-001",aspice="SWE.5.BP3"]
+// TestBuildASPICEDashboardData_DefaultProcesses verifies empty process config falls back to defaults.
 func TestBuildASPICEDashboardData_DefaultProcesses(t *testing.T) {
 	g := makeTestGraph()
 	analyzer := graph.NewAnalyzer(g)
@@ -167,7 +171,8 @@ func TestBuildASPICEDashboardData_DefaultProcesses(t *testing.T) {
 	}
 }
 
-// TS-RPT-002: Unbekannter Prozess wird übersprungen (keine Panic)
+// [test-spec,id=TS-RPT-040,req="REQ-ASPICE-001",aspice="SWE.5.BP3"]
+// TestBuildASPICEDashboardData_UnknownProcessSkipped verifies unknown process IDs are silently skipped.
 func TestBuildASPICEDashboardData_UnknownProcessSkipped(t *testing.T) {
 	g := makeTestGraph()
 	analyzer := graph.NewAnalyzer(g)
@@ -184,7 +189,8 @@ func TestBuildASPICEDashboardData_UnknownProcessSkipped(t *testing.T) {
 	}
 }
 
-// TS-RPT-002: Leerer Graph ergibt 0% Coverage, keine Panic
+// [test-spec,id=TS-RPT-041,req="REQ-ASPICE-001",aspice="SWE.5.BP3"]
+// TestBuildASPICEDashboardData_EmptyGraph verifies empty graph yields 0% coverage without panic.
 func TestBuildASPICEDashboardData_EmptyGraph(t *testing.T) {
 	g := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement),
@@ -208,7 +214,8 @@ func TestBuildASPICEDashboardData_EmptyGraph(t *testing.T) {
 	}
 }
 
-// TS-RPT-003: getCoverageLevel Schwellenwerte
+// [test-spec,id=TS-RPT-042,req="REQ-ASPICE-001",aspice="SWE.5.BP3"]
+// TestGetCoverageLevel verifies coverage level thresholds (good/warning/danger).
 func TestGetCoverageLevel(t *testing.T) {
 	cases := []struct {
 		pct      float64

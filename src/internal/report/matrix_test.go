@@ -6,6 +6,8 @@ import (
 	"github.com/paulefl/req42-tracer/src/internal/model"
 )
 
+// [test-spec,id=TS-RPT-043,req="REQ-REPORT-001",aspice="SWE.5.BP3"]
+// TestBuildMatrixData verifies requirement rows and arch/spec columns are built correctly.
 func TestBuildMatrixData(t *testing.T) {
 	// Create a test graph
 	graph := &model.TraceabilityGraph{
@@ -50,6 +52,8 @@ func TestBuildMatrixData(t *testing.T) {
 	t.Log("✅ Matrix data structure test passed")
 }
 
+// [test-spec,id=TS-RPT-044,req="REQ-REPORT-001",aspice="SWE.5.BP3"]
+// TestFilterMatrix verifies matrix rows are filtered by priority and status.
 func TestFilterMatrix(t *testing.T) {
 	graph := &model.TraceabilityGraph{
 		Requirements: map[string]*model.Requirement{
@@ -82,6 +86,8 @@ func TestFilterMatrix(t *testing.T) {
 	t.Log("✅ Matrix filtering test passed")
 }
 
+// [test-spec,id=TS-RPT-045,req="REQ-REPORT-001",aspice="SWE.5.BP3"]
+// TestExportMatrixCSV verifies matrix is exported as valid CSV with header and data rows.
 func TestExportMatrixCSV(t *testing.T) {
 	graph := &model.TraceabilityGraph{
 		Requirements: map[string]*model.Requirement{

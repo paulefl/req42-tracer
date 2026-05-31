@@ -27,6 +27,8 @@ import (
 	"testing"
 )
 
+// [test-spec,id=TS-WATCH-010,req="REQ-WATCH-001",aspice="SWE.4.BP2"]
+// TestInjectLiveReload_InjectsBeforeBody verifies live-reload script is injected before </body>.
 func TestInjectLiveReload_InjectsBeforeBody(t *testing.T) {
 	input := "<html><body><p>Hello</p></body></html>"
 	result := injectLiveReload(input)
@@ -39,6 +41,8 @@ func TestInjectLiveReload_InjectsBeforeBody(t *testing.T) {
 	}
 }
 
+// [test-spec,id=TS-WATCH-011,req="REQ-WATCH-001",aspice="SWE.4.BP2"]
+// TestInjectLiveReload_NoOpWhenNoBody verifies no-op when no </body> tag present.
 func TestInjectLiveReload_NoOpWhenNoBody(t *testing.T) {
 	input := "<html><p>No closing body tag</p></html>"
 	result := injectLiveReload(input)
@@ -47,6 +51,8 @@ func TestInjectLiveReload_NoOpWhenNoBody(t *testing.T) {
 	}
 }
 
+// [test-spec,id=TS-WATCH-012,req="REQ-WATCH-001",aspice="SWE.4.BP2"]
+// TestGenerationEndpoint verifies /api/generation returns JSON with generation counter.
 func TestGenerationEndpoint(t *testing.T) {
 	var gen atomic.Int64
 	gen.Store(42)
@@ -73,6 +79,8 @@ func TestGenerationEndpoint(t *testing.T) {
 	}
 }
 
+// [test-spec,id=TS-WATCH-013,req="REQ-WATCH-001",aspice="SWE.4.BP2"]
+// TestRootHandler_Returns503WhenReportMissing verifies 503 when report file does not exist.
 func TestRootHandler_Returns503WhenReportMissing(t *testing.T) {
 	outputPath := filepath.Join(t.TempDir(), "nonexistent.html")
 
@@ -99,6 +107,8 @@ func TestRootHandler_Returns503WhenReportMissing(t *testing.T) {
 	}
 }
 
+// [test-spec,id=TS-WATCH-014,req="REQ-WATCH-001",aspice="SWE.4.BP2"]
+// TestRootHandler_ServesInjectedHTML verifies root handler injects live-reload and serves HTML.
 func TestRootHandler_ServesInjectedHTML(t *testing.T) {
 	dir := t.TempDir()
 	outputPath := filepath.Join(dir, "report.html")
