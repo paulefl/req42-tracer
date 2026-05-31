@@ -21,30 +21,31 @@ func NewBausteinsichtParser(filePath string) *BausteinsichtParser {
 
 // BausteinsichtModel represents the structure of an architecture.jsonc file.
 type BausteinsichtModel struct {
-	Model map[string]*BausteinsichtProject `json:"model"`
-	Views []*BausteinsichtView              `json:"views,omitempty"`
+	Model map[string]*BausteinsichtProject    `json:"model"`
+	Views map[string]*BausteinsichtView       `json:"views,omitempty"`
 }
 
 // BausteinsichtProject represents a project in the architecture model.
 type BausteinsichtProject struct {
-	Description string                       `json:"description"`
+	Description string                           `json:"description"`
 	Elements    map[string]*BausteinsichtElement `json:"elements"`
 }
 
 // BausteinsichtElement represents an element in the architecture.
 type BausteinsichtElement struct {
-	Description string                       `json:"description"`
-	Type        string                       `json:"type,omitempty"`
-	Technology  string                       `json:"technology,omitempty"`
-	Parent      string                       `json:"parent,omitempty"`
+	Description string                           `json:"description"`
+	Type        string                           `json:"type,omitempty"`
+	Technology  string                           `json:"technology,omitempty"`
+	Parent      string                           `json:"parent,omitempty"`
 	Elements    map[string]*BausteinsichtElement `json:"elements,omitempty"`
 }
 
-// BausteinsichtView represents a diagram view in the architecture.
+// BausteinsichtView represents a named diagram view in the architecture.
 type BausteinsichtView struct {
-	Name    string   `json:"name"`
+	Title   string   `json:"title,omitempty"`
 	Include []string `json:"include"`
 	Exclude []string `json:"exclude,omitempty"`
+	Layout  string   `json:"layout,omitempty"`
 }
 
 // Parse loads and parses the Bausteinsicht model file.
