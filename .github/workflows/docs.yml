@@ -10,6 +10,7 @@ on:
       - 'project/req42-tracer/docs/**'
       - 'docToolchainConfig.groovy'
       - 'dtcw'
+      - '.github/workflows/docs.yml'
   workflow_dispatch:
 
 jobs:
