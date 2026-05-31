@@ -121,6 +121,8 @@ func TestBuildHoverContent_Arch(t *testing.T) {
 	}
 }
 
+// [test-spec,id=TS-LSP-013,req="REQ-LSP-001",aspice="SWE.4.BP2"]
+// TestBuildHoverContent_Unknown verifies nil is returned for unknown element IDs.
 func TestBuildHoverContent_Unknown(t *testing.T) {
 	g := hoverGraph()
 	result := buildHoverContent("req", "REQ-UNKNOWN", g)
@@ -129,6 +131,8 @@ func TestBuildHoverContent_Unknown(t *testing.T) {
 	}
 }
 
+// [test-spec,id=TS-LSP-014,req="REQ-LSP-001",aspice="SWE.4.BP2"]
+// TestBuildHoverContent_TestSpec verifies hover content is built for test-spec elements.
 func TestBuildHoverContent_TestSpec(t *testing.T) {
 	g := hoverGraph()
 	result := buildHoverContent("test-spec", "TS-LSP-001", g)

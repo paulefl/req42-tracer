@@ -16,6 +16,8 @@ import (
 	"github.com/paulefl/req42-tracer/src/internal/model"
 )
 
+// [test-spec,id=TS-CMD-012,req=REQ-GRAPH-001,aspice=SWE.5-BP3]
+// TestBuildGraph_EmptyDirs verifies buildGraph returns non-nil graph with empty dirs.
 func TestBuildGraph_EmptyDirs(t *testing.T) {
 	cfg := &model.Config{
 		Projects: map[string]*model.ProjectConfig{"software": {}},
@@ -32,6 +34,8 @@ func TestBuildGraph_EmptyDirs(t *testing.T) {
 	}
 }
 
+// [test-spec,id=TS-CMD-013,req=REQ-GRAPH-001,aspice=SWE.5-BP3]
+// TestBuildGraph_LoadsBausteinsicht verifies buildGraph loads Bausteinsicht elements from JSONC.
 func TestBuildGraph_LoadsBausteinsicht(t *testing.T) {
 	dir := t.TempDir()
 	jsonc := filepath.Join(dir, "architecture.jsonc")
