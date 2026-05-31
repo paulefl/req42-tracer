@@ -2,6 +2,9 @@ name: Test (Legacy — see ci.yml)
 
 # This workflow is superseded by ci.yml (Phase 5.3).
 # Kept for artifact compatibility; triggers disabled.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   workflow_dispatch:
 
