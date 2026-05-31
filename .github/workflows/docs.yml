@@ -31,6 +31,19 @@ jobs:
         with:
           output-path: build/docs
 
+      - name: Add root index.html redirect
+        run: |
+          cat > build/docs/html5/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html><head>
+          <meta charset="UTF-8">
+          <meta http-equiv="refresh" content="0; url=user-guide/">
+          <title>req42-tracer Docs</title>
+          </head><body>
+          <p>Redirecting to <a href="user-guide/">User Guide</a>…</p>
+          </body></html>
+          EOF
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
