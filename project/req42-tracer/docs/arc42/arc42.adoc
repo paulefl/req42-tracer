@@ -205,6 +205,12 @@ Parses JSONC architecture model.
 
 Parses AsciiDoc [arch] blocks with hierarchy support and requirement linking.
 
+[arch,id=comp.parser.gocode,parent=comp.parser,aspice=SWE.3,impl=internal/parser/gocode.go,req=REQ-TESTING-001]
+==== Go Test-Code Parser
+
+Parses Go test files and extracts `[test-spec]` annotations for explicit
+TestResult→TestSpec linkage (see ADR-003).
+
 === 5.3 Level 2 — Graph Subcomponents
 
 [arch,id=comp.graph.builder,parent=comp.graph,aspice=SWE.3,impl=internal/graph/build.go,req=REQ-GRAPH-001]
@@ -217,7 +223,57 @@ Constructs traceability graph from parsed elements.
 
 Detects gaps, orphans, stale traces, and validates coverage.
 
-=== 5.4 Level 2 — LSP Subcomponents
+=== 5.4 Level 2 — Report Subcomponents
+
+[arch,id=comp.report.graph,parent=comp.report,aspice=SWE.3,impl=internal/report/graph.go,req=REQ-REPORT-001]
+==== Graph Data Exporter
+
+Converts TraceabilityGraph to D3.js-compatible node/edge structure including
+DesignElement nodes (type "dsn", group 4).
+
+[arch,id=comp.report.matrix,parent=comp.report,aspice=SWE.3,impl=internal/report/matrix.go,req=REQ-REPORT-001,REQ-REPORT-002]
+==== Matrix Builder
+
+Builds Requirement × ArchElement × DesignElement traceability matrix with
+coverage statistics. Exports to CSV via `ExportMatrixToCSV`.
+
+[arch,id=comp.report.aspice,parent=comp.report,aspice=SWE.3,impl=internal/report/aspice_data.go,req=REQ-ASPICE-001]
+==== ASPICE Dashboard Data
+
+Computes ASPICE PAM 4.0 BP-coverage metrics for HTML dashboard rendering.
+
+[arch,id=comp.report.html,parent=comp.report,aspice=SWE.3,impl=internal/report/html.go,req=REQ-REPORT-001]
+==== HTML Report Generator
+
+Generates interactive HTML report (Graph View, Matrix View, ASPICE Dashboard,
+Gaps Tab) by injecting JSON into the embedded D3.js template.
+
+[arch,id=comp.report.table,parent=comp.report,aspice=SWE.3,impl=internal/report/table.go,req=REQ-REPORT-001,REQ-REPORT-002]
+==== CLI Table Reporter
+
+Renders traceability matrix and gap analysis as ASCII/Markdown table output.
+
+=== 5.5 Level 2 — TestResult Subcomponents
+
+[arch,id=comp.testresult.gotest,parent=comp.testresult,aspice=SWE.3,impl=internal/testresult/gotest.go,req=REQ-TESTING-001]
+==== Go-Test JSON Parser
+
+Parses `go test -json` output format into TestResult objects.
+ID format: `shortPackage::TestName` (e.g. `parser::TestBausteinsichtParser_Parse`).
+
+[arch,id=comp.testresult.junit,parent=comp.testresult,aspice=SWE.3,impl=internal/testresult/junit.go,req=REQ-TESTING-001]
+==== JUnit XML Parser
+
+Parses JUnit XML test result files. Supports Java dot-separated classnames
+and Go slash-separated package paths via `shortPackage()`.
+
+[arch,id=comp.testresult.loader,parent=comp.testresult,aspice=SWE.3,impl=internal/testresult/loader.go,req=REQ-TESTING-001]
+==== Test Result Loader
+
+Dispatches to format-specific parsers via `Loader.Load()` and bulk-loads
+all configured test sources via `LoadAll()`.
+
+=== 5.6 Level 2 — LSP Subcomponents
 
 [arch,id=comp.lsp.complete,parent=comp.lsp,aspice=SWE.3,impl=internal/lsp/complete.go,req=REQ-LSP-001]
 ==== LSP Completion Provider

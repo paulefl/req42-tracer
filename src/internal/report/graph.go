@@ -156,7 +156,8 @@ func ExportGraphData(g *model.TraceabilityGraph) *GraphData {
 				"linked_spec":  result.LinkedSpec,
 				"linked_code":  result.LinkedCode,
 				"platform":     result.Platform,
-				"pass_rate":    0, // Will be set later
+				"error":        result.Error,
+				"stdout":       result.Stdout,
 			},
 		}
 		data.Nodes = append(data.Nodes, node)

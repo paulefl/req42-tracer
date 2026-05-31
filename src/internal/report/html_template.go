@@ -1075,10 +1075,19 @@ const HTMLTemplate = `<!DOCTYPE html>
                     const badge = meta.result_status === 'pass' ? '🟢 pass' : (meta.result_status === 'fail' ? '🔴 fail' : '🟡 missing');
                     metaHTML += '<strong>result:</strong> ' + badge + '<br>';
                 }
-                Object.entries(meta).forEach(([k, v]) => {
-                    if (k === 'impl' || k === 'result_status') return; // already shown above
-                    if (v) metaHTML += '<strong>' + escHtml(k) + ':</strong> ' + escHtml(String(v)) + '<br>';
-                });
+                // Show test-result details
+                if (d.type === 'test-result') {
+                    const statusBadge = meta.status === 'passed' ? '🟢' : (meta.status === 'failed' ? '🔴' : '🟡');
+                    metaHTML += '<strong>status:</strong> ' + statusBadge + ' ' + escHtml(meta.status || '') + '<br>';
+                    if (meta.duration) metaHTML += '<strong>duration:</strong> ' + escHtml(String(meta.duration)) + 's<br>';
+                    if (meta.platform) metaHTML += '<strong>platform:</strong> ' + escHtml(meta.platform) + '<br>';
+                    if (meta.error) metaHTML += '<strong>error:</strong> <pre style="margin:4px 0;font-size:11px;white-space:pre-wrap;max-width:300px;color:#c0392b">' + escHtml(meta.error.substring(0, 300)) + '</pre>';
+                } else {
+                    Object.entries(meta).forEach(([k, v]) => {
+                        if (['impl', 'result_status', 'status', 'duration', 'platform', 'error', 'stdout', 'linked_spec', 'linked_code'].includes(k)) return;
+                        if (v) metaHTML += '<strong>' + escHtml(k) + ':</strong> ' + escHtml(String(v)) + '<br>';
+                    });
+                }
 
                 tooltip.innerHTML =
                     '<div class="tooltip-title">' + escHtml(d.label) + '</div>' +
@@ -1388,7 +1397,8 @@ const HTMLTemplate = `<!DOCTYPE html>
             html += '<th title="Implementation package (impl= attribute)">Impl</th>';
             html += '<th title="Overall coverage: Arch + TestSpec + TestResult">Coverage</th>';
             matrixData.columns.forEach(col => {
-                html += '<th style="cursor:pointer" title="' + escHtml(col.Title) + '" onclick="sortMatrix(\'' + escHtml(col.ID) + '\')">' + escHtml(col.ID) + sortArrow(col.ID) + '</th>';
+                const typeColor = col.Type === 'arch' ? '#7ed321' : (col.Type === 'dsn' ? '#9b59b6' : '#f5a623');
+                html += '<th style="cursor:pointer;border-top:3px solid ' + typeColor + '" title="[' + escHtml(col.Type) + '] ' + escHtml(col.Title) + '" onclick="sortMatrix(\'' + escHtml(col.ID) + '\')">' + escHtml(col.ID) + sortArrow(col.ID) + '</th>';
             });
             html += '</tr></thead><tbody>';
 
