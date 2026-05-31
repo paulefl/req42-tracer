@@ -48,7 +48,7 @@ func TestParseGoTestFile_ExtractsTestCode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	codes, err := parseGoTestFile(f, "proj")
+	_, codes, err := parseGoTestFile(f, "proj")
 	if err != nil {
 		t.Fatalf("parseGoTestFile: %v", err)
 	}
@@ -123,7 +123,7 @@ func TestParseGoTestFile_SkipsUnannotated(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	codes, err := parseGoTestFile(f, "proj")
+	_, codes, err := parseGoTestFile(f, "proj")
 	if err != nil {
 		t.Fatalf("parseGoTestFile: %v", err)
 	}
