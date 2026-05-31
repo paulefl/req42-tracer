@@ -17,6 +17,7 @@ type Analyzer struct {
 	reqToArch     map[string]map[string]struct{} // requirement ID → arch IDs referencing it
 	testedArchIDs map[string]struct{}             // arch IDs with at least one verified-by link
 	testedDsnIDs  map[string]struct{}             // design element IDs with at least one verified-by link
+	topLevelArchs []*model.ArchElement            // precomputed: arch elements with Parent == "" (SWE.5 candidates)
 }
 
 // NewAnalyzer creates a new graph analyzer.
@@ -44,6 +45,9 @@ func (a *Analyzer) buildIndex() {
 				}
 				a.reqToArch[reqID][archID] = struct{}{}
 			}
+			if arch.Parent == "" {
+				a.topLevelArchs = append(a.topLevelArchs, arch)
+			}
 		}
 
 		for _, link := range a.graph.Links {
@@ -61,6 +65,7 @@ func (a *Analyzer) buildIndex() {
 func (a *Analyzer) AnalyzeGaps() *model.GapAnalysisResult {
 	a.buildIndex()
 
+	// Pre-size UntestedArchElements to avoid heap reallocation on first append.
 	gap := &model.GapAnalysisResult{
 		OrphanRequirements:     []*model.Requirement{},
 		OrphanArchElements:     []*model.ArchElement{},
@@ -68,9 +73,9 @@ func (a *Analyzer) AnalyzeGaps() *model.GapAnalysisResult {
 		UntracedTestResults:    []*model.TestResult{},
 		MissingImplementation:  []*model.ArchElement{},
 		StaleTraces:            []*model.TraceLink{},
-		UntestedArchElements:   []*model.ArchElement{},
+		UntestedArchElements:   make([]*model.ArchElement, 0, len(a.topLevelArchs)),
 		OrphanDesignElements:   []*model.DesignElement{},
-		UntestedDesignElements: []*model.DesignElement{},
+		UntestedDesignElements: make([]*model.DesignElement, 0, len(a.graph.DesignElements)),
 	}
 
 	// O(|Requirements|) — O(1) lookup via index
@@ -80,19 +85,23 @@ func (a *Analyzer) AnalyzeGaps() *model.GapAnalysisResult {
 		}
 	}
 
-	// O(|ArchElements|)
+	// O(|ArchElements|) — child element gap checks
 	for _, arch := range a.graph.ArchElements {
-		if len(arch.Req) == 0 && arch.Parent != "" {
+		if arch.Parent == "" {
+			continue
+		}
+		if len(arch.Req) == 0 {
 			gap.OrphanArchElements = append(gap.OrphanArchElements, arch)
 		}
-		if arch.Impl == "" && arch.Parent != "" {
+		if arch.Impl == "" {
 			gap.MissingImplementation = append(gap.MissingImplementation, arch)
 		}
-		// SWE.5: top-level arch elements (SWE.2) need at least one integration test (arch= on test-spec)
-		if arch.Parent == "" {
-			if _, tested := a.testedArchIDs[arch.ID]; !tested {
-				gap.UntestedArchElements = append(gap.UntestedArchElements, arch)
-			}
+	}
+
+	// O(|topLevelArchs|) — SWE.5: top-level elements need an integration test
+	for _, arch := range a.topLevelArchs {
+		if _, tested := a.testedArchIDs[arch.ID]; !tested {
+			gap.UntestedArchElements = append(gap.UntestedArchElements, arch)
 		}
 	}
 
