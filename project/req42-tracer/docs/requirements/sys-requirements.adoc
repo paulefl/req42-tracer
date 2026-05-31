@@ -1,0 +1,107 @@
+= req42-tracer — System Requirements (SYS)
+
+:description: System-level requirements for req42-tracer (ASPICE SWE.1 BP1 — upstream of SW requirements)
+:module: github.com/paulefl/req42-tracer
+
+== Overview
+
+This document defines system-level requirements for the req42-tracer tool.
+All software requirements in `req42.adoc` derive from one or more SYS-level requirements defined here.
+
+ASPICE reference: SWE.1 BP1 — Software Requirements shall be derived from and consistent with system requirements.
+
+== System Requirements
+
+=== Traceability & Requirements Management
+
+[req,id=SYS-TRACE-001,version=1,priority=high,aspice=SYS.2,
+ status=approved,reviewed-by=paulefl,reviewed-date=2026-05-31]
+== System shall provide end-to-end traceability from requirements to tests
+
+The req42-tracer system shall enable tracing of artefacts from system/software
+requirements through architecture elements, design elements, test specifications,
+test code, and test results, bidirectionally and across multiple file formats.
+
+Derives-to (SW):
+- REQ-PARSE-001, REQ-PARSE-002, REQ-PARSE-003
+- REQ-GRAPH-001
+- REQ-REPORT-001, REQ-REPORT-002
+
+=== ASPICE Compliance
+
+[req,id=SYS-ASPICE-001,version=1,priority=high,aspice=SYS.2,
+ status=approved,reviewed-by=paulefl,reviewed-date=2026-05-31]
+== System shall support ASPICE PAM 4.0 process validation
+
+The system shall validate project artefacts against ASPICE PAM 4.0 process
+areas SWE.1–SWE.6 and report compliance coverage per process.
+
+Derives-to (SW): REQ-ASPICE-001
+
+=== Tooling & Integration
+
+[req,id=SYS-TOOL-001,version=1,priority=high,aspice=SYS.2,
+ status=approved,reviewed-by=paulefl,reviewed-date=2026-05-31]
+== System shall be usable as CLI tool and IDE extension
+
+The system shall provide a command-line interface for standalone use and
+an LSP server interface for integration into IDEs and editors.
+
+Derives-to (SW): REQ-INIT-001, REQ-WATCH-001, REQ-LSP-001
+
+=== Quality & Performance
+
+[req,id=SYS-QUAL-001,version=1,priority=medium,aspice=SYS.2,
+ status=approved,reviewed-by=paulefl,reviewed-date=2026-05-31]
+== System shall be implemented in Go and support Linux, macOS, Windows
+
+The system shall be implemented using Go 1.24+ for cross-platform
+compatibility and shall execute on Linux, macOS, and Windows without
+platform-specific configuration.
+
+Derives-to (SW): REQ-COMPAT-001, REQ-COMPAT-002
+
+=== Configuration
+
+[req,id=SYS-CONFIG-001,version=1,priority=medium,aspice=SYS.2,
+ status=approved,reviewed-by=paulefl,reviewed-date=2026-05-31]
+== System shall load project configuration from a YAML file
+
+The system shall read project-specific configuration (source paths, rules,
+ASPICE settings, output format) from a `.req42.yaml` file.
+
+Derives-to (SW): REQ-CONFIG-001
+
+=== Validation
+
+[req,id=SYS-VALID-001,version=1,priority=medium,aspice=SYS.2,
+ status=approved,reviewed-by=paulefl,reviewed-date=2026-05-31]
+== System shall validate project structure and custom rules
+
+The system shall check that all references are valid, detect traceability
+gaps, and evaluate configurable custom validation rules.
+
+Derives-to (SW): REQ-VALIDATE-001
+
+=== Testing
+
+[req,id=SYS-TEST-001,version=1,priority=high,aspice=SYS.2,
+ status=approved,reviewed-by=paulefl,reviewed-date=2026-05-31]
+== System shall achieve ≥80% unit test coverage on core packages
+
+The system shall maintain automated unit test coverage of at least 80% on
+core packages (parser, graph) and 70% on supporting packages.
+
+Derives-to (SW): REQ-TESTING-001
+
+== Traceability: SYS → SW Requirements
+
+| SYS-ID | SW-REQ IDs |
+|--------|-----------|
+| SYS-TRACE-001 | REQ-PARSE-001, REQ-PARSE-002, REQ-PARSE-003, REQ-GRAPH-001, REQ-REPORT-001, REQ-REPORT-002 |
+| SYS-ASPICE-001 | REQ-ASPICE-001 |
+| SYS-TOOL-001 | REQ-INIT-001, REQ-WATCH-001, REQ-LSP-001 |
+| SYS-QUAL-001 | REQ-COMPAT-001, REQ-COMPAT-002 |
+| SYS-CONFIG-001 | REQ-CONFIG-001 |
+| SYS-VALID-001 | REQ-VALIDATE-001 |
+| SYS-TEST-001 | REQ-TESTING-001 |
