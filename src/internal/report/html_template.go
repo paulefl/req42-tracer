@@ -742,6 +742,7 @@ const HTMLTemplate = `<!DOCTYPE html>
                     <button class="tab-button" onclick="switchTab('matrix')">Matrix View</button>
                     <button class="tab-button" onclick="switchTab('aspice')">ASPICE Dashboard</button>
                     <button class="tab-button" onclick="switchTab('gaps')" id="btn-tab-gaps">Gaps</button>
+                    <button class="tab-button" onclick="switchTab('elements')">Elements</button>
                 </div>
             </div>
 
@@ -822,6 +823,38 @@ const HTMLTemplate = `<!DOCTYPE html>
                     <div id="gaps-content"></div>
                 </div>
             </div>
+
+            <div id="elements" class="tab-content" style="flex-direction:column">
+                <div style="padding:16px 20px;background:#f8f9fa;border-bottom:1px solid #e0e0e0;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                    <strong>Elements</strong>
+                    <select id="el-filter-type" style="padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px">
+                        <option value="">All Types</option>
+                        <option value="req">Requirement</option>
+                        <option value="arch">Architecture</option>
+                        <option value="dsn">Design Element</option>
+                        <option value="test-spec">Test Spec</option>
+                        <option value="test-result">Test Result</option>
+                    </select>
+                    <input id="el-search" type="text" placeholder="Search ID or title…"
+                        style="padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;flex:1;min-width:150px">
+                    <span id="el-count" style="font-size:13px;color:#666"></span>
+                </div>
+                <div style="flex:1;overflow:auto;padding:0 20px 20px">
+                    <table id="el-table" style="width:100%;border-collapse:collapse;font-size:13px;margin-top:12px">
+                        <thead>
+                            <tr style="background:#f0f0f0;position:sticky;top:0">
+                                <th style="padding:8px;text-align:left;cursor:pointer;border:1px solid #ddd" onclick="elSort('id')">ID ↕</th>
+                                <th style="padding:8px;text-align:left;border:1px solid #ddd">Type</th>
+                                <th style="padding:8px;text-align:left;cursor:pointer;border:1px solid #ddd" onclick="elSort('title')">Title ↕</th>
+                                <th style="padding:8px;text-align:left;border:1px solid #ddd">Impl / Status</th>
+                                <th style="padding:8px;text-align:center;border:1px solid #ddd" title="Elements linking TO this">Trace ↑</th>
+                                <th style="padding:8px;text-align:center;border:1px solid #ddd" title="Elements this links TO">Trace ↓</th>
+                            </tr>
+                        </thead>
+                        <tbody id="el-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -831,6 +864,7 @@ const HTMLTemplate = `<!DOCTYPE html>
         const matrixData = <!--MATRIX_DATA_JSON-->;
         const aspiceData = <!--ASPICE_DATA_JSON-->;
         const gapsData = <!--GAPS_DATA_JSON-->;
+        const elementsData = <!--ELEMENTS_DATA_JSON-->;
 
         // Global variables for filtering
         let globalNode = null;
@@ -1210,8 +1244,68 @@ const HTMLTemplate = `<!DOCTYPE html>
                 document.getElementById('gaps').classList.add('active');
                 document.getElementById('btn-tab-gaps').classList.add('active');
                 renderGaps();
+            } else if (tabName === 'elements') {
+                document.getElementById('elements').classList.add('active');
+                document.querySelector('button[onclick="switchTab(\'elements\')"]').classList.add('active');
+                renderElements();
             }
         }
+
+        // ── Elements Tab ────────────────────────────────────────────────
+        let elSortCol = 'id', elSortAsc = true;
+
+        function elSort(col) {
+            if (elSortCol === col) { elSortAsc = !elSortAsc; } else { elSortCol = col; elSortAsc = true; }
+            renderElements();
+        }
+
+        function renderElements() {
+            const typeFilter = document.getElementById('el-filter-type').value;
+            const search = (document.getElementById('el-search').value || '').toLowerCase();
+            const typeColor = { req: '#4a90e2', arch: '#7ed321', dsn: '#9b59b6', 'test-spec': '#f5a623', 'test-result': '#999' };
+
+            let items = (elementsData.items || []).filter(it => {
+                if (typeFilter && it.type !== typeFilter) return false;
+                if (search && !it.id.toLowerCase().includes(search) && !it.title.toLowerCase().includes(search)) return false;
+                return true;
+            });
+
+            items = items.slice().sort((a, b) => {
+                const va = (elSortCol === 'id' ? a.id : a.title) || '';
+                const vb = (elSortCol === 'id' ? b.id : b.title) || '';
+                return elSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+            });
+
+            document.getElementById('el-count').textContent = items.length + ' element(s)';
+
+            const traceCell = (ids) => {
+                if (!ids || ids.length === 0) return '<td style="text-align:center;border:1px solid #ddd;color:#ccc">—</td>';
+                const tip = ids.slice(0, 5).join(', ') + (ids.length > 5 ? ', …' : '');
+                return '<td style="text-align:center;border:1px solid #ddd;cursor:default" title="' + escHtml(tip) + '">' +
+                       '<span style="background:#e8f4fd;border-radius:10px;padding:2px 8px;font-size:12px">' + ids.length + '</span></td>';
+            };
+
+            const rows = items.map(it => {
+                const color = typeColor[it.type] || '#999';
+                const badge = '<span style="background:' + color + ';color:#fff;border-radius:3px;padding:1px 6px;font-size:11px">' + escHtml(it.type) + '</span>';
+                const meta = escHtml(it.impl || it.status || '');
+                const traceUpMissing = (!it.trace_up || it.trace_up.length === 0) && it.type !== 'req';
+                const rowStyle = traceUpMissing ? 'background:#fff8f8' : '';
+                return '<tr style="border-bottom:1px solid #f0f0f0;' + rowStyle + '">' +
+                    '<td style="padding:7px 8px;border:1px solid #ddd;font-family:monospace;font-size:12px">' + escHtml(it.id) + '</td>' +
+                    '<td style="padding:7px 8px;border:1px solid #ddd">' + badge + '</td>' +
+                    '<td style="padding:7px 8px;border:1px solid #ddd">' + escHtml(it.title || '') + '</td>' +
+                    '<td style="padding:7px 8px;border:1px solid #ddd;font-size:12px;color:#666">' + meta + '</td>' +
+                    traceCell(it.trace_up) +
+                    traceCell(it.trace_down) +
+                    '</tr>';
+            }).join('');
+
+            document.getElementById('el-tbody').innerHTML = rows || '<tr><td colspan="6" style="padding:20px;text-align:center;color:#999">No elements match filter.</td></tr>';
+        }
+
+        document.getElementById('el-filter-type').addEventListener('change', renderElements);
+        document.getElementById('el-search').addEventListener('input', renderElements);
 
         function renderGaps() {
             const container = document.getElementById('gaps-content');
