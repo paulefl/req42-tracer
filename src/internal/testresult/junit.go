@@ -63,7 +63,7 @@ func ParseJUnit(filePath, project, platform string) ([]*model.TestResult, error)
 
 	for i, tc := range suite.TestCases {
 		result := &model.TestResult{
-			ID:         fmt.Sprintf("%s::%s::%s", platform, tc.Classname, tc.Name),
+			ID:         shortPackage(tc.Classname) + "::" + tc.Name,
 			Package:    tc.Classname,
 			TestName:   tc.Name,
 			FullName:   tc.Classname + "::" + tc.Name,

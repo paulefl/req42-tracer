@@ -149,6 +149,19 @@ func TestParseJUnit_SystemOut(t *testing.T) {
 	}
 }
 
+// [test-spec,id=TS-TR-024,req="REQ-TESTING-001",aspice="SWE.5.BP3"]
+// TestParseJUnit_ShortID verifies that IDs use short classname (last dot-segment, no platform prefix).
+func TestParseJUnit_ShortID(t *testing.T) {
+	f := writeTempXML(t, sampleJUnit)
+	results, _ := ParseJUnit(f, "proj", "linux")
+	for _, r := range results {
+		want := "MyTests::" + r.TestName
+		if r.ID != want {
+			t.Errorf("ID = %q, want %q", r.ID, want)
+		}
+	}
+}
+
 func writeTempXML(t *testing.T, content string) string {
 	t.Helper()
 	dir := t.TempDir()
