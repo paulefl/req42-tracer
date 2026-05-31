@@ -743,6 +743,7 @@ const HTMLTemplate = `<!DOCTYPE html>
                     <button class="tab-button" onclick="switchTab('aspice')">ASPICE Dashboard</button>
                     <button class="tab-button" onclick="switchTab('gaps')" id="btn-tab-gaps">Gaps</button>
                     <button class="tab-button" onclick="switchTab('elements')">Elements</button>
+                    <button class="tab-button" onclick="switchTab('coverage')">Coverage</button>
                 </div>
             </div>
 
@@ -855,6 +856,36 @@ const HTMLTemplate = `<!DOCTYPE html>
                     </table>
                 </div>
             </div>
+            <div id="coverage" class="tab-content" style="flex-direction:column">
+                <div style="padding:16px 20px;background:#f8f9fa;border-bottom:1px solid #e0e0e0;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                    <strong>Coverage Dashboard</strong>
+                    <select id="cov-filter-level" style="padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px">
+                        <option value="">All levels</option>
+                        <option value="danger">Danger (&lt;70%)</option>
+                        <option value="warning">Warning (70–80%)</option>
+                        <option value="good">Good (≥80%)</option>
+                    </select>
+                    <input id="cov-search" type="text" placeholder="Search package or arch…"
+                        style="padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;flex:1;min-width:150px">
+                    <span id="cov-count" style="font-size:13px;color:#666"></span>
+                </div>
+                <div style="padding:12px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px" id="cov-cards"></div>
+                <div style="flex:1;overflow:auto;padding:0 20px 20px">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px">
+                        <thead>
+                            <tr style="background:#f0f0f0;position:sticky;top:0">
+                                <th style="padding:8px;text-align:left;border:1px solid #ddd;cursor:pointer" onclick="covSort('arch_id')">Arch ↕</th>
+                                <th style="padding:8px;text-align:left;border:1px solid #ddd;cursor:pointer;font-family:monospace" onclick="covSort('package')">Package ↕</th>
+                                <th style="padding:8px;text-align:right;border:1px solid #ddd;cursor:pointer" onclick="covSort('statements')">Stmts ↕</th>
+                                <th style="padding:8px;text-align:right;border:1px solid #ddd;cursor:pointer" onclick="covSort('covered')">Covered ↕</th>
+                                <th style="padding:8px;border:1px solid #ddd;cursor:pointer" onclick="covSort('pct')">Coverage ↕</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cov-tbody"></tbody>
+                        <tfoot id="cov-tfoot"></tfoot>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -865,6 +896,7 @@ const HTMLTemplate = `<!DOCTYPE html>
         const aspiceData = <!--ASPICE_DATA_JSON-->;
         const gapsData = <!--GAPS_DATA_JSON-->;
         const elementsData = <!--ELEMENTS_DATA_JSON-->;
+        const coverageData = <!--COVERAGE_DATA_JSON-->;
 
         // Global variables for filtering
         let globalNode = null;
@@ -1248,8 +1280,100 @@ const HTMLTemplate = `<!DOCTYPE html>
                 document.getElementById('elements').classList.add('active');
                 document.querySelector('button[onclick="switchTab(\'elements\')"]').classList.add('active');
                 renderElements();
+            } else if (tabName === 'coverage') {
+                document.getElementById('coverage').classList.add('active');
+                document.querySelector('button[onclick="switchTab(\'coverage\')"]').classList.add('active');
+                renderCoverage();
             }
         }
+
+        // ── Coverage Tab ────────────────────────────────────────────────
+        let covSortCol = 'pct', covSortAsc = true;
+
+        function covSort(col) {
+            covSortAsc = (covSortCol === col) ? !covSortAsc : true;
+            covSortCol = col;
+            renderCoverage();
+        }
+
+        function renderCoverage() {
+            if (!coverageData || !coverageData.rows || coverageData.rows.length === 0) {
+                document.getElementById('cov-tbody').innerHTML =
+                    '<tr><td colspan="5" style="padding:20px;text-align:center;color:#999">' +
+                    'No coverage data. Run <code>req42-tracer coverage --coverage coverage.out</code> to include coverage data.' +
+                    '</td></tr>';
+                document.getElementById('cov-count').textContent = '';
+                return;
+            }
+
+            const level  = document.getElementById('cov-filter-level').value;
+            const search = (document.getElementById('cov-search').value || '').toLowerCase();
+            const levelColor = { good: '#27ae60', warning: '#f39c12', danger: '#e74c3c' };
+
+            let rows = coverageData.rows.filter(r => {
+                if (level  && r.level !== level) return false;
+                if (search && !(r.package || '').toLowerCase().includes(search) &&
+                             !(r.arch_id || '').toLowerCase().includes(search) &&
+                             !(r.arch_title || '').toLowerCase().includes(search)) return false;
+                return true;
+            });
+
+            rows.sort((a, b) => {
+                const va = a[covSortCol] ?? '', vb = b[covSortCol] ?? '';
+                if (typeof va === 'number') return covSortAsc ? va - vb : vb - va;
+                return covSortAsc ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+            });
+
+            document.getElementById('cov-count').textContent = rows.length + ' package(s)';
+
+            document.getElementById('cov-tbody').innerHTML = rows.map(r => {
+                const color = levelColor[r.level] || '#999';
+                const pct = (r.pct || 0).toFixed(1);
+                const bar = '<div style="display:inline-block;width:80px;height:8px;background:#eee;border-radius:3px;vertical-align:middle">' +
+                            '<div style="width:' + Math.min(r.pct||0,100).toFixed(1) + '%;height:8px;background:' + color + ';border-radius:3px"></div></div>';
+                const arch = r.arch_id
+                    ? '<span style="background:#7ed321;color:#fff;border-radius:3px;padding:1px 5px;font-size:11px">' + escHtml(r.arch_id) + '</span>'
+                    : '<span style="color:#ddd;font-size:11px">—</span>';
+                return '<tr style="border-bottom:1px solid #f0f0f0">' +
+                    '<td style="padding:7px 8px;border:1px solid #ddd">' + arch + (r.arch_title ? ' <small style="color:#888">' + escHtml(r.arch_title) + '</small>' : '') + '</td>' +
+                    '<td style="padding:7px 8px;border:1px solid #ddd;font-family:monospace;font-size:12px">' + escHtml(r.package || '') + '</td>' +
+                    '<td style="padding:7px 8px;border:1px solid #ddd;text-align:right">' + (r.statements || 0) + '</td>' +
+                    '<td style="padding:7px 8px;border:1px solid #ddd;text-align:right">' + (r.covered || 0) + '</td>' +
+                    '<td style="padding:7px 8px;border:1px solid #ddd">' +
+                        '<span style="font-weight:600;color:' + color + ';margin-right:8px">' + pct + '%</span>' + bar +
+                    '</td></tr>';
+            }).join('');
+
+            const totStmts = rows.reduce((s,r) => s + (r.statements||0), 0);
+            const totCov   = rows.reduce((s,r) => s + (r.covered||0), 0);
+            const totPct   = totStmts > 0 ? (totCov/totStmts*100).toFixed(1) : '0.0';
+            document.getElementById('cov-tfoot').innerHTML =
+                '<tr style="background:#f8f9fa;font-weight:700;border-top:2px solid #ddd">' +
+                '<td colspan="2" style="padding:8px 12px;border:1px solid #ddd">Total (' + rows.length + ' packages)</td>' +
+                '<td style="padding:8px;border:1px solid #ddd;text-align:right">' + totStmts + '</td>' +
+                '<td style="padding:8px;border:1px solid #ddd;text-align:right">' + totCov + '</td>' +
+                '<td style="padding:8px;border:1px solid #ddd">' + totPct + '%</td></tr>';
+
+            // Summary cards
+            const lvl = { good: 0, warning: 0, danger: 0 };
+            rows.forEach(r => { if (lvl[r.level] !== undefined) lvl[r.level]++; });
+            const ovPct = (coverageData.overall_pct || 0).toFixed(1);
+            const ovColor = levelColor[coverageData.overall_level] || '#667eea';
+            document.getElementById('cov-cards').innerHTML =
+                covCard(ovColor, 'Overall', ovPct + '%') +
+                covCard(levelColor.good, '≥80% packages', lvl.good) +
+                covCard(levelColor.warning, '70–80% packages', lvl.warning) +
+                covCard(levelColor.danger, '<70% packages', lvl.danger);
+        }
+
+        function covCard(color, label, value) {
+            return '<div style="background:white;border-radius:4px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-left:4px solid ' + color + '">' +
+                '<div style="font-size:11px;text-transform:uppercase;color:#888;margin-bottom:4px">' + label + '</div>' +
+                '<div style="font-size:24px;font-weight:700;color:' + color + '">' + value + '</div></div>';
+        }
+
+        document.getElementById('cov-filter-level').addEventListener('change', renderCoverage);
+        document.getElementById('cov-search').addEventListener('input', renderCoverage);
 
         // ── Elements Tab ────────────────────────────────────────────────
         let elSortCol = 'id', elSortAsc = true;
