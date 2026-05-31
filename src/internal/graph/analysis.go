@@ -98,8 +98,12 @@ func (a *Analyzer) AnalyzeGaps() *model.GapAnalysisResult {
 		}
 	}
 
-	// O(|topLevelArchs|) — SWE.5: top-level elements need an integration test
+	// O(|topLevelArchs|) — SWE.5: top-level elements with impl= need an integration test.
+	// Purely conceptual elements (no impl=) are documentation artefacts and excluded.
 	for _, arch := range a.topLevelArchs {
+		if arch.Impl == "" {
+			continue
+		}
 		if _, tested := a.testedArchIDs[arch.ID]; !tested {
 			gap.UntestedArchElements = append(gap.UntestedArchElements, arch)
 		}

@@ -410,7 +410,10 @@ func TestAnalyzeGaps_UntestedArchElement(t *testing.T) {
 	g := &model.TraceabilityGraph{
 		Requirements: make(map[string]*model.Requirement),
 		ArchElements: map[string]*model.ArchElement{
-			"comp.system": {ID: "comp.system", Parent: "", Title: "System Component"},
+			// impl= gesetzt → wird als SWE.5-Gap gemeldet (braucht Integrationstest)
+			"comp.system": {ID: "comp.system", Parent: "", Title: "System Component", Impl: "internal/system"},
+			// kein impl= → konzeptionelles Element, kein Gap
+			"intro.goals": {ID: "intro.goals", Parent: "", Title: "Quality Goals"},
 			"comp.sub":    {ID: "comp.sub", Parent: "comp.system", Title: "Sub Component"},
 		},
 		DesignElements: make(map[string]*model.DesignElement),
@@ -423,10 +426,36 @@ func TestAnalyzeGaps_UntestedArchElement(t *testing.T) {
 	gaps := a.AnalyzeGaps()
 
 	if len(gaps.UntestedArchElements) != 1 {
-		t.Fatalf("expected 1 untested arch element, got %d", len(gaps.UntestedArchElements))
+		t.Fatalf("expected 1 untested arch element (impl only), got %d", len(gaps.UntestedArchElements))
 	}
 	if gaps.UntestedArchElements[0].ID != "comp.system" {
 		t.Errorf("expected comp.system flagged, got %s", gaps.UntestedArchElements[0].ID)
+	}
+}
+
+// [test-spec,id=TS-GRAPH-041,req=REQ-GRAPH-001,aspice=SWE.5-BP4]
+// TestAnalyzeGaps_ConceptualArchNotFlagged verifies that arch elements without impl=
+// (documentation/conceptual) are NOT reported as SWE.5 gaps.
+func TestAnalyzeGaps_ConceptualArchNotFlagged(t *testing.T) {
+	g := &model.TraceabilityGraph{
+		Requirements: make(map[string]*model.Requirement),
+		ArchElements: map[string]*model.ArchElement{
+			"intro.goals":          {ID: "intro.goals", Parent: "", Title: "Quality Goals"},
+			"constraints.technical": {ID: "constraints.technical", Parent: "", Title: "Technical Constraints"},
+			"quality.performance":  {ID: "quality.performance", Parent: "", Title: "Performance"},
+		},
+		DesignElements: make(map[string]*model.DesignElement),
+		TestSpecs:      make(map[string]*model.TestSpec),
+		TestCodes:      make(map[string]*model.TestCode),
+		TestResults:    make(map[string]*model.TestResult),
+		Links:          []*model.TraceLink{},
+	}
+	a := NewAnalyzer(g)
+	gaps := a.AnalyzeGaps()
+
+	if len(gaps.UntestedArchElements) != 0 {
+		t.Errorf("expected 0 untested arch elements for conceptual-only graph, got %d: %v",
+			len(gaps.UntestedArchElements), gaps.UntestedArchElements)
 	}
 }
 
