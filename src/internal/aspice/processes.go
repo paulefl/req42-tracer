@@ -87,20 +87,6 @@ func (pr *ProcessRegistry) GetProcess(id string) *model.ASPICEProcessLevel {
 	return pr.processes[id]
 }
 
-// GetBestPractice returns a best practice definition by ID.
-func (pr *ProcessRegistry) GetBestPractice(id string) *model.ASPICEBestPractice {
-	return pr.bestPractices[id]
-}
-
-// ListProcesses returns all registered processes.
-func (pr *ProcessRegistry) ListProcesses() []*model.ASPICEProcessLevel {
-	var processes []*model.ASPICEProcessLevel
-	for _, p := range pr.processes {
-		processes = append(processes, p)
-	}
-	return processes
-}
-
 // ListBestPracticesForProcess returns all best practices for a given process.
 func (pr *ProcessRegistry) ListBestPracticesForProcess(processID string) []*model.ASPICEBestPractice {
 	var bps []*model.ASPICEBestPractice

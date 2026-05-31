@@ -450,8 +450,3 @@ func getCoverageLevel(percentage float64) string {
 	return "danger"
 }
 
-// GenerateLatexReport generates a LaTeX report (future extension)
-func (hr *HTMLReporter) GenerateLatexReport(latexPath string) error {
-	// Placeholder for future LaTeX report generation
-	return fmt.Errorf("LaTeX report generation not yet implemented")
-}
