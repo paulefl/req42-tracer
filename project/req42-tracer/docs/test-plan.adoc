@@ -1,0 +1,250 @@
+= req42-tracer — Test Plan
+:description: Integration and Qualification Test Plan (ASPICE SWE.5 / SWE.6)
+:toc: left
+:toc-title: Contents
+
+== 1. Purpose and Scope
+
+This document defines the test strategy, integration test plan, and qualification
+test plan for req42-tracer, addressing ASPICE process areas SWE.5 (Integration
+and Integration Testing) and SWE.6 (Qualification Testing).
+
+**Tool under test:** `req42-tracer` CLI  +
+**Repository:** `github.com/paulefl/req42-tracer`  +
+**Revision date:** 2026-05-31
+
+== 2. Test Strategy
+
+=== 2.1 Test Levels
+
+[cols="1,2,2,1"]
+|===
+| Level | Description | Implementation | ASPICE
+
+| Unit Tests
+| Per-package function and method tests
+| `*_test.go` in each package
+| SWE.4
+
+| Integration Tests
+| Multi-package pipeline: Parser → Graph → Report
+| `src/tests/integration/` + CLI tests
+| SWE.5
+
+| Qualification Tests
+| End-to-end validation against acceptance criteria
+| `src/cmd/req42-tracer/cli_test.go` + CI dogfooding
+| SWE.6
+|===
+
+=== 2.2 Component Integration Order (SWE.5 BP1)
+
+Integration proceeds bottom-up:
+
+. `model` (no dependencies)
+. `parser` → `model`
+. `testresult` → `model`
+. `graph` → `model`, `parser`, `testresult`
+. `aspice` → `model`, `graph`
+. `validation` → `model`, `graph`
+. `report` → `model`, `graph`, `aspice`
+. `lsp` → `model`, `graph`, `parser`
+. `cmd/req42-tracer` (CLI) → all of the above
+
+=== 2.3 Coverage Targets
+
+| Package | Unit Target | Integration Target |
+|---|---|---|
+| `internal/parser` | ≥80% | trace/gaps run without error |
+| `internal/graph` | ≥80% | full pipeline from adoc to HTML |
+| `internal/aspice` | ≥75% | ASPICE report on real project |
+| `internal/report` | ≥70% | HTML + CSV output generated |
+| `internal/testresult` | ≥70% | JUnit + go-test JSON parsed |
+| `internal/lsp` | ≥70% | initialize handshake + completion |
+| `cmd/req42-tracer` | ≥60% | all commands execute without panic |
+
+== 3. Integration Test Plan (ASPICE SWE.5)
+
+=== 3.1 IT-01 — Parser → Graph Pipeline
+
+[test-spec,id=TS-SWE5-001,req=REQ-GRAPH-001,aspice=SWE.5-BP3]
+====
+Test: Parser output feeds correctly into graph builder (Parser→Graph integration)
+====
+
+**Pre-condition:** `project/req42-tracer/docs/` directory with adoc files  +
+**Steps:**
+
+. Run `req42-tracer trace --config project/req42-tracer/.req42.yaml`
+. Verify exit code 0
+. Verify output contains `TRACEABILITY MATRIX`
+. Verify at least 10 requirements are listed
+
+**Pass criterion:** Command exits 0, matrix contains all 16 REQ-* IDs.
+
+=== 3.2 IT-02 — Graph → Gap Analysis
+
+[test-spec,id=TS-SWE5-002,req=REQ-REPORT-002,aspice=SWE.5-BP3]
+====
+Test: Graph analyzer produces correct gap analysis on real project
+====
+
+**Steps:**
+
+. Run `req42-tracer gaps --config project/req42-tracer/.req42.yaml`
+. Verify exit code 0
+. Verify output is either "No gaps detected" or lists specific gaps
+
+**Pass criterion:** Command exits 0 without panic.
+
+=== 3.3 IT-03 — Full Pipeline: adoc → HTML Report
+
+[test-spec,id=TS-SWE5-003,req=REQ-REPORT-001,aspice=SWE.5-BP3]
+====
+Test: Full pipeline from AsciiDoc source to interactive HTML report
+====
+
+**Steps:**
+
+. Run `req42-tracer trace --output /tmp/test-report.html`
+. Verify file exists and is > 10KB
+. Verify HTML contains `req42-tracer`, `D3`, and requirement IDs
+
+**Pass criterion:** HTML file generated, contains expected content.
+
+=== 3.4 IT-04 — Bausteinsicht Parser Integration
+
+[test-spec,id=TS-SWE5-004,req=REQ-PARSE-003,aspice=SWE.5-BP3]
+====
+Test: Bausteinsicht JSONC model integrates into graph without error
+====
+
+**Steps:**
+
+. Run `req42-tracer trace` on project with `architecture.jsonc`
+. Verify no "Warning: could not load Bausteinsicht model" in stderr
+. Verify arch elements from JSONC appear in trace output
+
+**Pass criterion:** No Bausteinsicht warning, arch elements loaded.
+
+=== 3.5 IT-05 — LSP Initialize Handshake
+
+[test-spec,id=TS-SWE5-005,req=REQ-LSP-001,aspice=SWE.5-BP3]
+====
+Test: LSP server accepts initialize request and returns capabilities
+====
+
+Already covered by `TestInitializeHandshake` in `src/internal/lsp/server_test.go`.
+
+=== 3.6 IT-06 — Coverage Command Integration
+
+[test-spec,id=TS-SWE5-006,req=REQ-TESTING-001,aspice=SWE.5-BP3]
+====
+Test: req42-tracer coverage command generates HTML from go coverage data
+====
+
+**Steps:**
+
+. Run `go test ./... -coverprofile=/tmp/cov.out`
+. Run `req42-tracer coverage --coverage /tmp/cov.out --output /tmp/cov.html`
+. Verify exit code 0 and file exists
+
+**Pass criterion:** Coverage HTML generated with per-package rows.
+
+== 4. Qualification Test Plan (ASPICE SWE.6)
+
+The following tests verify that req42-tracer meets its acceptance criteria
+derived from the software requirements in `req42.adoc`.
+
+=== 4.1 QT-01 — Project Initialization (REQ-INIT-001)
+
+[test-spec,id=TS-SWE6-001,req=REQ-INIT-001,aspice=SWE.6-BP1]
+====
+Qualification: req42-tracer init creates complete project structure
+====
+
+**Acceptance criterion:** `req42-tracer init --interactive=false` creates all
+required files (req42.adoc, arc42.adoc, architecture.jsonc, .req42.yaml, .gitignore).
+
+**Test:** `TestRunInitCmd` in `cli_test.go` — verifies all 3 key files created. ✓
+
+=== 4.2 QT-02 — Traceability Matrix Generation (REQ-REPORT-001)
+
+[test-spec,id=TS-SWE6-002,req=REQ-REPORT-001,aspice=SWE.6-BP1]
+====
+Qualification: req42-tracer trace generates correct traceability matrix
+====
+
+**Acceptance criterion:** `req42-tracer trace` on the project's own docs
+produces a matrix showing all 16 REQ-* requirements with arch and test links.
+
+**Test:** `TestRunTraceCmd` in `cli_test.go` — command exits 0. ✓  +
+**Dogfooding:** CI `dogfood` job runs `req42-tracer trace --verbose` on every push. ✓
+
+=== 4.3 QT-03 — Gap Analysis (REQ-REPORT-002)
+
+[test-spec,id=TS-SWE6-003,req=REQ-REPORT-002,aspice=SWE.6-BP1]
+====
+Qualification: req42-tracer gaps identifies only real gaps
+====
+
+**Acceptance criterion:** After #155 fix, conceptual arch elements are not
+reported as false-positive gaps. Only elements with `impl=` that lack tests
+are flagged.
+
+**Test:** `TestAnalyzeGaps_ConceptualArchNotFlagged` (TS-GRAPH-041). ✓  +
+**Dogfooding:** CI dogfooding runs `req42-tracer gaps` and exits 0. ✓
+
+=== 4.4 QT-04 — ASPICE Compliance Report (REQ-ASPICE-001)
+
+[test-spec,id=TS-SWE6-004,req=REQ-ASPICE-001,aspice=SWE.6-BP1]
+====
+Qualification: req42-tracer aspice produces PAM 4.0 compliance report
+====
+
+**Acceptance criterion:** `req42-tracer aspice` outputs Overall Coverage %
+and per-process details without error.
+
+**Test:** `TestRunAspiceCmd` in `cli_test.go` — command exits 0. ✓
+
+=== 4.5 QT-05 — Custom Validation (REQ-VALIDATE-001)
+
+[test-spec,id=TS-SWE6-005,req=REQ-VALIDATE-001,aspice=SWE.6-BP1]
+====
+Qualification: req42-tracer validate runs custom rules without panic
+====
+
+**Test:** `TestRunValidateCmd` in `cli_test.go`. ✓
+
+=== 4.6 QT-06 — Multi-Platform Support (REQ-COMPAT-001, REQ-COMPAT-002)
+
+[test-spec,id=TS-SWE6-006,req=REQ-COMPAT-001,aspice=SWE.6-BP2]
+====
+Qualification: req42-tracer builds and tests pass on Linux, macOS, Windows
+====
+
+**Acceptance criterion:** CI test matrix passes on all 3 platforms with Go 1.22/1.23/1.24.
+
+**Evidence:** CI matrix job `test` in `.github/workflows/ci.yml`. ✓
+
+=== 4.7 QT-07 — Test Coverage Thresholds (REQ-TESTING-001)
+
+[test-spec,id=TS-SWE6-007,req=REQ-TESTING-001,aspice=SWE.6-BP2]
+====
+Qualification: Core packages meet coverage thresholds
+====
+
+**Acceptance criterion:** parser ≥80%, graph ≥80%, aspice ≥75%, report ≥70%.
+
+**Evidence:** CI `Coverage threshold check` step in ci.yml. ✓
+
+== 5. Test Results Summary
+
+Test results are automatically captured by CI:
+
+* **JUnit XML:** `reports/junit.xml` (artifact, 30-day retention)
+* **go-test JSON:** `reports/test-results.json` (artifact, 30-day retention)
+* **Dogfooding HTML:** `reports/dogfood-report.html` (artifact, 30-day retention)
+* **Coverage:** `coverage.out` (artifact, 30-day retention)
+
+See CI runs: `https://github.com/paul-fleischmann-com/req42-tracer/actions`
