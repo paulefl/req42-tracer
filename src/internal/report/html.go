@@ -145,14 +145,25 @@ func (hr *HTMLReporter) GenerateSummaryReport(summaryPath string) error {
 
 func generateSummaryHTML(totalReqs, coveredReqs, totalArch, coveredArch,
 	totalTests, testedSpecs, totalResults, totalLinks int, graphFilename string) string {
-	coverage := func(covered, total float64) float64 {
+	pct := func(covered, total int) float64 {
 		if total == 0 {
 			return 0
 		}
-		return (covered / total) * 100
+		return float64(covered) / float64(total) * 100
 	}
+	var b strings.Builder
+	b.WriteString(summaryHTMLHeader())
+	b.WriteString(summaryMetricsGrid(totalReqs, coveredReqs, totalArch, coveredArch,
+		totalTests, testedSpecs, totalResults, totalLinks, pct))
+	b.WriteString(summaryCoverageDetails(totalReqs, coveredReqs, totalArch, coveredArch,
+		totalTests, testedSpecs, totalLinks))
+	b.WriteString(summaryRecommendations(totalReqs-coveredReqs, totalTests-testedSpecs))
+	b.WriteString(summaryHTMLFooter(graphFilename))
+	return b.String()
+}
 
-	html := fmt.Sprintf(`<!DOCTYPE html>
+func summaryHTMLHeader() string {
+	return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -160,154 +171,41 @@ func generateSummaryHTML(totalReqs, coveredReqs, totalArch, coveredArch,
     <title>req42-tracer: Coverage Summary</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%);
-            color: #333;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%);
-            color: white;
-            padding: 40px 20px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 16px;
-            opacity: 0.9;
-        }
-
-        .content {
-            padding: 40px;
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-
-        .metric {
-            background: #f8f9fa;
-            border-left: 4px solid #667eea;
-            padding: 20px;
-            border-radius: 4px;
-        }
-
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+               background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+               color: #333; min-height: 100vh; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white;
+                     border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  color: white; padding: 40px 20px; text-align: center; }
+        .header h1 { font-size: 32px; margin-bottom: 10px; }
+        .header p  { font-size: 16px; opacity: 0.9; }
+        .content { padding: 40px; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 20px; margin-bottom: 40px; }
+        .metric { background: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; border-radius: 4px; }
         .metric.good { border-left-color: #7ed321; }
         .metric.warning { border-left-color: #f5a623; }
         .metric.danger { border-left-color: #e74c3c; }
-
-        .metric-label {
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-
-        .metric-value {
-            font-size: 28px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 4px;
-        }
-
-        .metric-subtext {
-            font-size: 13px;
-            color: #999;
-        }
-
-        .coverage-bar {
-            width: 100%%;
-            height: 8px;
-            background: #e0e0e0;
-            border-radius: 4px;
-            margin-top: 10px;
-            overflow: hidden;
-        }
-
-        .coverage-fill {
-            height: 100%%;
-            background: #7ed321;
-            transition: width 0.3s;
-        }
-
-        .summary-section {
-            margin-bottom: 40px;
-        }
-
-        .summary-section h2 {
-            font-size: 20px;
-            margin-bottom: 20px;
-            color: #333;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-        }
-
-        .summary-table {
-            width: 100%%;
-            border-collapse: collapse;
-        }
-
-        .summary-table tr {
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .summary-table tr:hover {
-            background: #f8f9fa;
-        }
-
-        .summary-table td {
-            padding: 12px;
-            text-align: left;
-        }
-
-        .summary-table td:first-child {
-            font-weight: 500;
-            width: 40%%;
-        }
-
-        .summary-table td:last-child {
-            text-align: right;
-            font-weight: bold;
-        }
-
-        .footer {
-            background: #f8f9fa;
-            padding: 20px;
-            text-align: center;
-            color: #666;
-            font-size: 12px;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        .footer a {
-            color: #667eea;
-            text-decoration: none;
-        }
-
-        .footer a:hover {
-            text-decoration: underline;
-        }
+        .metric-label { font-size: 12px; color: #666; text-transform: uppercase; margin-bottom: 8px; }
+        .metric-value { font-size: 28px; font-weight: bold; color: #333; margin-bottom: 4px; }
+        .metric-subtext { font-size: 13px; color: #999; }
+        .coverage-bar { width: 100%; height: 8px; background: #e0e0e0;
+                        border-radius: 4px; margin-top: 10px; overflow: hidden; }
+        .coverage-fill { height: 100%; background: #7ed321; transition: width 0.3s; }
+        .summary-section { margin-bottom: 40px; }
+        .summary-section h2 { font-size: 20px; margin-bottom: 20px; color: #333;
+                              border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+        .summary-table { width: 100%; border-collapse: collapse; }
+        .summary-table tr { border-bottom: 1px solid #e0e0e0; }
+        .summary-table tr:hover { background: #f8f9fa; }
+        .summary-table td { padding: 12px; text-align: left; }
+        .summary-table td:first-child { font-weight: 500; width: 40%; }
+        .summary-table td:last-child { text-align: right; font-weight: bold; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center;
+                  color: #666; font-size: 12px; border-top: 1px solid #e0e0e0; }
+        .footer a { color: #667eea; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -316,129 +214,79 @@ func generateSummaryHTML(totalReqs, coveredReqs, totalArch, coveredArch,
             <h1>req42-tracer Coverage Summary</h1>
             <p>Traceability and test coverage metrics</p>
         </div>
-
         <div class="content">
-            <div class="metrics-grid">
-                <div class="metric %s">
-                    <div class="metric-label">Requirement Coverage</div>
-                    <div class="metric-value">%.1f%%</div>
-                    <div class="metric-subtext">%d of %d requirements</div>
-                    <div class="coverage-bar">
-                        <div class="coverage-fill" style="width: %.1f%%"></div>
-                    </div>
-                </div>
+`
+}
 
-                <div class="metric %s">
-                    <div class="metric-label">Architecture Coverage</div>
-                    <div class="metric-value">%.1f%%</div>
-                    <div class="metric-subtext">%d of %d components</div>
-                    <div class="coverage-bar">
-                        <div class="coverage-fill" style="width: %.1f%%"></div>
-                    </div>
-                </div>
-
-                <div class="metric %s">
-                    <div class="metric-label">Test Coverage</div>
-                    <div class="metric-value">%.1f%%</div>
-                    <div class="metric-subtext">%d of %d specs</div>
-                    <div class="coverage-bar">
-                        <div class="coverage-fill" style="width: %.1f%%"></div>
-                    </div>
-                </div>
-
-                <div class="metric">
-                    <div class="metric-label">Total Artifacts</div>
-                    <div class="metric-value">%d</div>
-                    <div class="metric-subtext">across all types</div>
-                </div>
-
-                <div class="metric">
-                    <div class="metric-label">Trace Links</div>
-                    <div class="metric-value">%d</div>
-                    <div class="metric-subtext">req → arch → test</div>
-                </div>
-
-                <div class="metric">
-                    <div class="metric-label">Test Results</div>
-                    <div class="metric-value">%d</div>
-                    <div class="metric-subtext">from CI/CD</div>
-                </div>
+func summaryMetricsGrid(totalReqs, coveredReqs, totalArch, coveredArch,
+	totalTests, testedSpecs, totalResults, totalLinks int,
+	pct func(int, int) float64) string {
+	card := func(level, label, subtext string, value float64) string {
+		return fmt.Sprintf(`            <div class="metric %s">
+                <div class="metric-label">%s</div>
+                <div class="metric-value">%.1f%%</div>
+                <div class="metric-subtext">%s</div>
+                <div class="coverage-bar"><div class="coverage-fill" style="width: %.1f%%"></div></div>
             </div>
-
-            <div class="summary-section">
-                <h2>Coverage Details</h2>
-                <table class="summary-table">
-                    <tr>
-                        <td>Requirements Covered</td>
-                        <td>%d / %d</td>
-                    </tr>
-                    <tr>
-                        <td>Architecture Components</td>
-                        <td>%d / %d</td>
-                    </tr>
-                    <tr>
-                        <td>Test Specifications Tested</td>
-                        <td>%d / %d</td>
-                    </tr>
-                    <tr>
-                        <td>Total Trace Links</td>
-                        <td>%d</td>
-                    </tr>
-                </table>
+`, level, label, value, subtext, value)
+	}
+	stat := func(label, subtext string, value int) string {
+		return fmt.Sprintf(`            <div class="metric">
+                <div class="metric-label">%s</div>
+                <div class="metric-value">%d</div>
+                <div class="metric-subtext">%s</div>
             </div>
+`, label, value, subtext)
+	}
+	var b strings.Builder
+	b.WriteString(`        <div class="metrics-grid">` + "\n")
+	b.WriteString(card(getCoverageLevel(pct(coveredReqs, totalReqs)), "Requirement Coverage",
+		fmt.Sprintf("%d of %d requirements", coveredReqs, totalReqs), pct(coveredReqs, totalReqs)))
+	b.WriteString(card(getCoverageLevel(pct(coveredArch, totalArch)), "Architecture Coverage",
+		fmt.Sprintf("%d of %d components", coveredArch, totalArch), pct(coveredArch, totalArch)))
+	b.WriteString(card(getCoverageLevel(pct(testedSpecs, totalTests)), "Test Coverage",
+		fmt.Sprintf("%d of %d specs", testedSpecs, totalTests), pct(testedSpecs, totalTests)))
+	b.WriteString(stat("Total Artifacts", "across all types", totalReqs+totalArch+totalTests+totalResults))
+	b.WriteString(stat("Trace Links", "req → arch → test", totalLinks))
+	b.WriteString(stat("Test Results", "from CI/CD", totalResults))
+	b.WriteString("        </div>\n")
+	return b.String()
+}
 
-            <div class="summary-section">
-                <h2>Recommendations</h2>
-                <table class="summary-table">
-                    <tr>
-                        <td>Uncovered Requirements</td>
-                        <td>%d</td>
-                    </tr>
-                    <tr>
-                        <td>Untested Specifications</td>
-                        <td>%d</td>
-                    </tr>
-                </table>
-            </div>
+func summaryCoverageDetails(totalReqs, coveredReqs, totalArch, coveredArch,
+	totalTests, testedSpecs, totalLinks int) string {
+	return fmt.Sprintf(`        <div class="summary-section">
+            <h2>Coverage Details</h2>
+            <table class="summary-table">
+                <tr><td>Requirements Covered</td><td>%d / %d</td></tr>
+                <tr><td>Architecture Components</td><td>%d / %d</td></tr>
+                <tr><td>Test Specifications Tested</td><td>%d / %d</td></tr>
+                <tr><td>Total Trace Links</td><td>%d</td></tr>
+            </table>
         </div>
+`, coveredReqs, totalReqs, coveredArch, totalArch, testedSpecs, totalTests, totalLinks)
+}
 
+func summaryRecommendations(uncoveredReqs, untestedSpecs int) string {
+	return fmt.Sprintf(`        <div class="summary-section">
+            <h2>Recommendations</h2>
+            <table class="summary-table">
+                <tr><td>Uncovered Requirements</td><td>%d</td></tr>
+                <tr><td>Untested Specifications</td><td>%d</td></tr>
+            </table>
+        </div>
+`, uncoveredReqs, untestedSpecs)
+}
+
+func summaryHTMLFooter(graphFilename string) string {
+	return fmt.Sprintf(`        </div>
         <div class="footer">
             Generated by <a href="https://github.com/paulefl/req42-tracer">req42-tracer</a> •
             <a href="%s">View Interactive Graph</a>
         </div>
     </div>
 </body>
-</html>`,
-		getCoverageLevel(coverage(float64(coveredReqs), float64(totalReqs))),
-		coverage(float64(coveredReqs), float64(totalReqs)),
-		coveredReqs, totalReqs,
-		coverage(float64(coveredReqs), float64(totalReqs)),
-
-		getCoverageLevel(coverage(float64(coveredArch), float64(totalArch))),
-		coverage(float64(coveredArch), float64(totalArch)),
-		coveredArch, totalArch,
-		coverage(float64(coveredArch), float64(totalArch)),
-
-		getCoverageLevel(coverage(float64(testedSpecs), float64(totalTests))),
-		coverage(float64(testedSpecs), float64(totalTests)),
-		testedSpecs, totalTests,
-		coverage(float64(testedSpecs), float64(totalTests)),
-
-		totalReqs+totalArch+totalTests+totalResults,
-		totalLinks,
-		totalResults,
-
-		coveredReqs, totalReqs,
-		coveredArch, totalArch,
-		testedSpecs, totalTests,
-		totalLinks,
-
-		totalReqs-coveredReqs,
-		totalTests-testedSpecs,
-		graphFilename,
-	)
-
-	return html
+</html>`, graphFilename)
 }
 
 func getCoverageLevel(percentage float64) string {
