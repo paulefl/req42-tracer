@@ -126,6 +126,19 @@ func TestParseGoTest_EmptyLines(t *testing.T) {
 	}
 }
 
+// [test-spec,id=TS-TR-023,req="REQ-TESTING-001",aspice="SWE.5.BP3"]
+// TestParseGoTest_ShortID verifies that IDs use short package name (last segment only, no platform prefix).
+func TestParseGoTest_ShortID(t *testing.T) {
+	f := writeTempJSON(t, sampleGoTest)
+	results, _ := ParseGoTest(f, "proj", "linux")
+	for _, r := range results {
+		want := "pkg::" + r.TestName
+		if r.ID != want {
+			t.Errorf("ID = %q, want %q", r.ID, want)
+		}
+	}
+}
+
 func writeTempJSON(t *testing.T, content string) string {
 	t.Helper()
 	dir := t.TempDir()

@@ -60,7 +60,7 @@ func ParseGoTest(filePath, project, platform string) ([]*model.TestResult, error
 			}
 
 			tests[key] = &model.TestResult{
-				ID:         fmt.Sprintf("%s::%s", platform, key),
+				ID:         shortPackage(event.Package) + "::" + event.Test,
 				Package:    event.Package,
 				TestName:   event.Test,
 				FullName:   key,

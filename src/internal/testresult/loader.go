@@ -54,8 +54,7 @@ func LoadAll(graph *model.TraceabilityGraph, config *model.Config) error {
 				result.Platform = "linux"
 			}
 
-			// Generate unique ID with platform
-			result.ID = fmt.Sprintf("%s::%s::%s", result.Platform, result.Package, result.TestName)
+			result.ID = shortPackage(result.Package) + "::" + result.TestName
 			graph.TestResults[result.ID] = result
 		}
 	}
