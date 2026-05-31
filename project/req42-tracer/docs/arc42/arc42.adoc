@@ -308,13 +308,95 @@ Describes dynamic behavior during execution.
 [arch,id=runtime.trace,aspice=SWE.2,req=REQ-REPORT-001,REQ-VALIDATE-001]
 ==== Trace Command Sequence
 
+[mermaid]
+....
+sequenceDiagram
+    participant CLI as req42-tracer trace
+    participant Cfg as model.LoadConfig
+    participant Par as parser.ParseAllFromDir
+    participant Bau as parser.BausteinsichtParser
+    participant GC  as parser.ParseGoTestFiles
+    participant TR  as testresult.LoadAll
+    participant Grp as graph.NewBuilder
+    participant Rpt as report.HTMLReporter
+
+    CLI->>Cfg: LoadConfig(.req42.yaml)
+    Cfg-->>CLI: *Config
+
+    CLI->>Par: ParseAllFromDir(docs/requirements)
+    Par-->>CLI: *TraceabilityGraph (reqs)
+
+    CLI->>Par: ParseAllFromDir(docs/arc42)
+    Par-->>CLI: *TraceabilityGraph (arch)
+
+    CLI->>Bau: Parse(architecture.jsonc)
+    Bau-->>CLI: *TraceabilityGraph (bausteinsicht)
+
+    CLI->>GC: ParseGoTestFiles(src/)
+    GC-->>CLI: *TraceabilityGraph (testcode)
+
+    CLI->>TR: LoadAll(graph, config)
+    TR-->>CLI: (test results merged)
+
+    CLI->>Grp: MergeGraph(all graphs)
+    Grp-->>CLI: *TraceabilityGraph (complete)
+
+    CLI->>Rpt: GenerateReport()
+    Rpt-->>CLI: report.html
+....
+
+Steps:
+
 1. Load configuration (.req42.yaml)
 2. Parse requirements (AsciiDoc)
 3. Load architecture model (Bausteinsicht)
-4. Parse test specifications
+4. Parse Go test annotations
 5. Load test results (JUnit XML / go-test JSON)
-6. Build traceability graph
+6. Build and merge traceability graph
 7. Generate report
+
+[arch,id=runtime.analyzegaps,aspice=SWE.2,req=REQ-REPORT-002]
+==== AnalyzeGaps() Algorithm
+
+[mermaid]
+....
+flowchart TD
+    A[AnalyzeGaps start] --> B[buildIndex\nbuild req→arch, arch→test maps]
+    B --> C{For each\nRequirement}
+    C --> D{Has arch\nlinks?}
+    D -- No --> E[→ OrphanRequirements]
+    D -- Yes --> C
+
+    B --> F{For each\nArchElement\nwith parent=}
+    F --> G{Has req=\nlinks?}
+    G -- No --> H[→ OrphanArchElements]
+    G -- Yes --> F
+    F --> I{Has impl=?}
+    I -- No --> F
+    I -- Yes --> J{Has integration\ntest-spec?}
+    J -- No --> K[→ UntestedArchElements]
+    J -- Yes --> F
+
+    B --> L{For each\nDesignElement}
+    L --> M{Has arch=\nparent?}
+    M -- No --> N[→ OrphanDesignElements]
+    M -- Yes --> L
+    L --> O{Has test-spec\nwith dsn=?}
+    O -- No --> P[→ UntestedDesignElements]
+    O -- Yes --> L
+
+    B --> Q{For each\nTestSpec}
+    Q --> R{Has req=\nor arch=?}
+    R -- No --> S[→ OrphanTestSpecs]
+    R -- Yes --> Q
+
+    B --> T{For each\nTestResult}
+    T --> U{LinkedSpec\nor LinkedCode?}
+    U -- No --> V[→ UntracedTestResults]
+    U -- Yes --> T
+
+    E & H & K & N & P & S & V --> W[Return GapAnalysisResult]
+....
 
 [arch,id=runtime.watch,aspice=SWE.2,req=REQ-WATCH-001]
 ==== Watch Mode Sequence
