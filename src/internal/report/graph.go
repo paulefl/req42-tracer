@@ -10,7 +10,7 @@ import (
 type Node struct {
 	ID       string                 `json:"id"`
 	Label    string                 `json:"label"`
-	Type     string                 `json:"type"` // "requirement", "arch", "test-spec", "test-code", "test-result"
+	Type     string                 `json:"type"` // "requirement", "arch", "dsn", "test-spec", "test-code", "test-result"
 	Metadata map[string]interface{} `json:"metadata"`
 	Group    int                    `json:"group"` // For D3 force layout grouping
 }
@@ -124,6 +124,23 @@ func ExportGraphData(g *model.TraceabilityGraph) *GraphData {
 		}
 		data.Nodes = append(data.Nodes, node)
 		nodeMap[code.ID] = true
+	}
+
+	// Add design element nodes (group 4) — SWE.3 Detailed Design
+	for _, dsn := range g.DesignElements {
+		node := Node{
+			ID:    dsn.ID,
+			Label: fmt.Sprintf("%s: %s", dsn.ID, dsn.Title),
+			Type:  "dsn",
+			Group: 4,
+			Metadata: map[string]interface{}{
+				"aspice": dsn.ASPICE,
+				"arch":   dsn.Arch,
+				"impl":   dsn.Impl,
+			},
+		}
+		data.Nodes = append(data.Nodes, node)
+		nodeMap[dsn.ID] = true
 	}
 
 	// Add test result nodes (group 3)
