@@ -45,6 +45,31 @@ jobs:
         if: runner.os != 'Windows'
         run: go tool cover -func=coverage.out
 
+      - name: Coverage threshold check
+        if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.24'
+        run: |
+          check() {
+            local pkg="$1" threshold="$2"
+            local pct
+            pct=$(go tool cover -func=coverage.out | awk -v p="$pkg" '$1 ~ p && /total:/ {print $NF}' | tr -d '%')
+            # fallback: aggregate all lines for the package
+            if [ -z "$pct" ]; then
+              pct=$(go tool cover -func=coverage.out | grep "^github.com/paulefl/req42-tracer/src/$pkg" | awk '{s+=$3; n++} END {if(n>0) printf "%.1f", s/n}' | tr -d '%')
+            fi
+            if [ -z "$pct" ]; then echo "SKIP $pkg (no data)"; return 0; fi
+            result=$(awk -v p="$pct" -v t="$threshold" 'BEGIN{print (p+0 >= t+0) ? "ok" : "fail"}')
+            echo "$pkg: ${pct}% (threshold: ${threshold}%) — $result"
+            [ "$result" = "ok" ]
+          }
+          fail=0
+          check internal/parser      80 || fail=1
+          check internal/graph       80 || fail=1
+          check internal/aspice      75 || fail=1
+          check internal/report      70 || fail=1
+          check internal/testresult  70 || fail=1
+          check internal/lsp         70 || fail=1
+          exit $fail
+
       - name: Export test results (JUnit XML + go-test JSON)
         if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.24'
         run: |
