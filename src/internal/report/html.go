@@ -57,6 +57,13 @@ func (hr *HTMLReporter) GenerateReport() error {
 		return fmt.Errorf("failed to marshal aspice data: %w", err)
 	}
 
+	// Build and serialize gaps data
+	gapsData := BuildGapsData(hr.analyzer.AnalyzeGaps())
+	gapsJSON, err := json.MarshalIndent(gapsData, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal gaps data: %w", err)
+	}
+
 	// Create output directory if needed
 	dir := filepath.Dir(hr.outputPath)
 	if dir != "." && dir != "" {
@@ -69,6 +76,7 @@ func (hr *HTMLReporter) GenerateReport() error {
 	htmlContent := strings.ReplaceAll(HTMLTemplate, "<!--GRAPH_DATA_JSON-->", string(graphJSON))
 	htmlContent = strings.ReplaceAll(htmlContent, "<!--MATRIX_DATA_JSON-->", string(matrixJSON))
 	htmlContent = strings.ReplaceAll(htmlContent, "<!--ASPICE_DATA_JSON-->", string(aspiceJSON))
+	htmlContent = strings.ReplaceAll(htmlContent, "<!--GAPS_DATA_JSON-->", string(gapsJSON))
 
 	// Write HTML file
 	if err := os.WriteFile(hr.outputPath, []byte(htmlContent), 0644); err != nil {

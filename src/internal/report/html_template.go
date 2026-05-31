@@ -72,6 +72,7 @@ const HTMLTemplate = `<!DOCTYPE html>
 
         .legend-dot.requirement { background: #4a90e2; }
         .legend-dot.arch { background: #7ed321; }
+        .legend-dot.dsn { background: #9b59b6; }
         .legend-dot.test-spec { background: #f5a623; }
         .legend-dot.test-code { background: #f5a623; opacity: 0.7; }
         .legend-dot.test-result { background: #999; }
@@ -652,6 +653,10 @@ const HTMLTemplate = `<!DOCTYPE html>
                     <span>Architecture</span>
                 </div>
                 <div class="legend-item">
+                    <div class="legend-dot dsn"></div>
+                    <span>Design Element (SWE.3)</span>
+                </div>
+                <div class="legend-item">
                     <div class="legend-dot test-spec"></div>
                     <span>Test Spec</span>
                 </div>
@@ -688,6 +693,10 @@ const HTMLTemplate = `<!DOCTYPE html>
                     <span id="stat-specs">0</span>
                 </div>
                 <div class="stats-item">
+                    <span>Design Elements:</span>
+                    <span id="stat-dsn">0</span>
+                </div>
+                <div class="stats-item">
                     <span>Test Results:</span>
                     <span id="stat-results">0</span>
                 </div>
@@ -711,6 +720,7 @@ const HTMLTemplate = `<!DOCTYPE html>
                     <button id="btn-filter-all" class="active">All</button>
                     <button id="btn-filter-req">Requirements</button>
                     <button id="btn-filter-arch">Architecture</button>
+                    <button id="btn-filter-dsn">Design</button>
                     <button id="btn-filter-tests">Tests</button>
                 </div>
                 <div class="control-group">
@@ -731,6 +741,7 @@ const HTMLTemplate = `<!DOCTYPE html>
                     <button class="tab-button active" onclick="switchTab('graph')">Graph View</button>
                     <button class="tab-button" onclick="switchTab('matrix')">Matrix View</button>
                     <button class="tab-button" onclick="switchTab('aspice')">ASPICE Dashboard</button>
+                    <button class="tab-button" onclick="switchTab('gaps')" id="btn-tab-gaps">Gaps</button>
                 </div>
             </div>
 
@@ -804,6 +815,13 @@ const HTMLTemplate = `<!DOCTYPE html>
                 </div>
                 <div class="aspice-grid" id="aspice-grid"></div>
             </div>
+
+            <div id="gaps" class="tab-content">
+                <div style="padding:20px">
+                    <h2 style="margin-bottom:16px">Gap Analysis</h2>
+                    <div id="gaps-content"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -812,6 +830,7 @@ const HTMLTemplate = `<!DOCTYPE html>
         const graphData = <!--GRAPH_DATA_JSON-->;
         const matrixData = <!--MATRIX_DATA_JSON-->;
         const aspiceData = <!--ASPICE_DATA_JSON-->;
+        const gapsData = <!--GAPS_DATA_JSON-->;
 
         // Global variables for filtering
         let globalNode = null;
@@ -840,6 +859,7 @@ const HTMLTemplate = `<!DOCTYPE html>
             const colorMap = {
                 'requirement': '#4a90e2',
                 'arch': '#7ed321',
+                'dsn': '#9b59b6',
                 'test-spec': '#f5a623',
                 'test-code': '#f5a623',
                 'test-result': '#999'
@@ -1001,6 +1021,11 @@ const HTMLTemplate = `<!DOCTYPE html>
                 filterByType('arch');
             });
 
+            document.getElementById('btn-filter-dsn').addEventListener('click', () => {
+                updateFilterButtons('dsn');
+                filterByType('dsn');
+            });
+
             document.getElementById('btn-filter-tests').addEventListener('click', () => {
                 updateFilterButtons('tests');
                 filterByType('test-spec', 'test-code', 'test-result');
@@ -1029,11 +1054,13 @@ const HTMLTemplate = `<!DOCTYPE html>
                 document.getElementById('btn-filter-all').classList.remove('active');
                 document.getElementById('btn-filter-req').classList.remove('active');
                 document.getElementById('btn-filter-arch').classList.remove('active');
+                document.getElementById('btn-filter-dsn').classList.remove('active');
                 document.getElementById('btn-filter-tests').classList.remove('active');
 
                 if (active === 'all') document.getElementById('btn-filter-all').classList.add('active');
                 else if (active === 'requirement') document.getElementById('btn-filter-req').classList.add('active');
                 else if (active === 'arch') document.getElementById('btn-filter-arch').classList.add('active');
+                else if (active === 'dsn') document.getElementById('btn-filter-dsn').classList.add('active');
                 else if (active === 'tests') document.getElementById('btn-filter-tests').classList.add('active');
             }
 
@@ -1121,6 +1148,7 @@ const HTMLTemplate = `<!DOCTYPE html>
             const stats = {
                 requirement: 0,
                 arch: 0,
+                dsn: 0,
                 'test-spec': 0,
                 'test-code': 0,
                 'test-result': 0
@@ -1134,6 +1162,7 @@ const HTMLTemplate = `<!DOCTYPE html>
 
             const reqEl = document.getElementById('stat-reqs');
             const archEl = document.getElementById('stat-arch');
+            const dsnEl = document.getElementById('stat-dsn');
             const specsEl = document.getElementById('stat-specs');
             const resultsEl = document.getElementById('stat-results');
             const totalEl = document.getElementById('stat-total');
@@ -1141,6 +1170,7 @@ const HTMLTemplate = `<!DOCTYPE html>
 
             if (reqEl) reqEl.textContent = stats.requirement;
             if (archEl) archEl.textContent = stats.arch;
+            if (dsnEl) dsnEl.textContent = stats.dsn;
             if (specsEl) specsEl.textContent = stats['test-spec'];
             if (resultsEl) resultsEl.textContent = stats['test-result'];
             if (totalEl) totalEl.textContent = data.nodes.length;
@@ -1167,7 +1197,45 @@ const HTMLTemplate = `<!DOCTYPE html>
                 document.getElementById('aspice').classList.add('active');
                 document.querySelector('button[onclick="switchTab(\'aspice\')"]').classList.add('active');
                 renderASPICE();
+            } else if (tabName === 'gaps') {
+                document.getElementById('gaps').classList.add('active');
+                document.getElementById('btn-tab-gaps').classList.add('active');
+                renderGaps();
             }
+        }
+
+        function renderGaps() {
+            const container = document.getElementById('gaps-content');
+            if (!container) return;
+
+            function gapSection(title, items, emptyMsg) {
+                if (items.length === 0) {
+                    return '<div style="margin-bottom:24px"><h3 style="color:#27ae60;margin-bottom:8px">✓ ' + escHtml(title) + ' (0)</h3><p style="color:#999;font-size:13px">' + escHtml(emptyMsg) + '</p></div>';
+                }
+                let rows = items.map(item =>
+                    '<tr><td style="padding:6px 12px;font-family:monospace;font-size:13px">' + escHtml(item.id) +
+                    '</td><td style="padding:6px 12px;font-size:13px">' + escHtml(item.title) +
+                    '</td><td style="padding:6px 12px;font-size:12px;color:#888">' + escHtml(item.info || '') + '</td></tr>'
+                ).join('');
+                return '<div style="margin-bottom:24px"><h3 style="color:#e74c3c;margin-bottom:8px">✗ ' + escHtml(title) + ' (' + items.length + ')</h3>' +
+                    '<table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e0e0e0;border-radius:4px">' +
+                    '<thead><tr style="background:#f8f9fa"><th style="padding:6px 12px;text-align:left;font-size:12px;color:#666">ID</th>' +
+                    '<th style="padding:6px 12px;text-align:left;font-size:12px;color:#666">Title</th>' +
+                    '<th style="padding:6px 12px;text-align:left;font-size:12px;color:#666">Info</th></tr></thead>' +
+                    '<tbody>' + rows + '</tbody></table></div>';
+            }
+
+            const html = (!gapsData.has_gaps)
+                ? '<div style="color:#27ae60;font-size:16px;padding:20px 0">✓ No gaps found — full traceability achieved.</div>'
+                : gapSection('Orphan Requirements (no arch/test coverage)', gapsData.orphan_requirements, 'All requirements are covered.') +
+                  gapSection('Orphan Architecture Elements (no requirement)', gapsData.orphan_arch_elements, 'All arch elements are traced.') +
+                  gapSection('Orphan Design Elements — SWE.3 (no arch parent)', gapsData.orphan_design_elements, 'All design elements have arch parents.') +
+                  gapSection('Untested Architecture Elements — SWE.2 (no integration test)', gapsData.untested_arch_elements, 'All arch elements have integration tests.') +
+                  gapSection('Untested Design Elements — SWE.4 (no unit test)', gapsData.untested_design_elements, 'All design elements have unit tests.') +
+                  gapSection('Orphan Test Specs (no requirement link)', gapsData.orphan_test_specs, 'All test specs are linked.') +
+                  gapSection('Untraced Test Results (no linked spec)', gapsData.untraced_test_results, 'All test results are traced.');
+
+            container.innerHTML = html;
         }
 
         function escHtml(s) {
@@ -1406,10 +1474,18 @@ const HTMLTemplate = `<!DOCTYPE html>
                 if (graphData && graphData.nodes) {
                     initializeGraph(graphData);
                 }
+                if (gapsData && gapsData.has_gaps) {
+                    const btn = document.getElementById('btn-tab-gaps');
+                    if (btn) btn.style.color = '#e74c3c';
+                }
             });
         } else {
             if (graphData && graphData.nodes) {
                 initializeGraph(graphData);
+            }
+            if (gapsData && gapsData.has_gaps) {
+                const btn = document.getElementById('btn-tab-gaps');
+                if (btn) btn.style.color = '#e74c3c';
             }
         }
     </script>

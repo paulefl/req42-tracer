@@ -96,6 +96,73 @@ func TestExportGraphData(t *testing.T) {
 	t.Log("✅ All graph export tests passed")
 }
 
+// [test-spec,id=TS-RPT-030,req="REQ-REPORT-001",aspice="SWE.5.BP3"]
+// TestExportGraphData_DesignElements verifies DesignElement nodes are exported with type "dsn".
+func TestExportGraphData_DesignElements(t *testing.T) {
+	graph := &model.TraceabilityGraph{
+		Requirements:   make(map[string]*model.Requirement),
+		ArchElements:   make(map[string]*model.ArchElement),
+		TestSpecs:      make(map[string]*model.TestSpec),
+		TestCodes:      make(map[string]*model.TestCode),
+		TestResults:    make(map[string]*model.TestResult),
+		DesignElements: map[string]*model.DesignElement{
+			"DSN-001": {
+				ID:    "DSN-001",
+				Title: "Parser Detail Design",
+				ASPICE: "SWE.3",
+				Arch:  "comp.parser",
+			},
+		},
+		Links: []*model.TraceLink{},
+	}
+
+	data := ExportGraphData(graph)
+
+	if len(data.Nodes) != 1 {
+		t.Fatalf("Expected 1 node, got %d", len(data.Nodes))
+	}
+	node := data.Nodes[0]
+	if node.Type != "dsn" {
+		t.Errorf("Type = %q, want \"dsn\"", node.Type)
+	}
+	if node.Group != 4 {
+		t.Errorf("Group = %d, want 4", node.Group)
+	}
+	if node.ID != "DSN-001" {
+		t.Errorf("ID = %q, want DSN-001", node.ID)
+	}
+}
+
+// [test-spec,id=TS-RPT-031,req="REQ-REPORT-001",aspice="SWE.5.BP3"]
+// TestFilterGraphByType_DSN verifies that dsn nodes can be filtered by type.
+func TestFilterGraphByType_DSN(t *testing.T) {
+	data := &GraphData{
+		Nodes: []Node{
+			{ID: "arch-001", Type: "arch"},
+			{ID: "DSN-001", Type: "dsn"},
+		},
+		Edges: []Edge{
+			{Source: "arch-001", Target: "DSN-001", Label: "derives"},
+		},
+	}
+
+	filtered := FilterGraphByType(data, "dsn")
+	if len(filtered.Nodes) != 1 {
+		t.Errorf("Expected 1 dsn node, got %d", len(filtered.Nodes))
+	}
+	if len(filtered.Edges) != 0 {
+		t.Errorf("Expected 0 edges (arch filtered out), got %d", len(filtered.Edges))
+	}
+
+	filtered = FilterGraphByType(data, "arch", "dsn")
+	if len(filtered.Nodes) != 2 {
+		t.Errorf("Expected 2 nodes, got %d", len(filtered.Nodes))
+	}
+	if len(filtered.Edges) != 1 {
+		t.Errorf("Expected 1 edge, got %d", len(filtered.Edges))
+	}
+}
+
 func TestFilterGraphByType(t *testing.T) {
 	// Create graph data
 	data := &GraphData{
