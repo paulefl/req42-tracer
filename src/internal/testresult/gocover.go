@@ -16,17 +16,35 @@ type PackageCoverage struct {
 	Pct        float64 // coverage percentage (0–100)
 }
 
-// ParseGoCoverage parses the output of `go tool cover -func=coverage.out`.
-// Each line has the form:
+// ParseGoCoverage parses Go coverage data in two formats:
 //
-//	github.com/foo/bar/pkg/file.go:FuncName	75.0%
+//  1. `go tool cover -func=coverage.out` output:
+//     github.com/foo/bar/pkg/file.go:FuncName	75.0%
 //
-// or the total line:
+//  2. Raw `coverage.out` profile format (mode line + block lines):
+//     mode: set
+//     github.com/foo/bar/pkg/file.go:10.56,12.3 2 1
 //
-//	total:	(statements)	75.0%
-//
-// Returns one PackageCoverage per package (aggregated across functions).
+// Returns one PackageCoverage per package (aggregated).
 func ParseGoCoverage(filePath string) ([]PackageCoverage, error) {
+	// Detect format by peeking at the first line
+	f0, err := os.Open(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("open go coverage file %s: %w", filePath, err)
+	}
+	scanner0 := bufio.NewScanner(f0)
+	scanner0.Scan()
+	firstLine := strings.TrimSpace(scanner0.Text())
+	f0.Close()
+
+	if strings.HasPrefix(firstLine, "mode:") {
+		return parseGoCoverageRaw(filePath)
+	}
+	return parseGoCoverageFunc(filePath)
+}
+
+// parseGoCoverageFunc parses `go tool cover -func` output.
+func parseGoCoverageFunc(filePath string) ([]PackageCoverage, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("open go coverage file %s: %w", filePath, err)
@@ -89,13 +107,89 @@ func ParseGoCoverage(filePath string) ([]PackageCoverage, error) {
 		if a.stmts > 0 {
 			pct = float64(a.covered) / float64(a.stmts) * 100
 		}
-		// Use only the short package name (last segment)
 		short := pkg
 		if i := strings.LastIndex(pkg, "/"); i >= 0 {
 			short = pkg[i+1:]
 		}
 		results = append(results, PackageCoverage{
 			Package:    short,
+			Statements: a.stmts,
+			Covered:    a.covered,
+			Pct:        pct,
+		})
+	}
+	return results, nil
+}
+
+// parseGoCoverageRaw parses a raw coverage.out profile file (mode line + block lines).
+// Format: <file>:<startline>.<startcol>,<endline>.<endcol> <numstmt> <count>
+func parseGoCoverageRaw(filePath string) ([]PackageCoverage, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("open go coverage profile %s: %w", filePath, err)
+	}
+	defer f.Close()
+
+	type accum struct{ stmts, covered int }
+	pkgMap := make(map[string]*accum)
+	var order []string
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if strings.HasPrefix(line, "mode:") || line == "" {
+			continue
+		}
+		// Format: pkg/file.go:start,end numStmts count
+		colonIdx := strings.LastIndex(line, ":")
+		if colonIdx < 0 {
+			continue
+		}
+		filePart := line[:colonIdx]
+		rest := line[colonIdx+1:]
+
+		parts := strings.Fields(rest)
+		if len(parts) < 3 {
+			continue
+		}
+		numStmts := 0
+		count := 0
+		fmt.Sscanf(parts[1], "%d", &numStmts)
+		fmt.Sscanf(parts[2], "%d", &count)
+
+		// Package = directory of the file
+		pkgPath := filePart
+		if slashIdx := strings.LastIndex(pkgPath, "/"); slashIdx > 0 {
+			pkgPath = pkgPath[:slashIdx]
+		}
+		// Short name
+		short := pkgPath
+		if i := strings.LastIndex(pkgPath, "/"); i >= 0 {
+			short = pkgPath[i+1:]
+		}
+
+		if _, exists := pkgMap[short]; !exists {
+			pkgMap[short] = &accum{}
+			order = append(order, short)
+		}
+		pkgMap[short].stmts += numStmts
+		if count > 0 {
+			pkgMap[short].covered += numStmts
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("reading coverage profile: %w", err)
+	}
+
+	results := make([]PackageCoverage, 0, len(order))
+	for _, pkg := range order {
+		a := pkgMap[pkg]
+		pct := 0.0
+		if a.stmts > 0 {
+			pct = float64(a.covered) / float64(a.stmts) * 100
+		}
+		results = append(results, PackageCoverage{
+			Package:    pkg,
 			Statements: a.stmts,
 			Covered:    a.covered,
 			Pct:        pct,

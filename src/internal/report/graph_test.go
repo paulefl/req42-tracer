@@ -6,6 +6,8 @@ import (
 	"github.com/paulefl/req42-tracer/src/internal/model"
 )
 
+// [test-spec,id=TS-RPT-058,req="REQ-REPORT-001",aspice="SWE.4.BP2"]
+// TestExportGraphData verifies ExportGraphData returns nodes and edges from a minimal graph.
 func TestExportGraphData(t *testing.T) {
 	// Create a minimal graph
 	graph := &model.TraceabilityGraph{
@@ -163,6 +165,8 @@ func TestFilterGraphByType_DSN(t *testing.T) {
 	}
 }
 
+// [test-spec,id=TS-RPT-059,req="REQ-REPORT-001",aspice="SWE.4.BP2"]
+// TestFilterGraphByType verifies FilterGraphByType filters nodes and edges by type.
 func TestFilterGraphByType(t *testing.T) {
 	// Create graph data
 	data := &GraphData{

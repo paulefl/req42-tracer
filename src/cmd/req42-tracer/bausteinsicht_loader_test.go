@@ -1,17 +1,5 @@
 package main
 
-// [test-spec,id=TS-CMD-001,req=REQ-PARSE-002,aspice=SWE.5-BP3]
-// Test: loadBausteinsicht warnt bei fehlendem JSONC-File (non-verbose)
-// [end]
-
-// [test-spec,id=TS-CMD-002,req=REQ-PARSE-002,aspice=SWE.5-BP3]
-// Test: loadBausteinsicht mergt JSONC-Arch-Elemente in den Builder
-// [end]
-
-// [test-spec,id=TS-CMD-003,req=REQ-PARSE-002,aspice=SWE.5-BP3]
-// Test: loadBausteinsicht überspringt doppelte IDs statt Fatal-Error
-// [end]
-
 import (
 	"os"
 	"path/filepath"
@@ -61,6 +49,8 @@ func captureStderr(t *testing.T, fn func()) string {
 	return string(buf[:n])
 }
 
+// [test-spec,id=TS-CMD-001,req=REQ-PARSE-002,aspice=SWE.5-BP3]
+// TestLoadBausteinsicht_WarnOnMissingFile verifies warning is emitted for missing JSONC file.
 func TestLoadBausteinsicht_WarnOnMissingFile(t *testing.T) {
 	builder := graph.NewBuilder()
 	stderr := captureStderr(t, func() {
@@ -74,6 +64,8 @@ func TestLoadBausteinsicht_WarnOnMissingFile(t *testing.T) {
 	}
 }
 
+// [test-spec,id=TS-CMD-002,req=REQ-PARSE-002,aspice=SWE.5-BP3]
+// TestLoadBausteinsicht_MergesElements verifies JSONC arch elements are merged into the builder.
 func TestLoadBausteinsicht_MergesElements(t *testing.T) {
 	f := writeTempJSONC(t, sampleBausteinsichtCmd)
 	builder := graph.NewBuilder()
@@ -88,6 +80,8 @@ func TestLoadBausteinsicht_MergesElements(t *testing.T) {
 	}
 }
 
+// [test-spec,id=TS-CMD-003,req=REQ-PARSE-002,aspice=SWE.5-BP3]
+// TestLoadBausteinsicht_SkipsDuplicateIDs verifies duplicate IDs are skipped without fatal error.
 func TestLoadBausteinsicht_SkipsDuplicateIDs(t *testing.T) {
 	f := writeTempJSONC(t, sampleBausteinsichtCmd)
 	builder := graph.NewBuilder()
