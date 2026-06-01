@@ -8,7 +8,6 @@ import (
 	"github.com/paulefl/req42-tracer/src/internal/aspice"
 	"github.com/paulefl/req42-tracer/src/internal/graph"
 	"github.com/paulefl/req42-tracer/src/internal/model"
-	"github.com/paulefl/req42-tracer/src/internal/testresult"
 )
 
 func newAspiceCmd() *cobra.Command {
@@ -41,10 +40,6 @@ func runAspiceCmd(cmd *cobra.Command, args []string) error {
 		config.GetDefaultProject(), verbose)
 	if err != nil {
 		return err
-	}
-
-	if err := testresult.LoadAll(g, config); err != nil && verbose {
-		fmt.Fprintf(os.Stderr, "Warning: could not load test results: %v\n", err)
 	}
 
 	analyzer := graph.NewAnalyzer(g)

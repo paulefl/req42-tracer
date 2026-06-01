@@ -7,6 +7,7 @@ import (
 	"github.com/paulefl/req42-tracer/src/internal/graph"
 	"github.com/paulefl/req42-tracer/src/internal/model"
 	"github.com/paulefl/req42-tracer/src/internal/parser"
+	"github.com/paulefl/req42-tracer/src/internal/testresult"
 )
 
 // buildGraph parses requirements, architecture, Bausteinsicht model, and Go test
@@ -54,6 +55,11 @@ func buildGraph(config *model.Config, reqDir, arcDir, project string, verbose bo
 		} else {
 			fmt.Fprintf(os.Stderr, "Warning: could not parse Go test files: %v\n", err)
 		}
+	}
+
+	// Load test results before BuildLinks so name-based linking can match them.
+	if err := testresult.LoadAll(builder.GetGraph(), config); err != nil && verbose {
+		fmt.Fprintf(os.Stderr, "Warning: could not load test results: %v\n", err)
 	}
 
 	builder.DeriveASPICELevels()

@@ -57,16 +57,22 @@ func (b *Builder) MergeGraph(other *model.TraceabilityGraph) error {
 		b.graph.DesignElements[id] = dsn
 	}
 
+	// TestSpecs and TestCodes from Go inline annotations may share IDs with adoc-declared
+	// specs (same ID, different source). Skip duplicates so one conflict can't block all
+	// TestCode linking; accumulate warnings to return to the caller.
+	var dupWarnings []string
 	for id, spec := range other.TestSpecs {
 		if _, exists := b.graph.TestSpecs[id]; exists {
-			return fmt.Errorf("duplicate test-spec ID: %s", id)
+			dupWarnings = append(dupWarnings, "duplicate test-spec ID: "+id)
+			continue
 		}
 		b.graph.TestSpecs[id] = spec
 	}
 
 	for id, code := range other.TestCodes {
 		if _, exists := b.graph.TestCodes[id]; exists {
-			return fmt.Errorf("duplicate test-code ID: %s", id)
+			dupWarnings = append(dupWarnings, "duplicate test-code ID: "+id)
+			continue
 		}
 		b.graph.TestCodes[id] = code
 	}
@@ -85,6 +91,9 @@ func (b *Builder) MergeGraph(other *model.TraceabilityGraph) error {
 	}
 	b.graph.Links = append(b.graph.Links, other.Links...)
 
+	if len(dupWarnings) > 0 {
+		return fmt.Errorf("%s", strings.Join(dupWarnings, "; "))
+	}
 	return nil
 }
 
