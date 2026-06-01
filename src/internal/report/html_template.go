@@ -360,6 +360,133 @@ const HTMLTemplate = `<!DOCTYPE html>
             opacity: 0.1;
         }
 
+        /* BFS focus: dimmed = not in neighborhood */
+        .node.dimmed {
+            opacity: 0.06;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .node-label.dimmed {
+            opacity: 0.06;
+            transition: opacity 0.3s;
+        }
+        .link.dimmed {
+            opacity: 0.04;
+            transition: opacity 0.3s;
+        }
+        .node { transition: opacity 0.3s; }
+        .link { transition: opacity 0.3s; }
+
+        /* Sidebar element selector */
+        .selector-section {
+            border-top: 1px solid #e0e0e0;
+            padding: 10px 0 0;
+        }
+        .selector-section h3 {
+            font-size: 11px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0 0 6px;
+            padding: 0 16px;
+        }
+        .selector-search {
+            display: block;
+            width: calc(100% - 32px);
+            margin: 0 16px 6px;
+            padding: 5px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            box-sizing: border-box;
+        }
+        .selector-list {
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 0 8px;
+        }
+        .selector-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .selector-item:hover { background: #f0f0f0; }
+        .selector-item.active { background: #fff3cd; font-weight: 600; }
+        .selector-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .selector-show-all {
+            display: block;
+            width: calc(100% - 32px);
+            margin: 6px 16px 0;
+            padding: 4px 8px;
+            font-size: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f8f9fa;
+            cursor: pointer;
+            text-align: center;
+        }
+        .selector-show-all:hover { background: #e9ecef; }
+
+        /* Hop controls bar in graph view */
+        .hop-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .hop-controls label { color: #666; margin-right: 2px; }
+        .hop-btn {
+            width: 24px; height: 24px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            line-height: 1;
+            padding: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .hop-btn:hover { background: #e9ecef; }
+        .hop-value {
+            min-width: 18px;
+            text-align: center;
+            font-weight: 700;
+            color: #333;
+        }
+        .hop-full-btn {
+            padding: 3px 7px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 4px;
+        }
+        .hop-full-btn:hover { background: #e9ecef; }
+        .hop-controls.inactive { opacity: 0.4; pointer-events: none; }
+
         .link-label {
             font-size: 10px;
             pointer-events: none;
@@ -710,6 +837,13 @@ const HTMLTemplate = `<!DOCTYPE html>
                 </div>
             </div>
 
+            <div class="selector-section">
+                <h3>Focus Element</h3>
+                <input id="selector-search" class="selector-search" type="text" placeholder="Filter by ID…">
+                <div id="selector-list" class="selector-list"></div>
+                <button id="selector-show-all" class="selector-show-all">Show All</button>
+            </div>
+
             <div class="controls">
                 <div class="control-group">
                     <label>Filters</label>
@@ -752,6 +886,13 @@ const HTMLTemplate = `<!DOCTYPE html>
                     <button class="zoom-btn" id="btn-zoom-in">+</button>
                     <button class="zoom-btn" id="btn-zoom-out">−</button>
                     <button class="zoom-btn" id="btn-zoom-fit">⊙</button>
+                </div>
+                <div class="hop-controls inactive" id="hop-controls">
+                    <label>Hops:</label>
+                    <button class="hop-btn" id="hop-minus">−</button>
+                    <span class="hop-value" id="hop-value">2</span>
+                    <button class="hop-btn" id="hop-plus">+</button>
+                    <button class="hop-full-btn" id="hop-full" title="Show full chain (5 hops)">Full chain</button>
                 </div>
                 <div class="tooltip" id="tooltip"></div>
             </div>
@@ -903,8 +1044,138 @@ const HTMLTemplate = `<!DOCTYPE html>
         let globalLink = null;
         let globalLabel = null;
         let globalEdgeLabel = null;
+        let globalGraphData = null;
+
+        // Focus state
+        let focusNodeId = null;
+        let focusHops = 2;
+        const HOP_MIN = 1, HOP_MAX = 5;
+
+        // BFS: returns Set of node IDs reachable within N steps (bidirectional)
+        function bfsNeighbors(startId, hops, data) {
+            const visited = new Set([startId]);
+            let frontier = [startId];
+            for (let h = 0; h < hops; h++) {
+                const next = [];
+                frontier.forEach(id => {
+                    data.edges.forEach(e => {
+                        const sid = typeof e.source === 'object' ? e.source.id : e.source;
+                        const tid = typeof e.target === 'object' ? e.target.id : e.target;
+                        if (sid === id && !visited.has(tid)) { visited.add(tid); next.push(tid); }
+                        if (tid === id && !visited.has(sid)) { visited.add(sid); next.push(sid); }
+                    });
+                });
+                frontier = next;
+            }
+            return visited;
+        }
+
+        function applyFocus(nodeId, hops, data) {
+            if (!globalNode) return;
+            const d = data || globalGraphData;
+            if (!d) return;
+            focusNodeId = nodeId;
+            focusHops = Math.max(HOP_MIN, Math.min(HOP_MAX, hops));
+
+            // Update hop display
+            document.getElementById('hop-value').textContent = focusHops;
+            document.getElementById('hop-controls').classList.remove('inactive');
+
+            const visible = bfsNeighbors(nodeId, focusHops, d);
+
+            globalNode
+                .classed('selected', n => n.id === nodeId)
+                .classed('faded', false)
+                .classed('dimmed', n => !visible.has(n.id));
+            globalLabel.classed('dimmed', n => !visible.has(n.id));
+            globalLink.classed('faded', false)
+                .classed('dimmed', e => {
+                    const sid = typeof e.source === 'object' ? e.source.id : e.source;
+                    const tid = typeof e.target === 'object' ? e.target.id : e.target;
+                    return !visible.has(sid) || !visible.has(tid);
+                });
+
+            // Highlight sidebar item
+            document.querySelectorAll('.selector-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.id === nodeId);
+            });
+
+            // URL hash
+            window.location.hash = 'focus=' + encodeURIComponent(nodeId) + '&hops=' + focusHops;
+
+            // Switch to graph tab if not already there
+            if (!document.getElementById('graph').classList.contains('active')) {
+                switchTab('graph');
+            }
+        }
+
+        function clearFocus() {
+            focusNodeId = null;
+            if (globalNode) {
+                globalNode.classed('selected', false).classed('faded', false).classed('dimmed', false);
+            }
+            if (globalLabel) globalLabel.classed('dimmed', false);
+            if (globalLink) globalLink.classed('faded', false).classed('dimmed', false);
+            document.querySelectorAll('.selector-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('hop-controls').classList.add('inactive');
+            window.location.hash = '';
+        }
+
+        function renderSidebarSelector(data) {
+            const colorMap = {
+                'requirement': '#4a90e2', 'arch': '#7ed321', 'dsn': '#9b59b6',
+                'test-spec': '#f5a623', 'test-code': '#e67e22', 'test-result': '#999'
+            };
+            const list = document.getElementById('selector-list');
+            if (!list || !data || !data.nodes) return;
+
+            function rebuild(filter) {
+                const q = filter.toLowerCase();
+                const items = data.nodes
+                    .filter(n => !q || n.id.toLowerCase().includes(q) || (n.label||'').toLowerCase().includes(q))
+                    .sort((a,b) => a.id.localeCompare(b.id));
+                list.innerHTML = items.map(n =>
+                    '<div class="selector-item' + (n.id === focusNodeId ? ' active' : '') + '" data-id="' + escHtml(n.id) + '">' +
+                    '<div class="selector-dot" style="background:' + (colorMap[n.type]||'#999') + '"></div>' +
+                    escHtml(n.id) + '</div>'
+                ).join('');
+                list.querySelectorAll('.selector-item').forEach(el => {
+                    el.addEventListener('click', () => applyFocus(el.dataset.id, focusHops, data));
+                });
+            }
+
+            rebuild('');
+            document.getElementById('selector-search').addEventListener('input', function() {
+                rebuild(this.value);
+            });
+            document.getElementById('selector-show-all').addEventListener('click', clearFocus);
+        }
+
+        function initHopControls(data) {
+            document.getElementById('hop-minus').addEventListener('click', () => {
+                if (focusNodeId && focusHops > HOP_MIN) applyFocus(focusNodeId, focusHops - 1, data);
+            });
+            document.getElementById('hop-plus').addEventListener('click', () => {
+                if (focusNodeId && focusHops < HOP_MAX) applyFocus(focusNodeId, focusHops + 1, data);
+            });
+            document.getElementById('hop-full').addEventListener('click', () => {
+                if (focusNodeId) applyFocus(focusNodeId, HOP_MAX, data);
+            });
+        }
+
+        function restoreHashState(data) {
+            const hash = window.location.hash.slice(1);
+            if (!hash) return;
+            const params = Object.fromEntries(hash.split('&').map(p => p.split('=')));
+            const id = params.focus ? decodeURIComponent(params.focus) : null;
+            const hops = parseInt(params.hops) || 2;
+            if (id && data.nodes.some(n => n.id === id)) {
+                applyFocus(id, hops, data);
+            }
+        }
 
         function initializeGraph(data) {
+            globalGraphData = data;
             // Update statistics
             updateStats(data);
 
@@ -974,7 +1245,7 @@ const HTMLTemplate = `<!DOCTYPE html>
                 .on('mouseout', hideTooltip)
                 .on('click', function(event, d) {
                     event.stopPropagation();
-                    highlightConnected(d, data);
+                    applyFocus(d.id, focusHops, data);
                 });
 
             // Create labels (store globally for filtering)
@@ -1065,11 +1336,7 @@ const HTMLTemplate = `<!DOCTYPE html>
             });
 
             // Reset view button
-            document.getElementById('btn-reset').addEventListener('click', () => {
-                globalNode.classed('selected', false);
-                globalLink.classed('faded', false);
-                globalNode.classed('faded', false);
-            });
+            document.getElementById('btn-reset').addEventListener('click', () => clearFocus());
 
             // Filter buttons
             document.getElementById('btn-filter-all').addEventListener('click', () => {
@@ -1172,22 +1439,6 @@ const HTMLTemplate = `<!DOCTYPE html>
                 document.getElementById('tooltip').classList.remove('visible');
             }
 
-            function highlightConnected(node, data) {
-                const connectedIds = new Set([node.id]);
-
-                // Find all connected nodes
-                data.edges.forEach(edge => {
-                    if (edge.source.id === node.id) connectedIds.add(edge.target.id);
-                    if (edge.target.id === node.id) connectedIds.add(edge.source.id);
-                });
-
-                nodeGroup.selectAll('.node')
-                    .classed('selected', d => d.id === node.id)
-                    .classed('faded', d => !connectedIds.has(d.id));
-
-                linkGroup.selectAll('.link')
-                    .classed('faded', d => !(connectedIds.has(d.source.id) && connectedIds.has(d.target.id)));
-            }
 
             function drag(simulation) {
                 function dragstarted(event) {
@@ -1697,24 +1948,23 @@ const HTMLTemplate = `<!DOCTYPE html>
         document.getElementById('search-req').addEventListener('input', renderMatrix);
 
         // Initialize graph visualization after all functions are defined
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                if (graphData && graphData.nodes) {
-                    initializeGraph(graphData);
-                }
-                if (gapsData && gapsData.has_gaps) {
-                    const btn = document.getElementById('btn-tab-gaps');
-                    if (btn) btn.style.color = '#e74c3c';
-                }
-            });
-        } else {
+        function bootGraph() {
             if (graphData && graphData.nodes) {
                 initializeGraph(graphData);
+                renderSidebarSelector(graphData);
+                initHopControls(graphData);
+                restoreHashState(graphData);
             }
             if (gapsData && gapsData.has_gaps) {
                 const btn = document.getElementById('btn-tab-gaps');
                 if (btn) btn.style.color = '#e74c3c';
             }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootGraph);
+        } else {
+            bootGraph();
         }
     </script>
 </body>
