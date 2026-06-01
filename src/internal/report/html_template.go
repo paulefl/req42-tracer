@@ -892,7 +892,7 @@ const HTMLTemplate = `<!DOCTYPE html>
                     <button class="hop-btn" id="hop-minus">−</button>
                     <span class="hop-value" id="hop-value">2</span>
                     <button class="hop-btn" id="hop-plus">+</button>
-                    <button class="hop-full-btn" id="hop-full" title="Show full chain (5 hops)">Full chain</button>
+                    <button class="hop-full-btn" id="hop-full" title="Show full chain (10 hops)">Full chain</button>
                 </div>
                 <div class="tooltip" id="tooltip"></div>
             </div>
@@ -1049,7 +1049,7 @@ const HTMLTemplate = `<!DOCTYPE html>
         // Focus state
         let focusNodeId = null;
         let focusHops = 2;
-        const HOP_MIN = 1, HOP_MAX = 5;
+        const HOP_MIN = 1, HOP_MAX = 10;
 
         // BFS: returns Set of node IDs reachable within N steps (bidirectional)
         function bfsNeighbors(startId, hops, data) {
